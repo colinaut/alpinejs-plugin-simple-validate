@@ -12,6 +12,16 @@ build({
     platform: 'browser',
     define: { CDN: true },
 })
+//Example
+build({
+    entryPoints: [`builds/cdn.js`],
+    outfile: `examples/${pluginName}.min.js`,
+    bundle: true,
+    minify: true,
+    sourcemap: false,
+    platform: 'browser',
+    define: { CDN: true },
+})
 //Module
 build({
     entryPoints: [`builds/module.js`],

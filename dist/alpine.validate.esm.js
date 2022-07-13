@@ -1,21 +1,42 @@
 // src/index.js
 var Plugin = function(Alpine) {
+  function cleanText(str) {
+    return String(str).toLowerCase().trim();
+  }
+  function isEmpty(str) {
+    return cleanText(str) === "";
+  }
+  ;
+  function isEmail(str) {
+    return cleanText(str).match(/^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/);
+  }
+  ;
+  function isPhone(str) {
+    return cleanText(str).match(/^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/);
+  }
+  ;
+  function isWebsite(str) {
+    return cleanText(str).match(/^(https?:\/\/)?(www\.)?([a-zA-Z0-9]+(-?[a-zA-Z0-9])*\.)+[\w]{2,}(\/\S*)?$/);
+  }
+  function isUrl(str) {
+    return cleanText(str).match(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()!@:%_\+.~#?&\/\/=]*)/);
+  }
+  function isWholeNumber(str) {
+    return Number.isInteger(Number(str)) && Number(str) > 0;
+  }
+  Alpine.magic("validate", () => ({
+    required: (str) => !isEmpty(str),
+    email: (str) => isEmail(str),
+    phone: (str) => isPhone(str),
+    website: (str) => isWebsite(str),
+    url: (str) => isUrl(str),
+    number: (str) => Number(str),
+    wholenumber: (str) => isWholeNumber(str)
+  }));
   Alpine.directive("validate", (el, {
     modifiers,
     expression
   }) => {
-    const isEmail = (txt) => {
-      return String(txt).toLowerCase().match(/^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/);
-    };
-    const isPhone = (txt) => {
-      return String(txt).toLowerCase().match(/^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/);
-    };
-    const isDomain = (txt) => {
-      return String(txt).toLowerCase().match(/^(https?:\/\/)?(www\.)?([a-zA-Z0-9]+(-?[a-zA-Z0-9])*\.)+[\w]{2,}(\/\S*)?$/);
-    };
-    const isUrl = (txt) => {
-      return String(txt).toLowerCase().match(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()!@:%_\+.~#?&\/\/=]*)/);
-    };
     function validateChecked() {
       if (!el.checked) {
         setError("required");
@@ -25,12 +46,13 @@ var Plugin = function(Alpine) {
     function validate() {
       const value = el.value.trim();
       let error = false;
-      if (!modifiers.includes("required") && value === "") {
+      if (!modifiers.includes("required") && isEmpty(value)) {
         setError(false);
         return false;
       }
-      if (modifiers.includes("required") && value === "") {
-        error = "required";
+      if (modifiers.includes("required") && isEmpty(value)) {
+        setError("required");
+        return false;
       }
       if (modifiers.includes("email") && !isEmail(value)) {
         error = "email address required";
@@ -38,21 +60,30 @@ var Plugin = function(Alpine) {
       if (modifiers.includes("phone") && !isPhone(value)) {
         error = "phone number required";
       }
-      if (modifiers.includes("website") && !isDomain(value)) {
+      if (modifiers.includes("website") && !isWebsite(value)) {
         error = "website required";
       }
       if (modifiers.includes("url") && !isUrl(value)) {
         error = "full url required";
       }
+      if (modifiers.includes("number") && !Number(value)) {
+        error = "number required";
+      }
+      if (modifiers.includes("wholenumber") && !isWholeNumber(value)) {
+        error = "whole number required";
+      }
       setError(error);
     }
     function setError(error) {
+      const parent = el.parentNode;
       if (error) {
         error = expression || error;
         console.error(`'${el.name}' validation error:`, error);
-        el.parentNode.setAttribute("data-error", error);
+        parent.setAttribute("data-error", error);
+        parent.removeAttribute("data-valid");
       } else {
-        el.parentNode.removeAttribute("data-error");
+        parent.removeAttribute("data-error");
+        parent.setAttribute("data-valid", true);
       }
     }
     if (modifiers.includes("checked")) {
