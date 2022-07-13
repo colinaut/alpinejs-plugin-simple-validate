@@ -14,6 +14,7 @@ Add plugin in head above alpinejs
 
 1. Add x-validate along with modifiers on form elements
 2. Add styles to make error messages appear
+3. Optionally modify message by adding expression `x-validate.required="full name required"`
 
 ### Modifiers
 
@@ -24,6 +25,7 @@ Add plugin in head above alpinejs
 * x-validate.email — valid if email address
 * x-validate.domain — valid if site domain, with or without http:// or https://
 * x-validate.url — valid if url, requires http:// or https://
+
 
 ### Example
 
