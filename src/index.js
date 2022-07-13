@@ -40,15 +40,21 @@ const Plugin = function (Alpine) {
     /*                               $validate magic                              */
     /* -------------------------------------------------------------------------- */
 
-    Alpine.magic("validate",() => ({
-        required: str => !isEmpty(str),
-        email: str => isEmail(str),
-        phone: str => isPhone(str),
-        website: str => isWebsite(str),
-        url: str => isUrl(str),
-        number: str => Number(str),
-        wholenumber: str => isWholeNumber(str)
-    }))
+    Alpine.magic("validate",() => {
+        function main(str) {
+            return !isEmpty(str)
+        }
+
+        main.required = str => !isEmpty(str)
+        main.email =  str => isEmail(str)
+        main.phone = str => isPhone(str)
+        main.website = str => isWebsite(str)
+        main.url = str => isUrl(str)
+        main.number = str => Number(str)
+        main.wholenumber = str => isWholeNumber(str)
+
+        return main
+    })
 
     /* -------------------------------------------------------------------------- */
     /*                            x-validate directive                            */

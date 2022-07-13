@@ -28,7 +28,7 @@
                 <input id="phone" name="phone" type="text"phone" x-model="phone" x-validate.required.phone />
             </div>
         </fieldset>
-        <fieldset x-show="$validate.required(name) && $validate.email(email) && $validate.phone(phone)">
+        <fieldset x-show="$validate(name) && $validate.email(email) && $validate.phone(phone)">
             <div>
                 <label for="animal">Favorite Animal</label>
                 <select id="animal" name="animal" x-model="animal" x-validate.required="you must pick an animal">

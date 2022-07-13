@@ -32,10 +32,10 @@ Add plugin in head above alpinejs
 
 ### Magic function $validate
 
-$validate function returns true or false depending on validation option; One difference it that it assumes required is true for any specific validation options like *email* or *phone*
+$validate function returns true or false; Main difference it that it assumes required is true for any specific validation options like *email* or *phone*
 
-* $validate.required('hi') returns true
-* $validate.required('') returns false
+* $validate('hi') returns true
+* $validate('') returns false
 * $validate.email('') returns false
 * $validate.email('hi') returns false
 * $validate.email('hi@hello.com') returns true

@@ -24,7 +24,38 @@ var Plugin = function(Alpine) {
   function isWholeNumber(str) {
     return Number.isInteger(Number(str)) && Number(str) > 0;
   }
-  Alpine.magic("validate", () => ({
+  function validate(str) {
+    function main(str2) {
+      return !isEmpty(str2);
+    }
+    function required(str2) {
+      return !isEmpty(str2);
+    }
+    function email(str2) {
+      return !isEmail(str2);
+    }
+    function phone(str2) {
+      return !isPhone(str2);
+    }
+    main.required = required(str);
+    main.email = email(str);
+    main.phone = phone(str);
+    return main;
+  }
+  Alpine.magic("validate", () => {
+    function main(str) {
+      return !isEmpty(str);
+    }
+    main.required = (str) => !isEmpty(str);
+    main.email = (str) => isEmail(str);
+    main.phone = (str) => isPhone(str);
+    main.website = (str) => isWebsite(str);
+    main.url = (str) => isUrl(str);
+    main.number = (str) => Number(str);
+    main.wholenumber = (str) => isWholeNumber(str);
+    return main;
+  });
+  Alpine.magic("validate0", () => ({
     required: (str) => !isEmpty(str),
     email: (str) => isEmail(str),
     phone: (str) => isPhone(str),
@@ -43,7 +74,7 @@ var Plugin = function(Alpine) {
       } else
         setError(false);
     }
-    function validate() {
+    function validate2() {
       const value = el.value.trim();
       let error = false;
       if (!modifiers.includes("required") && isEmpty(value)) {
@@ -89,7 +120,7 @@ var Plugin = function(Alpine) {
     if (modifiers.includes("checked")) {
       el.addEventListener("click", validateChecked);
     } else {
-      el.addEventListener("blur", validate);
+      el.addEventListener("blur", validate2);
     }
   });
 };
