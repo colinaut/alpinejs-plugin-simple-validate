@@ -28,6 +28,7 @@
                 <input id="phone" name="phone" type="text"phone" x-model="phone" x-validate.required.phone />
             </div>
         </fieldset>
+        <!-- only show fieldset if all above completed -->
         <fieldset x-show="$validate(name) && $validate.email(email) && $validate.phone(phone)">
             <div>
                 <label for="animal">Favorite Animal</label>
@@ -47,6 +48,7 @@
                 <input id="number" name="number" type="text" x-model="number" x-validate.required.number />
             </div>
         </fieldset>
+        <!-- only show fieldset if all above completed -->
         <fieldset x-show="$validate.wholenumber(wholenumber) && $validate.number(number)">
             <div>
                 <label for="requiredCheckbox"><input id="requiredCheckbox" name="requiredCheckbox" type="checkbox" x-model="requiredCheckbox" x-validate.checked /> You must check this box</label>

@@ -24,24 +24,6 @@ var Plugin = function(Alpine) {
   function isWholeNumber(str) {
     return Number.isInteger(Number(str)) && Number(str) > 0;
   }
-  function validate(str) {
-    function main(str2) {
-      return !isEmpty(str2);
-    }
-    function required(str2) {
-      return !isEmpty(str2);
-    }
-    function email(str2) {
-      return !isEmail(str2);
-    }
-    function phone(str2) {
-      return !isPhone(str2);
-    }
-    main.required = required(str);
-    main.email = email(str);
-    main.phone = phone(str);
-    return main;
-  }
   Alpine.magic("validate", () => {
     function main(str) {
       return !isEmpty(str);
@@ -55,15 +37,6 @@ var Plugin = function(Alpine) {
     main.wholenumber = (str) => isWholeNumber(str);
     return main;
   });
-  Alpine.magic("validate0", () => ({
-    required: (str) => !isEmpty(str),
-    email: (str) => isEmail(str),
-    phone: (str) => isPhone(str),
-    website: (str) => isWebsite(str),
-    url: (str) => isUrl(str),
-    number: (str) => Number(str),
-    wholenumber: (str) => isWholeNumber(str)
-  }));
   Alpine.directive("validate", (el, {
     modifiers,
     expression
@@ -74,7 +47,7 @@ var Plugin = function(Alpine) {
       } else
         setError(false);
     }
-    function validate2() {
+    function validate() {
       const value = el.value.trim();
       let error = false;
       if (!modifiers.includes("required") && isEmpty(value)) {
@@ -120,7 +93,7 @@ var Plugin = function(Alpine) {
     if (modifiers.includes("checked")) {
       el.addEventListener("click", validateChecked);
     } else {
-      el.addEventListener("blur", validate2);
+      el.addEventListener("blur", validate);
     }
   });
 };

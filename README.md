@@ -56,6 +56,7 @@ $validate function returns true or false; Main difference is that it assumes req
     <label>Your phone</label>
     <input type="phone" x-validate.required.phone />
   </div>
+  <!-- only show fieldset if all above completed -->
   <fieldset x-show="$validate.required(name) && $validate.email(email) && $validate.phone(phone)">
     <div>
         <label>Favorite Animal</label>
