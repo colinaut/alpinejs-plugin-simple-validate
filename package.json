@@ -1,0 +1,17 @@
+{
+  "name": "@colinaut/alpinejs-plugin-simple-validate",
+  "version": "1.0.0",
+  "description": "Simple Alpine form validation plugin",
+  "main": "dist/alpine.validate.cjs.js",
+  "module": "dist/alpine.validate.esm.js",
+  "unpkg": "dist/alpine.validate.min.js",
+  "keywords": [],
+  "author": "Colin Fahrion",
+  "license": "MIT",
+  "dependencies": {
+    "esbuild": "^0.12.22"
+  },
+  "scripts": {
+    "build": "node scripts/build.js"
+  }
+}
