@@ -53,7 +53,8 @@ var Plugin = function(Alpine) {
   Alpine.directive("validate", (el, {
     modifiers,
     expression
-  }) => {
+  }, { evaluate }) => {
+    let options = expression ? evaluate(expression) : {};
     function validateChecked() {
       if (!el.checked) {
         setError("required");
@@ -63,12 +64,21 @@ var Plugin = function(Alpine) {
     function validate() {
       const value = el.value.trim();
       let error = false;
-      if (!modifiers.includes("required") && isEmpty(value)) {
-        setError(false);
+      if (options.test === void 0 && modifiers.length === 0)
         return false;
+      if (options.test !== void 0) {
+        options = expression ? evaluate(expression) : {};
+        if (options.test === false) {
+          setError("required");
+          return false;
+        }
       }
       if (modifiers.includes("required") && isEmpty(value)) {
         setError("required");
+        return false;
+      }
+      if (!modifiers.includes("required") && isEmpty(value)) {
+        setError(false);
         return false;
       }
       if (modifiers.includes("email") && !isEmail(value)) {
@@ -94,7 +104,7 @@ var Plugin = function(Alpine) {
     function setError(error) {
       const parent = el.parentNode;
       if (error) {
-        error = expression || error;
+        error = options.error || error;
         console.error(`'${el.name}' validation error:`, error);
         parent.setAttribute("data-error", error);
         parent.removeAttribute("data-valid");

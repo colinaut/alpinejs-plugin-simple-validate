@@ -63,7 +63,11 @@ const Plugin = function (Alpine) {
     Alpine.directive("validate", (el, {
         modifiers,
         expression
-    }) => {
+    },{ evaluate }) => {
+
+        // options allows error for error message and test for ad hoc test; test should be boolean
+        // options = {error: 'error message', test: value === 'hi'}
+        let options = (expression) ? evaluate(expression) : {}
 
         // validation for checkboxes and radio buttons
         function validateChecked() {
@@ -81,18 +85,30 @@ const Plugin = function (Alpine) {
 
             let error = false
 
-            /* ----------------------------- Required or not ---------------------------- */
-            // if required not set then allow empty values
-            if (!modifiers.includes('required') && isEmpty(value)) {
-                setError(false);
-                return false;
+            /* ------------------------ End function if no tests ------------------------ */
+            if (options.test === undefined && modifiers.length === 0) return false;
+
+            /* ------------------------ Ad Hoc User Defined Test ------------------------ */
+            if (options.test !== undefined) {
+                // grab test again since reactive values may have changed
+                options = (expression) ? evaluate(expression) : {}
+                if (options.test === false) {
+                    setError('required');
+                    return false;
+                }
             }
+
+            /* ----------------------------- Required or not ---------------------------- */
             // if required then don't allow empty values
             if (modifiers.includes('required') && isEmpty(value)) {
                 setError('required');
                 return false;
             }
-
+            // if required not set then allow empty values
+            if (!modifiers.includes('required') && isEmpty(value)) {
+                setError(false);
+                return false;
+            }
             /* ---------------------------- Value Validators ---------------------------- */
             // if email then make sure it's a valid email address
             if (modifiers.includes('email') && !isEmail(value)) {
@@ -127,8 +143,8 @@ const Plugin = function (Alpine) {
             const parent = el.parentNode
             if (error) {
                 // set error message
-                // use expression in place of default error message
-                error = expression || error
+                // use option.error in place of default error message
+                error = options.error || error
                 console.error(`'${el.name}' validation error:`, error)
                 parent.setAttribute('data-error', error)
                 parent.removeAttribute('data-valid')

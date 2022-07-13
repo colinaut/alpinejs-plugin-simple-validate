@@ -15,12 +15,14 @@ Add plugin in head above alpinejs
 ### Directive x-validate
 
 1. Add x-validate along with modifiers on form elements
-2. Add styles to make error messages appear
-3. Optionally modify message by adding expression `x-validate.required="full name required"`
+2. Add styles to make error messages appear and/or validation appear
+3. Optionally modify message by adding expression `x-validate.required="{error: 'full name required'}"`
+4. Optionally write own ad hoc test by adding expression `x-validate.required="{test: value === 'bunny'}"`
 
-#### Modifiers
+#### Validation Modifiers
 
-* NOTE: x-validate on own does nothing
+NOTE: x-validate without any modifiers or ad hoc tests does nothing
+
 * x-validate.required — valid if not empty
 * x-validate.phone — valid if empty or if phone number
 * x-validate.required.phone — valid if not empty and phone number
@@ -60,7 +62,7 @@ $validate function returns true or false; Main difference is that it assumes req
   <fieldset x-show="$validate.required(name) && $validate.email(email) && $validate.phone(phone)">
     <div>
         <label>Favorite Animal</label>
-        <select x-modal="animal">
+        <select x-modal="animal" x-validate.required="{error: 'please select animal'}">
         <option>Cat</option>
         <option>Dog</option>
         <option>Bunny</option>

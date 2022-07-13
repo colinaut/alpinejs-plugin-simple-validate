@@ -13,7 +13,7 @@
 
 <body>
     <h1>Simple Form Validation Alpine Plugin</h1>
-    <form x-data="{name: '' , email: '' , phone: '', animal: '', wholenumber: '', number: '', requiredCheckbox: false}" @submit.prevent="console.log('submitted')">
+    <form x-data="{name: '' , email: '' , phone: '', animal: '', wholenumber: '', number: '', moon: '', requiredCheckbox: false}" @submit.prevent="console.log('submitted')">
         <fieldset>
             <div>
                 <label for="name">Your Name</label>
@@ -32,7 +32,7 @@
         <fieldset x-show="$validate(name) && $validate.email(email) && $validate.phone(phone)">
             <div>
                 <label for="animal">Favorite Animal</label>
-                <select id="animal" name="animal" x-model="animal" x-validate.required="you must pick an animal">
+                <select id="animal" name="animal" x-model="animal" x-validate.required="{error: 'please select an animal'}">
                     <option disabled selected value="">-- Select One --</option>
                     <option>Cat</option>
                     <option>Dog</option>
@@ -44,14 +44,18 @@
                 <input id="wholenumber" type="text" x-model="wholenumber" x-validate.required.wholenumber />
             </div>
             <div>
-                <label for="number">Any Number <span class="description">(negative or positive; integer or decimal)</span></label>
+                <label for="number">Any Number <span class="description">negative or positive; integer or decimal</span></label>
                 <input id="number" name="number" type="text" x-model="number" x-validate.required.number />
+            </div>
+            <div>
+                <label for="moon">Four letters: Big Pizza Pie</label>
+                <input id="moon" name="moon" type="text" x-model="moon" x-validate="{test: moon === 'moon', error: 'the correct word is moon'}" />
             </div>
         </fieldset>
         <!-- only show fieldset if all above completed -->
-        <fieldset x-show="$validate.wholenumber(wholenumber) && $validate.number(number)">
-            <div>
-                <label for="requiredCheckbox"><input id="requiredCheckbox" name="requiredCheckbox" type="checkbox" x-model="requiredCheckbox" x-validate.checked /> You must check this box</label>
+        <fieldset x-show="$validate.wholenumber(wholenumber) && $validate.number(number) && moon === 'moon'">
+            <div class="checkbox-wrapper">
+                <input id="requiredCheckbox" name="requiredCheckbox" type="checkbox" x-model="requiredCheckbox" x-validate.checked /> <label for="requiredCheckbox">You must check this box</label>
             </div>
             <div>
                 <button type="submit" :disabled="requiredCheckbox === false">Submit</button>
@@ -102,6 +106,16 @@
         border-radius: .2rem;
         border: 1px solid gray;
     }
+    form div.checkbox-wrapper {
+        flex-direction: row;
+        justify-content: start;
+        align-items: center;
+        gap: .6rem;
+    }
+    input[type="checkbox"] {
+        width: 1rem;
+        height: 1rem;
+    }
     .description {
         font-style: italic;
         font-size: .8rem;
@@ -131,7 +145,7 @@
         transition: all;
     }
     button:disabled { 
-        background-color: gray !important; 
+        background-color: gray !important;
         cursor: default;
     }
     button:hover {
