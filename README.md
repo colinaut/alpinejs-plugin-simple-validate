@@ -23,7 +23,7 @@ Add plugin in head above alpinejs
 * x-validate.phone — valid if empty or if phone number
 * x-validate.required.phone — valid if not empty and phone number
 * x-validate.email — valid if email address
-* x-validate.domain — valid if site domain, with or without http:// or https://
+* x-validate.website — valid if site domain, with or without http:// or https://
 * x-validate.url — valid if url, requires http:// or https://
 
 
