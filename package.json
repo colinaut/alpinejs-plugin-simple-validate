@@ -13,6 +13,7 @@
   ],
   "author": "Colin Fahrion",
   "license": "MIT",
+  "repository": "https://github.com/colinaut/alpinejs-plugin-simple-validate.git",
   "publishConfig": {
     "access": "public"
   },
