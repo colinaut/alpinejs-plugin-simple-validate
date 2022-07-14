@@ -42,6 +42,7 @@ NOTE: x-validate without any modifiers or ad hoc tests does nothing
 * x-validate.number — valid if number (positive or negative; integer or decimal)
 * x-validate.integer — valid if integer number (positive or negative)
 * x-validate.wholenumber — valid if whole number (positive integer)
+* x-validate.date — valid if valid date with or without time (uses basic Date.parse())
 
 #### Special case: checkboxes and radio buttons
 
