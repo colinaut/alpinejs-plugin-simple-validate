@@ -13,6 +13,9 @@
   ],
   "author": "Colin Fahrion",
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "esbuild": "^0.12.22"
   },
