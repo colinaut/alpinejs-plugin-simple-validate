@@ -54,7 +54,7 @@
             </div>
             <div>
                 <label for="moon">Four letters: Big Pizza Pie</label>
-                <input id="moon" name="moon" type="text" x-model="moon" x-validate="{test: moon === 'moon', error: 'the correct word is moon'}" />
+                <input id="moon" name="moon" type="text" x-model="moon" x-validate="{test: $el.value === 'moon', error: 'the correct word is moon'}" />
             </div>
             <div>
                 <label for="bunnysite">Bunny Website</label>
@@ -62,14 +62,14 @@
             </div>
         </fieldset>
         <!-- only show fieldset if all above completed -->
-        <fieldset x-show="$validate.wholenumber(wholenumber) && $validate.number(number) && moon === 'moon'" x-transition>
+        <fieldset x-show="$validate.wholenumber(wholenumber) && $validate.number(number) && moon === 'moon' && $validate.website(bunnysite) && bunnysite.includes('bunny')" x-transition>
             <legend>Finale</legend>
             <div>
                 <label for="dob">Date of Birth</label>
-                <input id="dob" name="dob" type="text"dob" x-model="dob" x-validate.required.date />
+                <input id="dob" name="dob" type="text" x-model="dob" x-validate.required.date />
             </div>
             <div class="checkbox-wrapper">
-                <input id="requiredCheckbox" name="requiredCheckbox" type="checkbox" x-model="requiredCheckbox" x-validate.checked /> <label for="requiredCheckbox">Agree allow us to sell all your secrets</label>
+                <input id="requiredCheckbox" name="requiredCheckbox" type="checkbox" x-model="requiredCheckbox" x-validate.checked /> <label for="requiredCheckbox">Sell all my secrets! YOLO!</label>
             </div>
             <div>
                 <button type="submit" :disabled="requiredCheckbox === false">Submit</button>

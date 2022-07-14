@@ -13,7 +13,7 @@ The x-validate directive allows for simple validation and error display on indiv
 
 1. Add x-validate along with modifiers on any form element `x-validate.required.email`
    1. *x-model is not required as the x-validate checks the value directly*
-   2. If validation fails it adds `data-error="required"` with appropriate error message to the form element's parent element and forces focus back on the form element until it is valid.
+   2. If validation fails it adds `data-error="required"` with a simple error message matching the modifier to the form element's parent element.
 2. Add styles to make error messages visible and/or validation visible
    1. Basic style: `[data-error]:after { content: attr(data-error); color: red;}`
    2. *Note:* I'm using the parent element as it is more convenient for styling and :after doesn't work on form elements.
@@ -39,7 +39,7 @@ NOTE: x-validate without any modifiers or ad hoc tests does nothing
 * x-validate.number — valid if number (positive or negative; integer or decimal)
 * x-validate.integer — valid if integer number (positive or negative)
 * x-validate.wholenumber — valid if whole number (positive integer)
-* x-validate.date — valid if valid date with or without time (uses basic Date.parse(); if you want more complex date comparisions I recommend checking out [dayjs](https://github.com/iamkun/dayjs))
+* x-validate.date — valid if valid date; if you want more complex date comparisions I recommend checking out [dayjs](https://github.com/iamkun/dayjs))
 
 #### Special case: checkboxes and radio buttons
 
@@ -75,7 +75,7 @@ More complicated examples in examples folder. run `npm run serve` to view.
     </div>
     <div class="checkbox-wrapper">
         <label><input type="checkbox" x-validate.checked name="yolo" id="yolo" x-model="yolo" /> Sell all my secret data!
-            Yolo!</label>
+            YOLO!</label>
     </div>
     <!-- submit button is disabled until email and phone are added -->
     <div>
