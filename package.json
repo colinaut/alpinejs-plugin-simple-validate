@@ -17,6 +17,7 @@
     "esbuild": "^0.12.22"
   },
   "scripts": {
+    "test": "echo \"No test specified\"",
     "build": "node scripts/build.js",
     "serve": "npx browser-sync start -c 'bs-config.js'"
   }
