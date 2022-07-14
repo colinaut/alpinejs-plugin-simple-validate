@@ -7,7 +7,7 @@ Very simple form validation plugin for AlpineJS
 Add plugin in head above alpinejs
 
 ```
-<script defer src="/js/alpine.validate.min.js"></script>
+<script defer src="https://unpkg.com/@colinaut/alpinejs-plugin-simple-validate@1/dist/alpine.validate.min.js"></script>
 <script defer src="/js/alpine.min.js"></script>
 ```
 ## Usage
