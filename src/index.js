@@ -97,7 +97,7 @@ const Plugin = function (Alpine) {
             let error = false
 
             /* ------------------------ End function if no tests ------------------------ */
-            if (options.test === undefined && modifiers.length === 0) return false;
+            if (!options.test && modifiers.length === 0) return false;
 
             /* ----------------------------- Required or not ---------------------------- */
             // if required then don't allow empty values

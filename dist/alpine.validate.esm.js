@@ -57,7 +57,7 @@ var Plugin = function(Alpine) {
     function validate() {
       const value = el.value;
       let error = false;
-      if (options.test === void 0 && modifiers.length === 0)
+      if (!options.test && modifiers.length === 0)
         return false;
       if (modifiers.includes("required") && isEmpty(value)) {
         setError("required");

@@ -1,0 +1,129 @@
+:root {
+    font-family: Helvetica, Arial, sans-serif;
+    /* Fluid font size from Utopia */
+    font-size: clamp(1rem, 0.9rem + 0.49vw, 1.25rem);
+    /* Safari Resize fix */
+    min-height: 1vw;
+}
+
+h1 {
+    width: 24rem;
+    margin: 2rem auto;
+    text-align: center;
+}
+
+nav {
+    width: 30rem;
+    margin: 2rem auto;
+    text-align: center;
+    display: flex;
+    justify-content: space-evenly;
+    gap: 1rem;
+}
+
+nav a {
+    color: blue;
+}
+
+.active {
+    text-decoration: none;
+    font-weight: 700;
+    color: darkslateblue;
+}
+
+form {
+    width: 20rem;
+    margin: 2rem auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    border-radius: .2rem;
+    background-color: lightsteelblue;
+    padding: 2rem;
+}
+
+fieldset {
+    border: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+legend {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin: 0 0 1rem;
+    color: darkslateblue;
+}
+
+form div {
+    display: flex;
+    flex-direction: column;
+    gap: .3rem;
+}
+
+input,
+textarea,
+select {
+    font-size: 1rem;
+    padding: .5rem;
+    border-radius: .2rem;
+    border: 1px solid gray;
+}
+
+form div.checkbox-wrapper {
+    flex-direction: row;
+    justify-content: start;
+    align-items: center;
+    gap: .6rem;
+    flex-wrap: wrap;
+}
+
+input[type="checkbox"] {
+    width: 1rem;
+    height: 1rem;
+}
+
+.description {
+    font-style: italic;
+    font-size: .8rem;
+    display: block;
+}
+
+[data-error]:after {
+    content: attr(data-error);
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: darkred;
+    display: block;
+}
+
+[data-error] input,
+[data-error] select,
+[data-error] textarea {
+    background-color: lightyellow;
+}
+
+button {
+    background-color: steelblue;
+    color: white;
+    padding: .6rem;
+    border-radius: .4rem;
+    border: 1px solid white;
+    font-size: 1.2rem;
+    text-transform: uppercase;
+    width: 12rem;
+    margin: 0 auto;
+    cursor: pointer;
+    transition: all;
+}
+
+button:disabled {
+    background-color: gray !important;
+    cursor: default;
+}
+
+button:hover {
+    background-color: purple;
+}
