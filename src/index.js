@@ -4,23 +4,24 @@ const Plugin = function (Alpine) {
     /*                                 Validators                                 */
     /* -------------------------------------------------------------------------- */
 
+
     function cleanText(str) {
-        return String(str).toLowerCase().trim()
+        return String(str).trim()
     }
     
     function isEmpty(str) {
         return cleanText(str) === ''
-    };
+    }
     
     function isEmail(str) {
         return cleanText(str)
             .match(/^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/);
-    };
+    }
 
     function isPhone(str) {
         return cleanText(str)
             .match(/^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/);
-    };
+    }
 
     function isWebsite(str) {
         return cleanText(str)
@@ -33,7 +34,16 @@ const Plugin = function (Alpine) {
     }
 
     function isWholeNumber(str) {
-        return Number.isInteger(Number(str)) && Number(str) > 0
+        const num = Number(str)
+        return Number.isInteger(num) && num > 0
+    }
+
+    function isInteger(str) {
+        return Number.isInteger(Number(str))
+    }
+
+    function isDate(str) {
+        return !isNaN(Date.parse(cleanText(str)))
     }
 
     /* -------------------------------------------------------------------------- */
@@ -46,12 +56,14 @@ const Plugin = function (Alpine) {
         }
 
         main.required = str => !isEmpty(str)
-        main.email =  str => isEmail(str)
+        main.email = str => isEmail(str)
         main.phone = str => isPhone(str)
         main.website = str => isWebsite(str)
         main.url = str => isUrl(str)
         main.number = str => Number(str)
         main.wholenumber = str => isWholeNumber(str)
+        main.integer = str => isInteger(str)
+        main.date = str => isDate(str)
 
         return main
     })
@@ -81,22 +93,11 @@ const Plugin = function (Alpine) {
         function validate() {
             const value = el
                 .value
-                .trim();
 
             let error = false
 
             /* ------------------------ End function if no tests ------------------------ */
             if (options.test === undefined && modifiers.length === 0) return false;
-
-            /* ------------------------ Ad Hoc User Defined Test ------------------------ */
-            if (options.test !== undefined) {
-                // grab test again since reactive values may have changed
-                options = (expression) ? evaluate(expression) : {}
-                if (options.test === false) {
-                    setError('required');
-                    return false;
-                }
-            }
 
             /* ----------------------------- Required or not ---------------------------- */
             // if required then don't allow empty values
@@ -109,6 +110,7 @@ const Plugin = function (Alpine) {
                 setError(false);
                 return false;
             }
+
             /* ---------------------------- Value Validators ---------------------------- */
             // if email then make sure it's a valid email address
             if (modifiers.includes('email') && !isEmail(value)) {
@@ -126,13 +128,32 @@ const Plugin = function (Alpine) {
             if (modifiers.includes('url') && !isUrl(value)) {
                 error = 'full url required';
             }
-            // if integer then must be a number value (negative or positive; integer or decimal)
+            // if number then must be a number value (negative or positive; integer or decimal)
             if (modifiers.includes('number') && !Number(value)) {
                 error = 'number required';
             }
-            // if integer then must be an integer value
+            // if integer then must be an positive integer value
+            if (modifiers.includes('integer') && !isInteger(value)) {
+                error = 'integer required';
+            }
+            // if wholenumber then must be an positive integer value
             if (modifiers.includes('wholenumber') && !isWholeNumber(value)) {
                 error = 'whole number required';
+            }
+            // if date then must be a date or date and time
+            if (modifiers.includes('date') && !isDate(value)) {
+                error = 'date required';
+            }
+
+            /* ------------------------ Ad Hoc User Defined Test ------------------------ */
+            // Adhoc test runs after all other tests
+            if (options.test !== undefined) {
+                // grab test again since reactive values may have changed
+                options = (expression) ? evaluate(expression) : {}
+                if (options.test === false) {
+                    // generic message; usually best to add a message
+                    error = error || 'validation failed';
+                }
             }
 
             setError(error);
@@ -148,6 +169,8 @@ const Plugin = function (Alpine) {
                 console.error(`'${el.name}' validation error:`, error)
                 parent.setAttribute('data-error', error)
                 parent.removeAttribute('data-valid')
+                // set focus back on element
+                el.focus()
             } else {
                 // remove error message
                 parent.removeAttribute('data-error')
@@ -158,6 +181,7 @@ const Plugin = function (Alpine) {
         // add event listeners blur for input and click for checkbox or radio buttons
         if (modifiers.includes('checked')) {
             el.addEventListener('click', validateChecked)
+            el.addEventListener('blur', validateChecked)
         } else {
             el.addEventListener('blur', validate)
         }

@@ -14,12 +14,22 @@ Add plugin in head above alpinejs
 
 ### Directive x-validate
 
-1. Add x-validate along with modifiers on form elements
-2. Add styles to make error messages appear and/or validation appear
-3. Optionally modify message by adding expression `x-validate.required="{error: 'full name required'}"`
-4. Optionally write own ad hoc test by adding expression `x-validate.required="{test: value === 'bunny'}"`
+1. Add x-validate along with modifiers on any form element
+   1. x-model is not required as the x-validate checks the value directly
+   2. If validation fails it adds `data-error="required"` with appropriate error message to the form element's parent element.
+   3. failed validation also resets focus on the form element that failed validation
+2. Add styles to make error messages visible and/or validation visible
+   1. Simple error message style: `[data-error]:after { content: attr(data-error); color: red;}`
+   2. *Note:* I'm using the parent element as it is more convenient for styling and :after doesn't work on form elements.
+3. Optionally add options with expression syntax
+   1. Change error message `x-validate.required="{error: 'full name required'}"`
+   2. Write own ad hoc test `x-validate.required="{test: $el.value.includes('bunny')}"`
+   3. Or both `x-validate.required="{test: $el.value.includes('bunny'), error: 'must include bunny'}"`
+   4. *Note:* ad hoc tests run after all validation modifiers which allows you to further limit a validation. For instance only allow twitter urls: `x-validate.required.url="{test: $el.value.startsWith('https://twitter.com/'), error: 'must be a twitter url'}"`
 
 #### Validation Modifiers
+
+The following work on all input, textarea, and select fields.
 
 NOTE: x-validate without any modifiers or ad hoc tests does nothing
 
@@ -30,7 +40,12 @@ NOTE: x-validate without any modifiers or ad hoc tests does nothing
 * x-validate.website — valid if site domain, with or without http:// or https://
 * x-validate.url — valid if url, requires http:// or https://
 * x-validate.number — valid if number (positive or negative; integer or decimal)
-* x-validate.wholenumber — valid if whole number
+* x-validate.integer — valid if integer number (positive or negative)
+* x-validate.wholenumber — valid if whole number (positive integer)
+
+#### Special case: checkboxes and radio buttons
+
+If you want to make sure an individual checkbox or radio button is selected use `x-validate.checked`
 
 ### Magic function $validate
 
@@ -43,6 +58,8 @@ $validate function returns true or false; Main difference is that it assumes req
 * $validate.email('hi@hello.com') returns true
 
 ## Example
+
+More complicated examples in examples folder. run `npm run serve` to view.
 
 ```
 <form x-data={name: '', email: '', phone: '', animal: ''}>
@@ -69,17 +86,11 @@ $validate function returns true or false; Main difference is that it assumes req
         </select>
     </div>
     <div>
-        <input type="checkbox" x-validate.checked />
-        <label>Yolo</label>
+        <label><input type="checkbox" x-validate.checked /> Yolo</label>
     </div>
   </fieldset>
 </form>
 <style type="text/css">
-    [data-error] {
-        background-color: #ffeeee;
-        padding: 0.5rem;
-        border-radius: 0.5rem;
-    }
     [data-error]:after {
         margin-left: 0.5rem;
         color: red;

@@ -1,6 +1,6 @@
 {
   "name": "@colinaut/alpinejs-plugin-simple-validate",
-  "version": "1.2.0",
+  "version": "1.2.2",
   "description": "Simple Alpine form validation plugin",
   "main": "dist/alpine.validate.cjs.js",
   "module": "dist/alpine.validate.esm.js",
@@ -12,6 +12,7 @@
     "esbuild": "^0.12.22"
   },
   "scripts": {
-    "build": "node scripts/build.js"
+    "build": "node scripts/build.js",
+    "serve": "npx browser-sync start -c 'bs-config.js'"
   }
 }
