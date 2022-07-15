@@ -1,5 +1,7 @@
 const Plugin = function (Alpine) {
 
+    const pluginName = 'validate'
+
     /* -------------------------------------------------------------------------- */
     /*                                 Validators                                 */
     /* -------------------------------------------------------------------------- */
@@ -38,29 +40,26 @@ const Plugin = function (Alpine) {
         return Number.isInteger(Number(str))
     }
 
-    function isDate(dateStr) {
-        const regex = /^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})$/
-      
-        if (dateStr.match(regex) === null) {
-          return false;
-        }
-      
-        let month, day, year
-        if (dateStr.includes('/')) [month, day, year] = dateStr.split('/')
-        if (dateStr.includes('-')) [month, day, year] = dateStr.split('-')
-        if (dateStr.includes('.')) [month, day, year] = dateStr.split('.')
-      
-        // 👇️ format Date string as `yyyy-mm-dd`
-        const isoFormattedStr = `${year}-${month}-${day}`
-      
+    function isDate(str, format) {
+        const [p1, p2, p3] = str.split(/[-\/.]/)
+
+        let isoFormattedStr
+        if (format === 'mm-dd-yyyy' && /^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})$/.test(str)) {
+            isoFormattedStr = `${p3}-${p1}-${p2}`
+        } else if (format === 'dd-mm-yyyy' && /^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})$/.test(str)) {
+            isoFormattedStr = `${p3}-${p2}-${p1}`
+        } else if (format === 'yyyy-mm-dd' && /^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})$/.test(str)) {
+            isoFormattedStr = `${p1}-${p2}-${p3}`
+        } else return false
+
         const date = new Date(isoFormattedStr)
-      
+
         const timestamp = date.getTime()
-      
+
         if (typeof timestamp !== 'number' || Number.isNaN(timestamp)) {
-          return false;
+            return false;
         }
-      
+
         return date.toISOString().startsWith(isoFormattedStr)
     }
 
@@ -68,7 +67,6 @@ const Plugin = function (Alpine) {
         return !isEmpty(str)
     }
 
-    validate.required = str => !isEmpty(str)
     validate.email = str => isEmail(str)
     validate.phone = str => isPhone(str)
     validate.website = str => isWebsite(str)
@@ -76,46 +74,52 @@ const Plugin = function (Alpine) {
     validate.number = str => Number(str)
     validate.wholenumber = str => isWholeNumber(str)
     validate.integer = str => isInteger(str)
-    validate.date = str => isDate(str)
+    validate.date = str => isDate(str,'mm-dd-yyyy')
+    validate['date-mm-dd-yyyy'] = str => isDate(str,'mm-dd-yyyy')
+    validate['date-dd-mm-yyyy'] = str => isDate(str,'dd-mm-yyyy')
+    validate['date-yyyy-mm-dd'] = str => isDate(str,'yyyy-mm-dd')
 
     /* -------------------------------------------------------------------------- */
     /*                               $validate magic                              */
     /* -------------------------------------------------------------------------- */
 
-    Alpine.magic("validate", () => validate)
+    Alpine.magic(pluginName, () => validate)
 
     /* -------------------------------------------------------------------------- */
     /*                            x-validate directive                            */
     /* -------------------------------------------------------------------------- */
 
-    Alpine.directive("validate", (el, {
+    Alpine.directive(pluginName, (el, {
         modifiers,
         expression
     }, {
         evaluate
     }) => {
 
-        const parent = el.parentNode
-
         // options allows error for error message and test for ad hoc test; test should be boolean
         // options = {error: 'error message', test: value === 'hi'}
         let options = (expression) ? evaluate(expression) : {}
+        // console.log("🚀 ~ file: index.js ~ line 105 ~ hasModifier ~ modifiers", modifiers)
+        function hasModifier(type) {
+            return modifiers.includes(type)
+        }
 
         // validation for checkboxes and radio buttons
         function validateChecked() {
+            console.log("valCheck")
             if (!el.checked) {
+                console.log("checked")
                 setError('required')
-            } else
+            } else {
+                console.log("unchecked")
                 removeError()
+            }
         }
 
         // validation for input fields, textareas, and select fields
         function validateInput() {
-            const value = el.value
 
-            function hasModifier(type) {
-                return modifiers.includes(type)
-            }
+            const value = el.value
 
             /* ------------------------ End function if no tests ------------------------ */
             if (options.test === undefined && modifiers.length === 0) return false;
@@ -137,10 +141,16 @@ const Plugin = function (Alpine) {
 
             /* ---------------------------- Value Validators ---------------------------- */
 
-            modifiers.every(modifier => {
-                if (modifier !== 'required' && !validate[modifier](value)) {
-                    error = `${modifier} required`
-                    return false;
+            modifiers.every((modifier, i) => {
+                if (typeof validate[modifier] === 'function') {
+                    if (modifier.includes('date') && !validate[modifier](value)) {
+                        const format = (modifier.length > 4) ? modifier.slice(5) : 'mm-dd-yyyy'
+                        error = `date required in ${format} format`
+                        return false;
+                    } else if (!validate[modifier](value)) {
+                        error = `${modifier} required`
+                        return false;
+                    }
                 }
                 return true;
             })
@@ -166,23 +176,23 @@ const Plugin = function (Alpine) {
             // use option.error in place of default error message if available
             error = options.error || error
             // console.error(`'${el.name}' validation error:`, error)
-            parent.setAttribute('data-error', error)
-            parent.removeAttribute('data-valid')
+            el.parentNode.setAttribute('data-error', error)
+            el.parentNode.removeAttribute('data-valid')
+            // add 'input' event after validation on blur fails
+            if (hasModifier('refocus')) el.focus()
+            if (el.nodeName === 'INPUT' || el.nodeName === 'TEXTAREA') addEventListener('input', validateInput)
         }
 
         function removeError() {
-            parent.removeAttribute('data-error')
-            parent.setAttribute('data-valid', true)
+            el.parentNode.removeAttribute('data-error')
+            el.parentNode.setAttribute('data-valid', true)
             // console.log(`'${el.name}' is valid`)
         }
 
         // add event listeners depending on type of element
         if (el.nodeName === 'INPUT' && modifiers.includes('checked') && (el.type === 'checkbox' || el.type === 'radio')) {
             el.addEventListener('click', validateChecked)
-        } else if (el.nodeName === 'INPUT' || el.nodeName === 'TEXTAREA') {
-            el.addEventListener('input', validateInput)
-            el.addEventListener('blur', validateInput)
-        } else if (el.nodeName === 'SELECT') {
+        } else if (el.nodeName === 'INPUT' || el.nodeName === 'TEXTAREA' || el.nodeName === 'SELECT') {
             el.addEventListener('blur', validateInput)
         }
 

@@ -20,11 +20,11 @@
             <legend>Part 1: Contact Info</legend>
             <div>
                 <label for="name">Your Name</label>
-                <input id="name" name="name" type="text" x-model="name" x-validate.required />
+                <input id="name" name="name" type="text" x-model="name" x-validate.required.refocus />
             </div>
             <div>
                 <label for="email">Your Email</label>
-                <input id="email" name="email" type="email" x-model="email" x-validate.required.email />
+                <input id="email" name="email" type="email" x-model="email" x-validate.required.email.refocus />
             </div>
             <div>
                 <label for="phone">Your Phone</label>
@@ -58,7 +58,7 @@
             </div>
             <div>
                 <label for="bunnysite">Bunny Website</label>
-                <input id="bunnysite" name="bunnysite" type="text" x-model="bunnysite" x-validate.website="{test: $el.value.includes('bunny'), error: 'must be a website that has the word bunny in it'}" />
+                <input id="bunnysite" name="bunnysite" type="text" x-model="bunnysite" x-validate.website.refocus="{test: $el.value.includes('bunny'), error: 'must be a website that has the word bunny in it'}" />
             </div>
         </fieldset>
         <!-- only show fieldset if all above completed -->

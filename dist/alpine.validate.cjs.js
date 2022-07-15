@@ -13,6 +13,7 @@ __export(exports, {
 
 // src/index.js
 var Plugin = function(Alpine) {
+  const pluginName = "validate";
   function cleanText(str) {
     return String(str).trim();
   }
@@ -38,19 +39,17 @@ var Plugin = function(Alpine) {
   function isInteger(str) {
     return Number.isInteger(Number(str));
   }
-  function isDate(dateStr) {
-    const regex = /^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})$/;
-    if (dateStr.match(regex) === null) {
+  function isDate(str, format) {
+    const [p1, p2, p3] = str.split(/[-\/.]/);
+    let isoFormattedStr;
+    if (format === "mm-dd-yyyy" && /^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})$/.test(str)) {
+      isoFormattedStr = `${p3}-${p1}-${p2}`;
+    } else if (format === "dd-mm-yyyy" && /^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})$/.test(str)) {
+      isoFormattedStr = `${p3}-${p2}-${p1}`;
+    } else if (format === "yyyy-mm-dd" && /^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})$/.test(str)) {
+      isoFormattedStr = `${p1}-${p2}-${p3}`;
+    } else
       return false;
-    }
-    let month, day, year;
-    if (dateStr.includes("/"))
-      [month, day, year] = dateStr.split("/");
-    if (dateStr.includes("-"))
-      [month, day, year] = dateStr.split("-");
-    if (dateStr.includes("."))
-      [month, day, year] = dateStr.split(".");
-    const isoFormattedStr = `${year}-${month}-${day}`;
     const date = new Date(isoFormattedStr);
     const timestamp = date.getTime();
     if (typeof timestamp !== "number" || Number.isNaN(timestamp)) {
@@ -61,7 +60,6 @@ var Plugin = function(Alpine) {
   const validate = (str) => {
     return !isEmpty(str);
   };
-  validate.required = (str) => !isEmpty(str);
   validate.email = (str) => isEmail(str);
   validate.phone = (str) => isPhone(str);
   validate.website = (str) => isWebsite(str);
@@ -69,27 +67,33 @@ var Plugin = function(Alpine) {
   validate.number = (str) => Number(str);
   validate.wholenumber = (str) => isWholeNumber(str);
   validate.integer = (str) => isInteger(str);
-  validate.date = (str) => isDate(str);
-  Alpine.magic("validate", () => validate);
-  Alpine.directive("validate", (el, {
+  validate.date = (str) => isDate(str, "mm-dd-yyyy");
+  validate["date-mm-dd-yyyy"] = (str) => isDate(str, "mm-dd-yyyy");
+  validate["date-dd-mm-yyyy"] = (str) => isDate(str, "dd-mm-yyyy");
+  validate["date-yyyy-mm-dd"] = (str) => isDate(str, "yyyy-mm-dd");
+  Alpine.magic(pluginName, () => validate);
+  Alpine.directive(pluginName, (el, {
     modifiers,
     expression
   }, {
     evaluate
   }) => {
-    const parent = el.parentNode;
     let options = expression ? evaluate(expression) : {};
+    function hasModifier(type) {
+      return modifiers.includes(type);
+    }
     function validateChecked() {
+      console.log("valCheck");
       if (!el.checked) {
+        console.log("checked");
         setError("required");
-      } else
+      } else {
+        console.log("unchecked");
         removeError();
+      }
     }
     function validateInput() {
       const value = el.value;
-      function hasModifier(type) {
-        return modifiers.includes(type);
-      }
       if (options.test === void 0 && modifiers.length === 0)
         return false;
       if (hasModifier("required") && isEmpty(value)) {
@@ -101,10 +105,16 @@ var Plugin = function(Alpine) {
         return false;
       }
       let error = false;
-      modifiers.every((modifier) => {
-        if (modifier !== "required" && !validate[modifier](value)) {
-          error = `${modifier} required`;
-          return false;
+      modifiers.every((modifier, i) => {
+        if (typeof validate[modifier] === "function") {
+          if (modifier.includes("date") && !validate[modifier](value)) {
+            const format = modifier.length > 4 ? modifier.slice(5) : "mm-dd-yyyy";
+            error = `date required in ${format} format`;
+            return false;
+          } else if (!validate[modifier](value)) {
+            error = `${modifier} required`;
+            return false;
+          }
         }
         return true;
       });
@@ -121,19 +131,20 @@ var Plugin = function(Alpine) {
     }
     function setError(error) {
       error = options.error || error;
-      parent.setAttribute("data-error", error);
-      parent.removeAttribute("data-valid");
+      el.parentNode.setAttribute("data-error", error);
+      el.parentNode.removeAttribute("data-valid");
+      if (hasModifier("refocus"))
+        el.focus();
+      if (el.nodeName === "INPUT" || el.nodeName === "TEXTAREA")
+        addEventListener("input", validateInput);
     }
     function removeError() {
-      parent.removeAttribute("data-error");
-      parent.setAttribute("data-valid", true);
+      el.parentNode.removeAttribute("data-error");
+      el.parentNode.setAttribute("data-valid", true);
     }
     if (el.nodeName === "INPUT" && modifiers.includes("checked") && (el.type === "checkbox" || el.type === "radio")) {
       el.addEventListener("click", validateChecked);
-    } else if (el.nodeName === "INPUT" || el.nodeName === "TEXTAREA") {
-      el.addEventListener("input", validateInput);
-      el.addEventListener("blur", validateInput);
-    } else if (el.nodeName === "SELECT") {
+    } else if (el.nodeName === "INPUT" || el.nodeName === "TEXTAREA" || el.nodeName === "SELECT") {
       el.addEventListener("blur", validateInput);
     }
   });

@@ -13,7 +13,8 @@ The x-validate directive allows for simple validation and error display on indiv
 
 1. Add x-validate along with modifiers on any form element `x-validate.required.email`
    1. *x-model is not required as the x-validate checks the value directly*
-   2. If validation fails it adds `data-error="required"` with a simple error message matching the modifier to the form element's parent element.
+   2. validation is triggered initially only on blur; after failing once it then is triggered on 'input' to validate as the user types.
+   3. If validation fails it adds `data-error="required"` with a simple error message matching the modifier to the form element's parent element.
 2. Add styles to make error messages visible and/or validation visible
    1. Basic style: `[data-error]:after { content: attr(data-error); color: red;}`
    2. *Note:* I'm using the parent element as it is more convenient for styling and :after doesn't work on form elements.
@@ -24,26 +25,27 @@ The x-validate directive allows for simple validation and error display on indiv
    4. *Note:* ad hoc tests run after all validation modifiers which allows you to further limit a validation. For instance only allow twitter urls: `x-validate.required.url="{test: $el.value.startsWith('https://twitter.com/'), error: 'must be a twitter url'}"`
 
 
-#### Validation Modifiers
-
-The following work on all input, textarea, and select fields.
+#### Modifiers
 
 NOTE: x-validate without any modifiers or ad hoc tests does nothing
 
-* x-validate.required — valid if not empty
-* x-validate.phone — valid if empty or if phone number
-* x-validate.required.phone — valid if not empty and phone number
-* x-validate.email — valid if email address
-* x-validate.website — valid if site domain, with or without http:// or https://
-* x-validate.url — valid if url, requires http:// or https://
-* x-validate.number — valid if number (positive or negative; integer or decimal)
-* x-validate.integer — valid if integer number (positive or negative)
-* x-validate.wholenumber — valid if whole number (positive integer)
-* x-validate.date — valid if valid date; if you want more complex date comparisions I recommend checking out [dayjs](https://github.com/iamkun/dayjs))
-
-#### Special case: checkboxes and radio buttons
-
-If you want to make sure an individual checkbox or radio button is selected use `x-validate.checked`
+* `x-validate.required` — valid if not empty
+* `x-validate.phone` — valid if empty or if phone number
+* `x-validate.required.phone` — valid if not empty and phone number
+* `x-validate.email` — valid if email address
+* `x-validate.website` — valid if site domain, with or without http:// or https://
+* `x-validate.url` — valid if url, requires http:// or https://
+* `x-validate.number` — valid if number (positive or negative; integer or decimal)
+* `x-validate.integer` — valid if integer number (positive or negative)
+* `x-validate.wholenumber` — valid if whole number (positive integer)
+* Date validation: allows for / or - or . between units
+  * `x-validate.date-mm-dd-yyyy` — valid if date using mm-dd-yyyy format
+  * `x-validate.date-dd-mm-yyyy` — valid if date using dd-mm-yyyy format
+  * `x-validate.date-yyyy-mm-dd` — valid if date using yyyy-mm-dd format
+  * `x-validate.date` defaults to mm-dd-yyyy format
+  * *If you want more complicated validation I recommend [dayjs](https://github.com/iamkun/dayjs)*
+* `x-validate.checked` — only used for checkboxes or radio buttons; valid if checked
+* `x-validate.required.refocus` — 'refocus' forces focus on the field when validation fails
 
 ### Magic function $validate
 
