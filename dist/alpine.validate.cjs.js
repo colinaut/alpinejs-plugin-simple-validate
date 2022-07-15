@@ -83,12 +83,9 @@ var Plugin = function(Alpine) {
       return modifiers.includes(type);
     }
     function validateChecked() {
-      console.log("valCheck");
       if (!el.checked) {
-        console.log("checked");
         setError("required");
       } else {
-        console.log("unchecked");
         setValid();
       }
     }
@@ -99,7 +96,7 @@ var Plugin = function(Alpine) {
         return false;
       }
       if (!hasModifier("required") && isEmpty(value)) {
-        removeError();
+        setValid();
         return false;
       }
       let error = false;

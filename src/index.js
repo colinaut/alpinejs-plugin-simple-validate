@@ -106,12 +106,9 @@ const Plugin = function (Alpine) {
 
         // validation for checkboxes and radio buttons
         function validateChecked() {
-            console.log("valCheck")
             if (!el.checked) {
-                console.log("checked")
                 setError('required')
             } else {
-                console.log("unchecked")
                 setValid()
             }
         }
@@ -129,7 +126,7 @@ const Plugin = function (Alpine) {
             }
             // if required not set then allow empty values
             if (!hasModifier('required') && isEmpty(value)) {
-                removeError()
+                setValid()
                 return false
             }
 
