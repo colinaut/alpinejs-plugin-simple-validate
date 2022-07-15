@@ -62,6 +62,8 @@ $validate function returns true or false; Main difference is that it assumes req
 
 This plugin does not automatically validate prior to submission. However, since `x-validate` automatically adds a `data-valid` attribute with `true` or `false` which can be checked prior to submitting the form. You can also use `$validate()` for any validation.
 
+*Note: I am currently working on implementing a more reactive whole form validation (see Roadmap).*
+
 ## Example
 
 More complicated examples in examples folder. run `npm run serve` to view.
@@ -147,6 +149,15 @@ eleventyConfig.addPassthroughCopy({
 <script src="/js/alpine.validate.min.js" defer></script>
 <script src="/js/alpine.min.js" defer></script>
 ```
+
+## Roadmap
+
+* Form submit validation
+  * Reactive data containing name, value, and valid (true/false) for every field with `x-validate`.
+  * Submit button disabled state and action to check validation state for every field.
+* `x-validate.group.required` functionality for groups of checkboxes or radio buttons. Allowing for at least requiring one radio button or at least one checkbox to be checked.
+
+*If you have any other feature suggestions feel free to add a feature request*
 
 ## Acknowledgements
 Built using [AlpineJS plugin blueprint](https://github.com/img.shields.io/github/v/release/victoryoalli/alpinejs-plugin-blueprint)
