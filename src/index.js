@@ -112,7 +112,7 @@ const Plugin = function (Alpine) {
                 setError('required')
             } else {
                 console.log("unchecked")
-                removeError()
+                setValid()
             }
         }
 
@@ -120,9 +120,6 @@ const Plugin = function (Alpine) {
         function validateInput() {
 
             const value = el.value
-
-            /* ------------------------ End function if no tests ------------------------ */
-            if (options.test === undefined && modifiers.length === 0) return false;
 
             /* ----------------------------- Required or not ---------------------------- */
             // if required then don't allow empty values
@@ -168,7 +165,7 @@ const Plugin = function (Alpine) {
 
             // if error is false then it removes the error message
             if (error) setError(error)
-            if (!error) removeError()
+            if (!error) setValid()
         }
 
         // set message on parent element
@@ -176,23 +173,31 @@ const Plugin = function (Alpine) {
             // use option.error in place of default error message if available
             error = options.error || error
             // console.error(`'${el.name}' validation error:`, error)
+            // Add error messsage to parentNode
             el.parentNode.setAttribute('data-error', error)
-            el.parentNode.removeAttribute('data-valid')
+            // set form element data-valid to false
+            el.setAttribute('data-valid', false)
             // add 'input' event after validation on blur fails
             if (hasModifier('refocus')) el.focus()
             if (el.nodeName === 'INPUT' || el.nodeName === 'TEXTAREA') addEventListener('input', validateInput)
         }
 
-        function removeError() {
+        function setValid() {
+            // remove error message
             el.parentNode.removeAttribute('data-error')
-            el.parentNode.setAttribute('data-valid', true)
+            // set data-valid on form element to true
+            el.setAttribute('data-valid', true)
             // console.log(`'${el.name}' is valid`)
         }
 
         // add event listeners depending on type of element
-        if (el.nodeName === 'INPUT' && modifiers.includes('checked') && (el.type === 'checkbox' || el.type === 'radio')) {
+        if (options.test === undefined && modifiers.length === 0) {
+            // if no tests or modifiers do nothing.
+        } else if(el.nodeName === 'INPUT' && modifiers.includes('checked') && (el.type === 'checkbox' || el.type === 'radio')) {
+            el.setAttribute('data-valid', false)
             el.addEventListener('click', validateChecked)
         } else if (el.nodeName === 'INPUT' || el.nodeName === 'TEXTAREA' || el.nodeName === 'SELECT') {
+            el.setAttribute('data-valid', false)
             el.addEventListener('blur', validateInput)
         }
 

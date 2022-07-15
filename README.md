@@ -5,7 +5,7 @@
 
 Very simple form validation plugin for [AlpineJS](https://alpinejs.dev). This plugin is designed, like AlpineJS itself, to be sprinkled in as needed. What this plugin does not do is impose an opinionated structure for your form data or functionality. It can be used with or without x-model.
 
-The x-validate directive allows for simple validation and error display on individual form elements. And the $validate() magic function grants easy access to the same validation functions for use as booleans in x-show and and x-bind. You can also use the $validate() magic function to validate the form before submitting it.
+The x-validate directive allows for simple validation and error display on individual form elements. And the $validate() magic function grants easy access to the same validation functions for use as booleans in x-show and and x-bind.
 
 ## Usage
 
@@ -14,8 +14,9 @@ The x-validate directive allows for simple validation and error display on indiv
 1. Add x-validate along with modifiers on any form element `x-validate.required.email`
    1. *x-model is not required as the x-validate checks the value directly*
    2. validation is triggered initially only on blur; after failing once it then is triggered on 'input' to validate as the user types.
-   3. If validation fails it adds `data-error="required"` with a simple error message matching the modifier to the form element's parent element.
-2. Add styles to make error messages visible and/or validation visible
+   3. If validation fails, it adds `data-valid="false"` to the form element and adds `data-error` to the field's parent element with a simple error message matching the modifier. For instance: `data-error="email required"`
+   4. If the validation passes, it adds `data-valid="true"` to the form element and removes `data-error` attribute from the parent element
+2. Add styles to make `data-error` error messages visible and/or validation visible
    1. Basic style: `[data-error]:after { content: attr(data-error); color: red;}`
    2. *Note:* I'm using the parent element as it is more convenient for styling and :after doesn't work on form elements.
 3. Optionally add options with expression syntax
@@ -56,6 +57,10 @@ $validate function returns true or false; Main difference is that it assumes req
 * $validate.email('') returns false
 * $validate.email('hi') returns false
 * $validate.email('hi@hello.com') returns true
+
+## Validation When Submitting
+
+This plugin does not automatically validate prior to submission. However, since `x-validate` automatically adds a `data-valid` attribute with `true` or `false` which can be checked prior to submitting the form. You can also use `$validate()` for any validation.
 
 ## Example
 

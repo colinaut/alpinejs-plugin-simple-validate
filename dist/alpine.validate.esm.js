@@ -76,13 +76,11 @@ var Plugin = function(Alpine) {
         setError("required");
       } else {
         console.log("unchecked");
-        removeError();
+        setValid();
       }
     }
     function validateInput() {
       const value = el.value;
-      if (options.test === void 0 && modifiers.length === 0)
-        return false;
       if (hasModifier("required") && isEmpty(value)) {
         setError("required");
         return false;
@@ -114,24 +112,27 @@ var Plugin = function(Alpine) {
       if (error)
         setError(error);
       if (!error)
-        removeError();
+        setValid();
     }
     function setError(error) {
       error = options.error || error;
       el.parentNode.setAttribute("data-error", error);
-      el.parentNode.removeAttribute("data-valid");
+      el.setAttribute("data-valid", false);
       if (hasModifier("refocus"))
         el.focus();
       if (el.nodeName === "INPUT" || el.nodeName === "TEXTAREA")
         addEventListener("input", validateInput);
     }
-    function removeError() {
+    function setValid() {
       el.parentNode.removeAttribute("data-error");
-      el.parentNode.setAttribute("data-valid", true);
+      el.setAttribute("data-valid", true);
     }
-    if (el.nodeName === "INPUT" && modifiers.includes("checked") && (el.type === "checkbox" || el.type === "radio")) {
+    if (options.test === void 0 && modifiers.length === 0) {
+    } else if (el.nodeName === "INPUT" && modifiers.includes("checked") && (el.type === "checkbox" || el.type === "radio")) {
+      el.setAttribute("data-valid", false);
       el.addEventListener("click", validateChecked);
     } else if (el.nodeName === "INPUT" || el.nodeName === "TEXTAREA" || el.nodeName === "SELECT") {
+      el.setAttribute("data-valid", false);
       el.addEventListener("blur", validateInput);
     }
   });
