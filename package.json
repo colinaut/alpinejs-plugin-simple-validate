@@ -23,6 +23,7 @@
   "scripts": {
     "test": "echo \"No test specified\"",
     "build": "node scripts/build.js",
+    "dev": "node scripts/build.js --watch",
     "serve": "npx browser-sync start -c 'bs-config.js'"
   }
 }
