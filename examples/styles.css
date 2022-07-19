@@ -11,6 +11,9 @@ h1 {
     margin: 2rem auto;
     text-align: center;
 }
+h2,h3,ul,p {
+    margin: 0 0 1rem;
+}
 
 nav {
     width: 30rem;
@@ -126,4 +129,12 @@ button:disabled {
 
 button:hover {
     background-color: purple;
+}
+
+.form-validation-log {
+    border: 1px solid orange;
+    border-radius: .5rem;
+    padding: 1rem;
+    margin: 1rem 0;
+    background-color: lightyellow;
 }

@@ -1,6 +1,23 @@
 const Plugin = function (Alpine) {
+    // TODO: add support for groups of checkboxes and/or radio buttons with x-validate.group
+    // TODO: make way for fieldsets to know if every field in it is valid
+    // TODO: possibly use Alpine.bind() to make an x-bind disabled for the submit button
 
     const pluginName = 'validate'
+
+    /* -------------------------------------------------------------------------- */
+    /*                              Helper Functions                              */
+    /* -------------------------------------------------------------------------- */
+
+    function isTextField(el) {
+        allowedTypes = ['text', 'password', 'date', 'datetime-local', 'email', 'tel', 'url', 'time','week', 'month','number']
+        return ((el.nodeName === 'INPUT' && allowedTypes.includes(el.type)) || el.nodeName === 'TEXTAREA')
+    }
+
+    function isClickField(el) {
+        allowedTypes = ['checkbox', 'radio']
+        return (el.nodeName === 'INPUT' && allowedTypes.includes(el.type))
+    }
 
     /* -------------------------------------------------------------------------- */
     /*                                 Validators                                 */
@@ -63,6 +80,29 @@ const Plugin = function (Alpine) {
         return date.toISOString().startsWith(isoFormattedStr)
     }
 
+    /* -------------------------------------------------------------------------- */
+    /*                       Validation Reactive Data Store                       */
+    /* -------------------------------------------------------------------------- */
+
+    const formData = Alpine.reactive({});
+
+    function replaceFieldData(el, valid) {
+        const formId = el.closest('form').getAttribute('id')
+        if (formId) {
+            formData[formId] = formData[formId].map(val => {
+                if (val.name === el.name) {
+                    return {name: el.name, value: el.value, valid: valid}
+                } else return val
+            })
+            // console.log("🚀 ~ file: index.js ~ line 83 ~ replaceFieldData ~ formData[formId]", formData[formId])
+        } else return false
+        
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                            Validation Functions                            */
+    /* -------------------------------------------------------------------------- */
+
     const validate = str => {
         return !isEmpty(str)
     }
@@ -78,6 +118,14 @@ const Plugin = function (Alpine) {
     validate['date-mm-dd-yyyy'] = str => isDate(str,'mm-dd-yyyy')
     validate['date-dd-mm-yyyy'] = str => isDate(str,'dd-mm-yyyy')
     validate['date-yyyy-mm-dd'] = str => isDate(str,'yyyy-mm-dd')
+    // Display reactive formData
+    validate.formData = formId => formData[formId]
+    // Check if form is completed
+    validate.isFormComplete = formId => {
+        // Reactive proxies cause problems with validation, so we need to build our own array of objects
+        let dataArray = formData[formId].map(val => Object.getOwnPropertyNames(val).reduce((data, key) => ({ ...data, [key]: val[key] }), {}))
+        return dataArray.every(val => val.valid === true)
+    }
 
     /* -------------------------------------------------------------------------- */
     /*                               $validate magic                              */
@@ -104,16 +152,33 @@ const Plugin = function (Alpine) {
             return modifiers.includes(type)
         }
 
-        // validation for checkboxes and radio buttons
+        /* -------------------------------------------------------------------------- */
+        /*                       Add fields to formData[formId]                       */
+        /* -------------------------------------------------------------------------- */
+        const formID = el.closest('form').getAttribute('id')
+        if (formID) {
+            formData[formID] = formData[formID] || []
+            // willValidate defaults to true if there are modifiers or ad hoc tests
+            const willValidate = modifiers.length > 0 || options.test || false
+            // default valid to false if there are modifiers or tests
+            formData[formID].push({name:el.name, value:el.value, valid:!willValidate})
+            // console.log("🚀 ~ file: index.js ~ line 135 ~ Plugin ~ formData", formData)
+        }
+
+        /* -------------------------------------------------------------------------- */
+        /*                 validation for checkboxes and radio buttons                */
+        /* -------------------------------------------------------------------------- */
         function validateChecked() {
-            if (!el.checked) {
-                setError('required')
-            } else {
+            if (el.checked) {
                 setValid()
+            } else if (!el.checked) {
+                setError('required')
             }
         }
 
-        // validation for input fields, textareas, and select fields
+        /* -------------------------------------------------------------------------- */
+        /*          validation for input fields, textareas, and select fields         */
+        /* -------------------------------------------------------------------------- */
         function validateInput() {
 
             const value = el.value
@@ -165,37 +230,54 @@ const Plugin = function (Alpine) {
             if (!error) setValid()
         }
 
-        // set message on parent element
+        /* -------------------------------------------------------------------------- */
+        /*                              Invalid Set Error                             */
+        /* -------------------------------------------------------------------------- */
         function setError(error) {
             // use option.error in place of default error message if available
             error = options.error || error
             // console.error(`'${el.name}' validation error:`, error)
-            // Add error messsage to parentNode
+            // Add error message to parentNode
             el.parentNode.setAttribute('data-error', error)
             // set form element data-valid to false
             el.setAttribute('data-valid', false)
-            // add 'input' event after validation on blur fails
+            // Refocus if modifier set
             if (hasModifier('refocus')) el.focus()
-            if (el.nodeName === 'INPUT' || el.nodeName === 'TEXTAREA') addEventListener('input', validateInput)
+            // add 'input' event after validation on blur fails for input and textarea
+            if (isTextField(el)) {
+                addEventListener('input', validateInput)
+            }
+            // update Alpine formData
+            replaceFieldData(el, false)
         }
 
+        /* -------------------------------------------------------------------------- */
+        /*                             Valid remove error                             */
+        /* -------------------------------------------------------------------------- */
         function setValid() {
             // remove error message
             el.parentNode.removeAttribute('data-error')
             // set data-valid on form element to true
             el.setAttribute('data-valid', true)
             // console.log(`'${el.name}' is valid`)
+            // update Alpine formData
+            replaceFieldData(el, true)
         }
 
-        // add event listeners depending on type of element
+        /* -------------------------------------------------------------------------- */
+        /*              add event listeners depending on type of element              */
+        /* -------------------------------------------------------------------------- */
         if (options.test === undefined && modifiers.length === 0) {
             // if no tests or modifiers do nothing.
-        } else if(el.nodeName === 'INPUT' && modifiers.includes('checked') && (el.type === 'checkbox' || el.type === 'radio')) {
+        } else if(modifiers.includes('checked') && isClickField(el)) {
+            // if checkbox or radio button
             el.setAttribute('data-valid', false)
             el.addEventListener('click', validateChecked)
-        } else if (el.nodeName === 'INPUT' || el.nodeName === 'TEXTAREA' || el.nodeName === 'SELECT') {
+        } else if (isTextField(el) || el.nodeName === 'SELECT') {
+            // text type input, text area, or select menu
             el.setAttribute('data-valid', false)
             el.addEventListener('blur', validateInput)
+            if (modifiers.includes('input')) el.addEventListener('input', validateInput)
         }
 
     });

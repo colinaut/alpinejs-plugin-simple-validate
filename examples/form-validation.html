@@ -15,27 +15,35 @@
 <body>
     <h1>Simple Form Validation Alpine Plugin</h1>
     <nav><a href="/index.html">More Complicated Example</a> <a href="/readme-example.html">README Simple
-            Example</a> <a href="/no-x-model.html" class="active">No x-model</a> <a href="/form-validation.html">Form Validation</a><a href="/multiform-validation.html">MultiForm Validation</a></nav>
-    <form x-data>
+            Example</a> <a href="/no-x-model.html">No x-model</a> <a href="/form-validation.html" class="active">Form Validation</a><a href="/multiform-validation.html">MultiForm Validation</a></nav>
+    <form id="form" x-data="{email: '' , phone: '', yolo: ''}" @submit="(e => {if (!$validate.isFormComplete('form')) e.preventDefault()})">
         <div>
             <label for="name">Your Name</label>
             <input type="text" id="name" name="name" x-validate.required />
         </div>
         <div>
             <label for="email">Your Email</label>
-            <input type="email" id="email" name="email" x-validate.required.email />
+            <input type="email" id="email" name="email" x-model="email" x-validate.required.email />
         </div>
         <div>
             <label for="phone">Your Phone</label>
-            <input type="phone" id="phone" name="phone" x-validate.required.phone />
+            <input type="phone" x-model="phone" id="phone" name="phone" x-validate.required.phone />
         </div>
         <div class="checkbox-wrapper">
-            <label><input type="checkbox" x-validate.checked name="yolo" id="yolo" /> Sell all my secret data!
+            <label><input type="checkbox" x-validate.checked name="yolo" id="yolo" x-model="yolo" value="Sell all my secret data!" /> Sell all my secret data!
                 YOLO!</label>
         </div>
         <!-- submit button is disabled until email and phone are added -->
         <div>
-            <button type="submit" :disabled="!$validate.isFormComplete('form')">Submit</button>
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </div>
+        <div class="form-validation-log">
+            <h3>Validations</h3>
+            <ul>
+                <template x-for="v in $validate.formData('form')">
+                    <li>field: <b x-text="v.name"></b> <span x-text="v.value"></span> <i x-text="v.valid"></i></li>
+                </template>
+            </ul>
         </div>
     </form>
 </body>

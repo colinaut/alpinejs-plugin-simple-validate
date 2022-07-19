@@ -5,16 +5,16 @@
 
 Very simple form validation plugin for [AlpineJS](https://alpinejs.dev). This plugin is designed, like AlpineJS itself, to be sprinkled in as needed. What this plugin does not do is impose an opinionated structure for your form data or functionality. It can be used with or without x-model.
 
-The x-validate directive allows for simple validation and error display on individual form elements. And the $validate() magic function grants easy access to the same validation functions for use as booleans in x-show and and x-bind.
+The x-validate directive allows for simple validation and error display on individual form elements. And the $validate() magic function grants easy access to the same validation functions for use as booleans in x-show and and x-bind. This plugin also saves all the field data for each form in a reactive object which can be used for form validation prior to submission (see 'Magic formData functions' below)
 
 ## Usage
 
 ### Directive x-validate
 
 1. Add x-validate along with modifiers on any form element `x-validate.required.email`
-   1. *x-model is not required as the x-validate checks the value directly*
+   1. *x-model is not required as the x-validate checks the value directly. But you do need a x-data somewhere to initiate Alpine.*
    2. validation is triggered initially only on blur; after failing once it then is triggered on 'input' to validate as the user types.
-   3. If validation fails, it adds `data-valid="false"` to the form element and adds `data-error` to the field's parent element with a simple error message matching the modifier. For instance: `data-error="email required"`
+   3. If validation fails, it adds `data-valid="false"` to the form element and adds `data-error` to the field's parent element with a simple error message matching the modifier. For instance `x-validate.required.email` displays as `data-error="email required"`
    4. If the validation passes, it adds `data-valid="true"` to the form element and removes `data-error` attribute from the parent element
 2. Add styles to make `data-error` error messages visible and/or validation visible
    1. Basic style: `[data-error]:after { content: attr(data-error); color: red;}`
@@ -25,14 +25,12 @@ The x-validate directive allows for simple validation and error display on indiv
    3. Or both `x-validate.required="{test: $el.value.includes('bunny'), error: 'must include bunny'}"`
    4. *Note:* ad hoc tests run after all validation modifiers which allows you to further limit a validation. For instance only allow twitter urls: `x-validate.required.url="{test: $el.value.startsWith('https://twitter.com/'), error: 'must be a twitter url'}"`
 
-
 #### Modifiers
 
-NOTE: x-validate without any modifiers or ad hoc tests does nothing
-
+* `x-validate` — if set without modifiers or ad hoc tests, field is automatically valid. You might want to do this if you want to save the data to formData (see FormData Functions below)
 * `x-validate.required` — valid if not empty
 * `x-validate.phone` — valid if empty or if phone number
-* `x-validate.required.phone` — valid if not empty and phone number
+* `x-validate.required.phone` — valid if not empty and phone number (modifiers can be used in any order)
 * `x-validate.email` — valid if email address
 * `x-validate.website` — valid if site domain, with or without http:// or https://
 * `x-validate.url` — valid if url, requires http:// or https://
@@ -47,20 +45,27 @@ NOTE: x-validate without any modifiers or ad hoc tests does nothing
   * *If you want more complicated validation I recommend [dayjs](https://github.com/iamkun/dayjs)*
 * `x-validate.checked` — only used for checkboxes or radio buttons; valid if checked
 * `x-validate.required.refocus` — 'refocus' forces focus on the field when validation fails
+* `x-validate.required.email.input` — 'input' sets it to always use both the 'input' and 'blur' events for validating. This is useful for the last input field, if you are disabling the submit button and want it to enable immediately rather than on blur.
 
 ### Magic function $validate
 
-$validate function returns true or false; Main difference is that it assumes required is true including for any specific validation options like *email* or *phone*
+The base `$validate()` function acts as `required`. You can add any specific validation like *email* or *phone*. Main difference between the magic function and the directive is that required is assumed.
 
-* $validate('hi') returns true
-* $validate('') returns false
-* $validate.email('') returns false
-* $validate.email('hi') returns false
-* $validate.email('hi@hello.com') returns true
+#### Example Validation Functions
 
-## Validation When Submitting
+* `$validate('hi')` returns true
+* `$validate('')` returns false
+* `$validate.email('')` returns false
+* `$validate.email('hi')` returns false
+* `$validate.email('hi@hello.com')` returns true
+* `val === '' || $validate.email(val)` returns true if val is empty string or is a valid email address
 
-This plugin does not automatically validate prior to submission. However, since `x-validate` automatically adds a `data-valid` attribute with `true` or `false` which can be checked prior to submitting the form. You can also use `$validate()` for any validation.
+#### Magic formData functions
+
+Every field marked with `x-validate` is added to a reactive formData[formId] array. You can use the following magic functions to disable the submit button or validate prior to submission. *Note: In order to use these functions the form element must have an id attribute.*
+
+* `$validate.isFormComplete('formId')` returns true or false depending on if every form field is validated or not
+* `$validate.formData('formId')` returns an array of form data {name,value,valid}
 
 *Note: I am currently working on implementing a more reactive whole form validation (see Roadmap).*
 
@@ -69,7 +74,7 @@ This plugin does not automatically validate prior to submission. However, since 
 More complicated examples in examples folder. run `npm run serve` to view.
 
 ```
-<form x-data="{email: '' , phone: '', yolo: ''}">
+<form id="form" x-data="{email: '' , phone: '', yolo: ''}">
     <div>
         <label for="name">Your Name</label>
         <input type="text" id="name" name="name" x-validate.required />

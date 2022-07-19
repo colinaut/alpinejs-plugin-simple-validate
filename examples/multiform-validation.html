@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Simple Form Validation Alpine Plugin</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="description" content="example page for simple form validation alpinejs plugin" />
+    <script defer src="/alpine.validate.min.js"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.10.2/dist/cdn.min.js"></script>
+    <link href="https://unpkg.com/@csstools/normalize.css" rel="stylesheet" />
+    <link href="/styles.css" rel="stylesheet" />
+</head>
+
+<body>
+    <h1>Simple Form Validation Alpine Plugin</h1>
+    <!-- TODO: why is Safari tabs not working when jumping to next input after the last input? -->
+    <nav><a href="/index.html">More Complicated Example</a> <a href="/readme-example.html">README Simple
+            Example</a> <a href="/no-x-model.html">No x-model</a> <a href="/form-validation.html">Form Validation</a><a href="/multiform-validation.html" class="active">MultiForm Validation</a></nav>
+    <form id="form" x-data="{validate: [], email: '' , phone: '', yolo: ''}">
+        <div>
+            <label for="name">Your Name</label>
+            <input type="text" id="name" name="name" x-validate.required />
+        </div>
+        <div> 
+            <label for="email">Your Email</label>
+            <input type="email" id="email" name="email" x-model="email" x-validate.required.email />
+        </div>
+        <div>
+            <label for="phone">Your Phone</label>
+            <input type="phone" x-model="phone" id="phone" name="phone" x-validate.required.phone />
+        </div>
+        <div class="checkbox-wrapper">
+            <label><input type="checkbox" x-validate.checked name="yolo" id="yolo" x-model="yolo" value="Sell all my secret data!" /> Sell all my secret data!
+                YOLO!</label>
+        </div>
+        <div>
+            <button type="submit" :disabled="!$validate.isFormComplete('form')">Submit</button>
+        </div>
+        <div class="form-validation-log">
+            <h3>Validations</h3>
+            <ul>
+                <template x-for="v in $validate.formData('form')">
+                    <li>field: <b x-text="v.name"></b> <span x-text="v.value"></span> <i x-text="v.valid"></i></li>
+                </template>
+            </ul>
+            <p>Form complete? <span x-text="$validate.isFormComplete('form')"></span></p>
+        </div>
+    </form>
+    <form id="dogform" x-data>
+        <div>
+            <label for="dogname">Your Dog's Name</label>
+            <input type="text" id="dogname" name="dogname" x-validate.required />
+        </div>
+        <div>
+            <label for="dogage">Your Dog's Age</label>
+            <input type="text" id="dogage" name="dogage" x-validate.required.wholenumber.input />
+        </div>
+        <div>
+            <label for="dognick">Your Dog's nickname (not required)</label>
+            <input type="text" id="dognick" name="dognick" x-validate />
+        </div>
+        <!-- submit button is disabled until email and phone are added -->
+        <div>
+            <button type="submit" :disabled="!$validate.isFormComplete('dogform')">Submit</button>
+        </div>
+        <div class="form-validation-log">
+            <h3>Validations</h3>
+            <ul>
+                <template x-for="v in $validate.formData('dogform')">
+                    <li>field: <b x-text="v.name"></b> <span x-text="v.value"></span> <i x-text="v.valid"></i></li>
+                </template>
+            </ul>
+            <p>Form complete? <span x-text="$validate.isFormComplete('dogform')"></span></p>
+        </div>
+    </form>
+</body>
+
+</html>

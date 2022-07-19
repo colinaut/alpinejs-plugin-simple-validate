@@ -1,4 +1,22 @@
 var __defProp = Object.defineProperty;
+var __defProps = Object.defineProperties;
+var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
+var __getOwnPropSymbols = Object.getOwnPropertySymbols;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __propIsEnum = Object.prototype.propertyIsEnumerable;
+var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+var __spreadValues = (a, b) => {
+  for (var prop in b || (b = {}))
+    if (__hasOwnProp.call(b, prop))
+      __defNormalProp(a, prop, b[prop]);
+  if (__getOwnPropSymbols)
+    for (var prop of __getOwnPropSymbols(b)) {
+      if (__propIsEnum.call(b, prop))
+        __defNormalProp(a, prop, b[prop]);
+    }
+  return a;
+};
+var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
 var __markAsModule = (target) => __defProp(target, "__esModule", { value: true });
 var __export = (target, all) => {
   __markAsModule(target);
@@ -14,6 +32,14 @@ __export(exports, {
 // src/index.js
 var Plugin = function(Alpine) {
   const pluginName = "validate";
+  function isTextField(el) {
+    allowedTypes = ["text", "password", "date", "datetime-local", "email", "tel", "url", "time", "week", "month", "number"];
+    return el.nodeName === "INPUT" && allowedTypes.includes(el.type) || el.nodeName === "TEXTAREA";
+  }
+  function isClickField(el) {
+    allowedTypes = ["checkbox", "radio"];
+    return el.nodeName === "INPUT" && allowedTypes.includes(el.type);
+  }
   function cleanText(str) {
     return String(str).trim();
   }
@@ -57,6 +83,19 @@ var Plugin = function(Alpine) {
     }
     return date.toISOString().startsWith(isoFormattedStr);
   }
+  const formData = Alpine.reactive({});
+  function replaceFieldData(el, valid) {
+    const formId = el.closest("form").getAttribute("id");
+    if (formId) {
+      formData[formId] = formData[formId].map((val) => {
+        if (val.name === el.name) {
+          return { name: el.name, value: el.value, valid };
+        } else
+          return val;
+      });
+    } else
+      return false;
+  }
   const validate = (str) => {
     return !isEmpty(str);
   };
@@ -71,6 +110,11 @@ var Plugin = function(Alpine) {
   validate["date-mm-dd-yyyy"] = (str) => isDate(str, "mm-dd-yyyy");
   validate["date-dd-mm-yyyy"] = (str) => isDate(str, "dd-mm-yyyy");
   validate["date-yyyy-mm-dd"] = (str) => isDate(str, "yyyy-mm-dd");
+  validate.formData = (formId) => formData[formId];
+  validate.isFormComplete = (formId) => {
+    let dataArray = formData[formId].map((val) => Object.getOwnPropertyNames(val).reduce((data, key) => __spreadProps(__spreadValues({}, data), { [key]: val[key] }), {}));
+    return dataArray.every((val) => val.valid === true);
+  };
   Alpine.magic(pluginName, () => validate);
   Alpine.directive(pluginName, (el, {
     modifiers,
@@ -82,11 +126,17 @@ var Plugin = function(Alpine) {
     function hasModifier(type) {
       return modifiers.includes(type);
     }
+    const formID = el.closest("form").getAttribute("id");
+    if (formID) {
+      formData[formID] = formData[formID] || [];
+      const willValidate = modifiers.length > 0 || options.test || false;
+      formData[formID].push({ name: el.name, value: el.value, valid: !willValidate });
+    }
     function validateChecked() {
-      if (!el.checked) {
-        setError("required");
-      } else {
+      if (el.checked) {
         setValid();
+      } else if (!el.checked) {
+        setError("required");
       }
     }
     function validateInput() {
@@ -130,20 +180,25 @@ var Plugin = function(Alpine) {
       el.setAttribute("data-valid", false);
       if (hasModifier("refocus"))
         el.focus();
-      if (el.nodeName === "INPUT" || el.nodeName === "TEXTAREA")
+      if (isTextField(el)) {
         addEventListener("input", validateInput);
+      }
+      replaceFieldData(el, false);
     }
     function setValid() {
       el.parentNode.removeAttribute("data-error");
       el.setAttribute("data-valid", true);
+      replaceFieldData(el, true);
     }
     if (options.test === void 0 && modifiers.length === 0) {
-    } else if (el.nodeName === "INPUT" && modifiers.includes("checked") && (el.type === "checkbox" || el.type === "radio")) {
+    } else if (modifiers.includes("checked") && isClickField(el)) {
       el.setAttribute("data-valid", false);
       el.addEventListener("click", validateChecked);
-    } else if (el.nodeName === "INPUT" || el.nodeName === "TEXTAREA" || el.nodeName === "SELECT") {
+    } else if (isTextField(el) || el.nodeName === "SELECT") {
       el.setAttribute("data-valid", false);
       el.addEventListener("blur", validateInput);
+      if (modifiers.includes("input"))
+        el.addEventListener("input", validateInput);
     }
   });
 };
