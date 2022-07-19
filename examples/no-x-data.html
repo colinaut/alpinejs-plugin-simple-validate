@@ -14,28 +14,28 @@
 
 <body>
     <h1>Simple Form Validation Alpine Plugin</h1>
-    <nav><a href="/index.html">More Complicated Example</a> <a href="/readme-example.html" class="active">README Simple
-            Example</a> <a href="/no-x-data.html">No x-data</a></nav>
-    <form x-data="{email: '' , phone: '', yolo: ''}">
+    <nav><a href="/index.html">More Complicated Example</a> <a href="/readme-example.html">README Simple
+            Example</a> <a href="/no-x-data.html" class="active">No x-data</a></nav>
+    <form>
         <div>
             <label for="name">Your Name</label>
-            <input type="text" id="name" name="name" x-validate />
+            <input type="text" id="name" name="name" x-validate.required />
         </div>
         <div>
             <label for="email">Your Email</label>
-            <input type="email" id="email" name="email" x-model="email" x-validate.required.email />
+            <input type="email" id="email" name="email" x-validate.required.email />
         </div>
         <div>
             <label for="phone">Your Phone</label>
-            <input type="phone" x-model="phone" id="phone" name="phone" x-validate.required.phone />
+            <input type="phone" id="phone" name="phone" x-validate.required.phone />
         </div>
         <div class="checkbox-wrapper">
-            <label><input type="checkbox" x-validate.checked name="yolo" id="yolo" x-model="yolo" /> Sell all my secret data!
+            <label><input type="checkbox" x-validate.checked name="yolo" id="yolo" /> Sell all my secret data!
                 YOLO!</label>
         </div>
         <!-- submit button is disabled until email and phone are added -->
         <div>
-            <button type="submit" :disabled="!$validate.email(email) || !$validate.phone(phone) || !yolo">Submit</button>
+            <button type="submit">Submit</button>
         </div>
     </form>
 </body>
