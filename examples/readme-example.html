@@ -15,11 +15,11 @@
 <body>
     <h1>Simple Form Validation Alpine Plugin</h1>
     <nav><a href="/index.html">More Complicated Example</a> <a href="/readme-example.html" class="active">README Simple
-            Example</a> <a href="/no-x-data.html">No x-data</a></nav>
+            Example</a> <a href="/no-x-model.html">No x-model</a></nav>
     <form x-data="{email: '' , phone: '', yolo: ''}">
         <div>
             <label for="name">Your Name</label>
-            <input type="text" id="name" name="name" x-validate />
+            <input type="text" id="name" name="name" x-validate.required />
         </div>
         <div>
             <label for="email">Your Email</label>
