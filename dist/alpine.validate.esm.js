@@ -81,8 +81,20 @@ var Plugin = function(Alpine) {
   validate["date-yyyy-mm-dd"] = (str) => isDate(str, "yyyy-mm-dd");
   validate.formData = (formId) => formData[formId];
   validate.isFormComplete = (formId) => {
-    let dataArray = formData[formId].map((val) => Object.getOwnPropertyNames(val).reduce((data, key) => ({ ...data, [key]: val[key] }), {}));
+    const dataArray = formData[formId].map((val) => Object.getOwnPropertyNames(val).reduce((data, key) => ({ ...data, [key]: val[key] }), {}));
     return dataArray.every((val) => val.valid === true);
+  };
+  validate.submit = (e) => {
+    const formId = e.target.getAttribute("id");
+    formData[formId].forEach((val) => {
+      if (val.valid === false) {
+        e.preventDefault();
+        console.log(`${formId}:${val.name} not valid`);
+        const field = document.querySelector(`#${formId} [name='${val.name}']`);
+        field.focus();
+        field.blur();
+      }
+    });
   };
   Alpine.magic(pluginName, () => validate);
   Alpine.directive(pluginName, (el, {
@@ -95,11 +107,11 @@ var Plugin = function(Alpine) {
     function hasModifier(type) {
       return modifiers.includes(type);
     }
-    const formID = el.closest("form").getAttribute("id");
-    if (formID) {
-      formData[formID] = formData[formID] || [];
+    const formId = el.closest("form").getAttribute("id");
+    if (formId) {
+      formData[formId] = formData[formId] || [];
       const willValidate = modifiers.length > 0 || options.test || false;
-      formData[formID].push({ name: el.name, value: el.value, valid: !willValidate });
+      formData[formId].push({ name: el.name, value: el.value, valid: !willValidate });
     }
     function validateChecked() {
       if (el.checked) {
@@ -162,6 +174,7 @@ var Plugin = function(Alpine) {
     if (options.test === void 0 && modifiers.length === 0) {
     } else if (modifiers.includes("checked") && isClickField(el)) {
       el.setAttribute("data-valid", false);
+      el.addEventListener("blur", validateChecked);
       el.addEventListener("click", validateChecked);
     } else if (isTextField(el) || el.nodeName === "SELECT") {
       el.setAttribute("data-valid", false);

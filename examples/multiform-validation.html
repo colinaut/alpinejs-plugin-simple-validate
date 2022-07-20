@@ -17,7 +17,7 @@
     <!-- TODO: why is Safari tabs not working when jumping to next input after the last input? -->
     <nav><a href="/index.html">More Complicated Example</a> <a href="/readme-example.html">README Simple
             Example</a> <a href="/no-x-model.html">No x-model</a> <a href="/form-validation.html">Form Validation</a><a href="/multiform-validation.html" class="active">MultiForm Validation</a></nav>
-    <form id="form" x-data="{validate: [], email: '' , phone: '', yolo: ''}">
+    <form id="form" x-data="{validate: [], email: '' , phone: '', yolo: ''}" @submit="$validate.submit">
         <div>
             <label for="name">Your Name</label>
             <input type="text" id="name" name="name" x-validate.required />
@@ -47,7 +47,7 @@
             <p>Form complete? <span x-text="$validate.isFormComplete('form')"></span></p>
         </div>
     </form>
-    <form id="dogform" x-data>
+    <form id="dogform" x-data @submit="$validate.submit">
         <div>
             <label for="dogname">Your Dog's Name</label>
             <input type="text" id="dogname" name="dogname" x-validate.required />

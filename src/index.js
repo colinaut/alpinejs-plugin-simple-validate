@@ -123,8 +123,20 @@ const Plugin = function (Alpine) {
     // Check if form is completed
     validate.isFormComplete = formId => {
         // Reactive proxies cause problems with validation, so we need to build our own array of objects
-        let dataArray = formData[formId].map(val => Object.getOwnPropertyNames(val).reduce((data, key) => ({ ...data, [key]: val[key] }), {}))
+        const dataArray = formData[formId].map(val => Object.getOwnPropertyNames(val).reduce((data, key) => ({ ...data, [key]: val[key] }), {}))
         return dataArray.every(val => val.valid === true)
+    }
+    validate.submit = e => {
+        const formId = e.target.getAttribute('id')
+        formData[formId].forEach(val => {
+            if (val.valid === false) {
+                e.preventDefault();
+                console.log(`${formId}:${val.name} not valid`)
+                const field = document.querySelector(`#${formId} [name='${val.name}']`)
+                field.focus();
+                field.blur();
+            }
+        })
     }
 
     /* -------------------------------------------------------------------------- */
@@ -155,13 +167,13 @@ const Plugin = function (Alpine) {
         /* -------------------------------------------------------------------------- */
         /*                       Add fields to formData[formId]                       */
         /* -------------------------------------------------------------------------- */
-        const formID = el.closest('form').getAttribute('id')
-        if (formID) {
-            formData[formID] = formData[formID] || []
+        const formId = el.closest('form').getAttribute('id')
+        if (formId) {
+            formData[formId] = formData[formId] || []
             // willValidate defaults to true if there are modifiers or ad hoc tests
             const willValidate = modifiers.length > 0 || options.test || false
             // default valid to false if there are modifiers or tests
-            formData[formID].push({name:el.name, value:el.value, valid:!willValidate})
+            formData[formId].push({name:el.name, value:el.value, valid:!willValidate})
             // console.log("🚀 ~ file: index.js ~ line 135 ~ Plugin ~ formData", formData)
         }
 
@@ -272,6 +284,7 @@ const Plugin = function (Alpine) {
         } else if(modifiers.includes('checked') && isClickField(el)) {
             // if checkbox or radio button
             el.setAttribute('data-valid', false)
+            el.addEventListener('blur', validateChecked)
             el.addEventListener('click', validateChecked)
         } else if (isTextField(el) || el.nodeName === 'SELECT') {
             // text type input, text area, or select menu

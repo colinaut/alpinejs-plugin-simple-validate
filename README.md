@@ -64,10 +64,9 @@ The base `$validate()` function acts as `required`. You can add any specific val
 
 Every field marked with `x-validate` is added to a reactive formData[formId] array. You can use the following magic functions to disable the submit button or validate prior to submission. *Note: In order to use these functions the form element must have an id attribute.*
 
+* `@submit="$validate.submit"` used on form element. Validates current form; if validation fails errors are shown and the submit event is prevented.
 * `$validate.isFormComplete('formId')` returns true or false depending on if every form field is validated or not
 * `$validate.formData('formId')` returns an array of form data {name,value,valid}
-
-*Note: I am currently working on implementing a more reactive whole form validation (see Roadmap).*
 
 ## Example
 
@@ -157,9 +156,6 @@ eleventyConfig.addPassthroughCopy({
 
 ## Roadmap
 
-* Form submit validation
-  * Reactive data containing name, value, and valid (true/false) for every field with `x-validate`.
-  * Submit button disabled state and action to check validation state for every field.
 * `x-validate.group.required` functionality for groups of checkboxes or radio buttons. Allowing for at least requiring one radio button or at least one checkbox to be checked.
 
 *If you have any other feature suggestions feel free to add a feature request*

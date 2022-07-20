@@ -92,6 +92,7 @@ input[type="checkbox"] {
     font-style: italic;
     font-size: .8rem;
     display: block;
+    line-height: 1.4;
 }
 
 [data-error]:after {
@@ -137,4 +138,12 @@ button:hover {
     padding: 1rem;
     margin: 1rem 0;
     background-color: lightyellow;
+}
+
+code {
+    background-color: rgb(255 255 255 / 0.3);
+    padding: .2rem .3rem;
+    font-family: monospace;
+    border-radius: .3rem;
+    font-style: normal;
 }
