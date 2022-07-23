@@ -11,6 +11,7 @@ build({
     sourcemap: false,
     platform: 'browser',
     define: { CDN: true },
+    target: "es2019",
 })
 //Example
 build({
@@ -21,6 +22,7 @@ build({
     sourcemap: false,
     platform: 'browser',
     define: { CDN: true },
+    target: "es2019",
 })
 //Module
 build({
@@ -30,6 +32,7 @@ build({
     bundle: true,
     platform: 'neutral',
     mainFields: ['main', 'module'],
+    target: "es2019",
 })
 build({
     entryPoints: [`builds/module.js`],
@@ -37,6 +40,7 @@ build({
     bundle: true,
     target: ['node10.4'],
     platform: 'node',
+    target: "es2019",
 })
 
 

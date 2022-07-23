@@ -14,69 +14,49 @@
 
 <body>
     <h1>Simple Form Validation Alpine Plugin</h1>
-    <nav><a href="/index.html" class="active">More Complicated Example</a> <a href="/readme-example.html">README Simple Example</a>
-        <a href="/no-x-model.html">No x-model</a> <a href="/form-validation.html">Form Validation</a><a href="/multiform-validation.html">MultiForm Validation</a></nav>
-    <form id="form" x-data="{name: '' , email: '' , phone: '', animal: '', wholenumber: '', number: '', moon: '', bunnysite: '', dob: '', requiredCheckbox: false}" @submit.prevent="console.log('submitted')">
-        <fieldset>
-            <legend>Part 1: Contact Info</legend>
-            <div>
-                <label for="name">Your Name</label>
-                <input id="name" name="name" type="text" x-model="name" x-validate.required.refocus />
-            </div>
-            <div>
-                <label for="email">Your Email</label>
-                <input id="email" name="email" type="email" x-model="email" x-validate.required.email.refocus />
-            </div>
-            <div>
-                <label for="phone">Your Phone</label>
-                <input id="phone" name="phone" type="text"phone" x-model="phone" x-validate.required.phone />
-            </div>
-        </fieldset>
-        <!-- only show fieldset if all above completed -->
-        <fieldset x-show="$validate(name) && $validate.email(email) && $validate.phone(phone)" x-transition>
-            <legend>Part 2: Random Stuff</legend>
-            <div>
-                <label for="animal">Favorite Animal</label>
-                <select id="animal" name="animal" x-model="animal" x-validate.required="{error: 'please select an animal'}">
-                    <option disabled selected value="">-- Select One --</option>
-                    <option>Cat</option>
-                    <option>Dog</option>
-                    <option>Bunny</option>
-                    <option>Ferret</option>
-                </select>
-            </div>
-            <div>
-                <label for="wholenumber">Whole Number</label>
-                <input id="wholenumber" type="text" x-model="wholenumber" x-validate.required.wholenumber />
-            </div>
-            <div>
-                <label for="number">Any Number <span class="description">negative or positive; integer or decimal</span></label>
-                <input id="number" name="number" type="text" x-model="number" x-validate.required.number />
-            </div>
-            <div>
-                <label for="moon">Four letters: Big Pizza Pie</label>
-                <input id="moon" name="moon" type="text" x-model="moon" x-validate="{test: $el.value === 'moon', error: 'the correct word is moon'}" />
-            </div>
-            <div>
-                <label for="bunnysite">Bunny Website</label>
-                <input id="bunnysite" name="bunnysite" type="text" x-model="bunnysite" x-validate.website.refocus="{test: $el.value.includes('bunny'), error: 'must be a website that has the word bunny in it'}" />
-            </div>
-        </fieldset>
-        <!-- only show fieldset if all above completed -->
-        <fieldset x-show="$validate.wholenumber(wholenumber) && $validate.number(number) && moon === 'moon' && $validate.website(bunnysite) && bunnysite.includes('bunny')" x-transition>
-            <legend>Finale</legend>
-            <div>
-                <label for="dob">Date of Birth</label>
-                <input id="dob" name="dob" type="text" x-model="dob" x-validate.required.date />
-            </div>
-            <div class="checkbox-wrapper">
-                <input id="requiredCheckbox" name="requiredCheckbox" type="checkbox" x-model="requiredCheckbox" x-validate.checked /> <label for="requiredCheckbox">Sell all my secrets! YOLO!</label>
-            </div>
-            <div>
-                <button type="submit" :disabled="requiredCheckbox === false">Submit</button>
-            </div>
-        </fieldset>
-
+    <nav x-data="{htmlPage: window.location.pathname.split('/').pop(), links: [{ name: 'README Example', page: 'index.html'},{name: 'Validation', page:'validation.html'},{name: 'Multiform', page: 'multiform.html'},{name: 'Complicated Form', page: 'complicated.html'}]}">
+        <template x-for="a in links">
+            <a :href="'/' + a.page" x-text="a.name" :class="a.page === htmlPage && 'active'"></a>
+        </template>
+    </nav>
+    <form id="form" x-data x-validate @submit="$validate.submit">
+        <p><em>* required</em></p>
+        <div>
+            <label for="name">Your Name *</label>
+            <input type="text" id="name" name="name" required />
+        </div>
+        <div>
+            <label for="email">Your Email *</label>
+            <input type="email" id="email" name="email" />
+        </div>
+        <div>
+            <label for="wholenumber">Whole Number</label>
+            <input type="wholenumber" id="wholenumber" name="wholenumber" x-validate.wholenumber data-error-msg="positive whole number required" />
+        </div>
+        <div id="animals" class="checkbox-wrapper" data-error-msg="you must pick at least one animal">
+            <h4>Favorite Animals *</h4>
+            <label><input type="checkbox" x-validate.group name="animal" id="cat" value="cat" /> 
+                Cat</label>
+            <label><input type="checkbox" x-validate.group name="animal" id="dog" value="dog" /> 
+                Dog</label>
+            <label><input type="checkbox" x-validate.group name="animal" id="bunny" value="bunny" /> 
+                Bunny</label>
+        </div>
+        <div id="transport" class="checkbox-wrapper" data-error-msg="you must pick at least one transport">
+            <h4>Favorite Transport *</h4>
+            <label><input type="radio" x-validate.group name="transport" id="transport-bus" value="bus" /> 
+                Bus</label>
+            <label><input type="radio" x-validate.group name="transport" id="transport-train" value="train" /> 
+                Train</label>
+        </div>
+        <div class="checkbox-wrapper">
+            <h4>You must click this! *</h4>
+            <label><input type="checkbox" required name="yolo" id="yolo" value="yolo" /> Sell all my secret data!
+                YOLO!</label>
+        </div>
+        <div>
+            <input type="submit"  value="submit">
+        </div>
     </form>
 </body>
 

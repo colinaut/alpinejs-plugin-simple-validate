@@ -14,24 +14,32 @@
 
 <body>
     <h1>Simple Form Validation Alpine Plugin</h1>
-    <nav><a href="/index.html">More Complicated Example</a> <a href="/readme-example.html">README Simple
-            Example</a> <a href="/no-x-model.html">No x-model</a> <a href="/form-validation.html" class="active">Form Validation</a><a href="/multiform-validation.html">MultiForm Validation</a></nav>
-    <form id="form" x-data="{email: '' , phone: '', yolo: ''}" @submit="$validate.submit">
+    <nav x-data="{htmlPage: window.location.pathname.split('/').pop(), links: [{ name: 'README Example', page: 'index.html'},{name: 'Validation', page:'validation.html'},{name: 'Multiform', page: 'multiform.html'},{name: 'Complicated Form', page: 'complicated.html'}]}">
+        <template x-for="a in links">
+            <a :href="'/' + a.page" x-text="a.name" :class="a.page === htmlPage && 'active'"></a>
+        </template>
+    </nav>
+    <form id="form" x-data x-validate @submit="$validate.submit">
         <p class="description">This form uses <code>@submit="$validate.submit"</code> to make sure the form is complete</p>
         <div>
-            <label for="name">Your Name</label>
-            <input type="text" id="name" name="name" x-validate.required />
+            <label for="name">Your Name *</label>
+            <input type="text" id="name" name="name" required />
         </div>
         <div>
-            <label for="email">Your Email</label>
-            <input type="email" id="email" name="email" x-model="email" x-validate.required.email />
+            <label for="email">Your Email *</label>
+            <input type="email" id="email" name="email" required/>
         </div>
         <div>
-            <label for="phone">Your Phone</label>
-            <input type="phone" x-model="phone" id="phone" name="phone" x-validate.required.phone />
+            <label for="phone">Your Phone *</label>
+            <input type="phone" id="phone" name="phone" required />
+        </div>
+        <div>
+            <label for="wholenumber">Whole Number</label>
+            <input type="wholenumber" id="wholenumber" name="wholenumber" x-validate.wholenumber />
         </div>
         <div class="checkbox-wrapper">
-            <label><input type="checkbox" x-validate.checked name="yolo" id="yolo" x-model="yolo" value="Sell all my secret data!" /> Sell all my secret data!
+            <h4>You must click this! *</h4>
+            <label><input type="checkbox" name="yolo" id="yolo" value="Sell all my secret data!" required /> Sell all my secret data!
                 YOLO!</label>
         </div>
         <!-- submit button is disabled until email and phone are added -->

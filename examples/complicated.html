@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Simple Form Validation Alpine Plugin</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="description" content="example page for simple form validation alpinejs plugin" />
+    <script defer src="/alpine.validate.min.js"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.10.2/dist/cdn.min.js"></script>
+    <link href="https://unpkg.com/@csstools/normalize.css" rel="stylesheet" />
+    <link href="/styles.css" rel="stylesheet" />
+</head>
+
+<body>
+    <h1>Simple Form Validation Alpine Plugin</h1>
+    <nav x-data="{htmlPage: window.location.pathname.split('/').pop(), links: [{ name: 'README Example', page: 'index.html'},{name: 'Validation', page:'validation.html'},{name: 'Multiform', page: 'multiform.html'},{name: 'Complicated Form', page: 'complicated.html'}]}">
+        <template x-for="a in links">
+            <a :href="'/' + a.page" x-text="a.name" :class="a.page === htmlPage && 'active'"></a>
+        </template>
+    </nav>
+    <form id="form" x-validate x-data @submit="$validate.submit">
+        <p><em>* required</em></p>
+        <fieldset>
+            <legend>Part 1: Contact Info</legend>
+            <div>
+                <label for="name">Your Name *</label>
+                <input id="name" name="name" type="text" required />
+            </div>
+            <div>
+                <label for="email">Your Email *</label>
+                <input id="email" name="email" type="email" required />
+            </div>
+            <div>
+                <label for="phone">Your Phone</label>
+                <input id="phone" name="phone" type="tel" />
+            </div>
+        </fieldset>
+        <!-- only show fieldset if all above completed -->
+        <!-- NOTE: slice only works for the above fields since they are in order in the array -->
+        <!-- Below this the fields use x-validate which messes with the order of the fields in formData -->
+        <fieldset x-show="$validate.formData('form').filter(val => val.name === 'email' || val.name === 'name').every(val => val.valid)" x-transition>
+            <legend>Part 2: Random Stuff</legend>
+            <div>
+                <label for="animal">Favorite Animal *</label>
+                <select id="animal" name="animal" required data-error-msg="please select an animal">
+                    <option disabled selected value="">-- Select One --</option>
+                    <option>Cat</option>
+                    <option>Dog</option>
+                    <option>Bunny</option>
+                    <option>Ferret</option>
+                </select>
+            </div>
+            <div>
+                <label for="wholenumber">Whole Number</label>
+                <input id="wholenumber" type="text" x-validate.wholenumber />
+            </div>
+            <div>
+                <label for="number">Any Number <span class="description">negative or positive; integer or decimal</span></label>
+                <input id="number" name="number" type="text" x-validate.number />
+            </div>
+            <div>
+                <label for="moon">Four letters: Big Pizza Pie *</label>
+                <input id="moon" name="moon" type="text" required x-validate="$el.value === 'moon'" data-error-msg="the correct word is moon" />
+            </div>
+            <div>
+                <label for="bunnysite">Bunny Website *</label>
+                <input id="bunnysite" name="bunnysite" type="text" required x-validate.website.refocus="$el.value.includes('bunny')" data-error-msg="must be a website name with the word bunny in it"/>
+            </div>
+        </fieldset>
+        <!-- only show fieldset if all above completed -->
+        <fieldset x-show="$validate.formData('form').filter(val => val.name !== 'dob').filter(val => val.name !== 'yolo').every(val => val.valid)" x-transition>
+            <legend>Finale</legend>
+            <div>
+                <label for="dob">Date of Birth *</label>
+                <input id="dob" name="dob" type="text" required x-validate.date data-error-msg="DOB in mm-dd-yyyy formate required"/>
+            </div>
+            <div class="checkbox-wrapper">
+                <label><input id="yolo" name="yolo" type="checkbox" value="yolo" required /> Sell all my secrets! YOLO! *</label>
+            </div>
+            <div>
+                <button type="submit">Submit</button>
+            </div>
+        </fieldset>
+        <div class="form-validation-log">
+            <h3>Validations</h3>
+            <ul>
+                <template x-for="v in $validate.formData('form').filter(val => val.name !== 'dob').filter(val => val.name !== 'yolo')">
+                    <li>field: <b x-text="v.name"></b> <span x-text="v.value"></span> <i x-text="v.valid"></i></li>
+                </template>
+            </ul>
+        </div>
+
+    </form>
+</body>
+
+</html>

@@ -14,7 +14,9 @@ h1 {
 h2,h3,ul,p {
     margin: 0 0 1rem;
 }
-
+h4 {
+    margin: 0 0 0.2rem;
+}
 nav {
     width: 30rem;
     margin: 2rem auto;
@@ -53,6 +55,10 @@ fieldset {
     gap: 1rem;
 }
 
+label {
+    font-weight: 700;
+}
+
 legend {
     font-size: 1.2rem;
     font-weight: 700;
@@ -75,15 +81,18 @@ select {
     border: 1px solid gray;
 }
 
-form div.checkbox-wrapper {
-    flex-direction: row;
-    justify-content: start;
-    align-items: center;
+.checkbox-wrapper {
     gap: .6rem;
+}
+.checkbox-wrapper label {
+    display: flex;
     flex-wrap: wrap;
+    align-items: center;
+    gap: 0.3rem;
+    font-weight: 400;
 }
 
-input[type="checkbox"] {
+input[type="checkbox"], input[type="radio"] {
     width: 1rem;
     height: 1rem;
 }
@@ -109,7 +118,7 @@ input[type="checkbox"] {
     background-color: lightyellow;
 }
 
-button {
+button, input[type="button"], input[type="submit"]{
     background-color: steelblue;
     color: white;
     padding: .6rem;
@@ -123,7 +132,7 @@ button {
     transition: all;
 }
 
-button:disabled {
+button:disabled, input[type="submit"]:disabled {
     background-color: gray !important;
     cursor: default;
 }

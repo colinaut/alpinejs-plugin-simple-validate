@@ -14,24 +14,26 @@
 
 <body>
     <h1>Simple Form Validation Alpine Plugin</h1>
-    <!-- TODO: why is Safari tabs not working when jumping to next input after the last input? -->
-    <nav><a href="/index.html">More Complicated Example</a> <a href="/readme-example.html">README Simple
-            Example</a> <a href="/no-x-model.html">No x-model</a> <a href="/form-validation.html">Form Validation</a><a href="/multiform-validation.html" class="active">MultiForm Validation</a></nav>
-    <form id="form" x-data="{validate: [], email: '' , phone: '', yolo: ''}" @submit="$validate.submit">
+    <nav x-data="{htmlPage: window.location.pathname.split('/').pop(), links: [{ name: 'README Example', page: 'index.html'},{name: 'Validation', page:'validation.html'},{name: 'Multiform', page: 'multiform.html'},{name: 'Complicated Form', page: 'complicated.html'}]}">
+        <template x-for="a in links">
+            <a :href="'/' + a.page" x-text="a.name" :class="a.page === htmlPage && 'active'"></a>
+        </template>
+    </nav>
+    <form id="form" x-data x-validate @submit="$validate.submit">
         <div>
-            <label for="name">Your Name</label>
-            <input type="text" id="name" name="name" x-validate.required />
+            <label for="name">Your Name *</label>
+            <input type="text" id="name" name="name" required />
         </div>
         <div> 
-            <label for="email">Your Email</label>
-            <input type="email" id="email" name="email" x-model="email" x-validate.required.email />
+            <label for="email">Your Email *</label>
+            <input type="email" id="email" name="email" required />
         </div>
         <div>
             <label for="phone">Your Phone</label>
-            <input type="phone" x-model="phone" id="phone" name="phone" x-validate.required.phone />
+            <input type="phone" id="phone" name="phone" />
         </div>
         <div class="checkbox-wrapper">
-            <label><input type="checkbox" x-validate.checked name="yolo" id="yolo" x-model="yolo" value="Sell all my secret data!" /> Sell all my secret data!
+            <label><input type="checkbox" required name="yolo" id="yolo" value="Sell all my secret data!" /> Sell all my secret data!
                 YOLO!</label>
         </div>
         <div>
@@ -47,18 +49,18 @@
             <p>Form complete? <span x-text="$validate.isFormComplete('form')"></span></p>
         </div>
     </form>
-    <form id="dogform" x-data @submit="$validate.submit">
+    <form id="dogform" x-data x-validate @submit="$validate.submit">
         <div>
-            <label for="dogname">Your Dog's Name</label>
-            <input type="text" id="dogname" name="dogname" x-validate.required />
+            <label for="dogname">Your Dog's Name *</label>
+            <input type="text" id="dogname" name="dogname" required />
         </div>
         <div>
-            <label for="dogage">Your Dog's Age</label>
-            <input type="text" id="dogage" name="dogage" x-validate.required.wholenumber.input />
+            <label for="dogage">Your Dog's Age *</label>
+            <input type="text" id="dogage" name="dogage" required x-validate.wholenumber/>
         </div>
         <div>
-            <label for="dognick">Your Dog's nickname (not required)</label>
-            <input type="text" id="dognick" name="dognick" x-validate />
+            <label for="dognick">Your Dog's nickname</label>
+            <input type="text" id="dognick" name="dognick" />
         </div>
         <!-- submit button is disabled until email and phone are added -->
         <div>
