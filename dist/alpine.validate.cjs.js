@@ -1,22 +1,4 @@
 var __defProp = Object.defineProperty;
-var __defProps = Object.defineProperties;
-var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
-var __getOwnPropSymbols = Object.getOwnPropertySymbols;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __propIsEnum = Object.prototype.propertyIsEnumerable;
-var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-var __spreadValues = (a, b) => {
-  for (var prop in b || (b = {}))
-    if (__hasOwnProp.call(b, prop))
-      __defNormalProp(a, prop, b[prop]);
-  if (__getOwnPropSymbols)
-    for (var prop of __getOwnPropSymbols(b)) {
-      if (__propIsEnum.call(b, prop))
-        __defNormalProp(a, prop, b[prop]);
-    }
-  return a;
-};
-var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
 var __markAsModule = (target) => __defProp(target, "__esModule", { value: true });
 var __export = (target, all) => {
   __markAsModule(target);
@@ -41,7 +23,6 @@ var Plugin = function(Alpine) {
   const getAttr = (el, attr) => el.getAttribute(attr);
   const getFormId = (el) => el.matches("form") ? getAttr(el, "id") : getAttr(el.closest("form"), "id");
   const setAttr = (el, attr, value = "") => el.setAttribute(attr, value);
-  const removeAttr = (el, attr) => el.removeAttribute(attr);
   function getAdjacentSibling(elem, selector) {
     var sibling = elem.nextElementSibling;
     if (!selector)
@@ -86,9 +67,9 @@ var Plugin = function(Alpine) {
           if (data.value !== "") {
             tempArray = tempArray.some((val) => val === data.value) ? tempArray.filter((val) => val !== data.value) : [...tempArray, data.value];
           }
-          data = __spreadProps(__spreadValues(__spreadValues({}, fieldData), data), { array: tempArray, value: tempArray.toString() });
+          data = { ...fieldData, ...data, array: tempArray, value: tempArray.toString() };
         } else {
-          data = __spreadValues(__spreadValues({}, fieldData), data);
+          data = { ...fieldData, ...data };
         }
       }
       tempFormData.push(data);
@@ -109,12 +90,12 @@ var Plugin = function(Alpine) {
   validate.date[dateFormats[2]] = (str) => isDate(str, dateFormats[2]);
   let validateMagic = {};
   validateMagic.formData = (formId) => {
-    return formData[formId].map((val) => Object.getOwnPropertyNames(val).reduce((data, key) => __spreadProps(__spreadValues({}, data), { [key]: val[key] }), {}));
+    return formData[formId].map((val) => Object.getOwnPropertyNames(val).reduce((data, key) => ({ ...data, [key]: val[key] }), {}));
   };
   validateMagic.updateFormData = (formId, data) => updateFormData(formId, data);
   validateMagic.toggleErrorMessage = (field, valid, options) => toggleErrorMessage(field, valid, options);
   validateMagic.isFormComplete = (formId) => {
-    const dataArray = formData[formId].map((val) => Object.getOwnPropertyNames(val).reduce((data, key) => __spreadProps(__spreadValues({}, data), { [key]: val[key] }), {}));
+    const dataArray = formData[formId].map((val) => Object.getOwnPropertyNames(val).reduce((data, key) => ({ ...data, [key]: val[key] }), {}));
     return dataArray.every((val) => val.valid === true);
   };
   validateMagic.submit = (e) => {
@@ -131,7 +112,7 @@ var Plugin = function(Alpine) {
     });
   };
   Object.keys(validate).forEach((key) => {
-    validateMagic = __spreadProps(__spreadValues({}, validateMagic), { [key]: validate[key] });
+    validateMagic = { ...validateMagic, [key]: validate[key] };
   });
   Alpine.magic(pluginName, () => validateMagic);
   Alpine.directive(pluginName, (el, {
@@ -148,9 +129,9 @@ var Plugin = function(Alpine) {
     function defaultData(field) {
       let data = { name: getName(field), type: field.type, value: field.value, valid: !isRequired(field) };
       if (field.type === "checkbox")
-        data = __spreadProps(__spreadValues({}, data), { value: "", array: [] });
+        data = { ...data, value: "", array: [] };
       if (field.type === "radio")
-        data = __spreadProps(__spreadValues({}, data), { value: "" });
+        data = { ...data, value: "" };
       return data;
     }
     if (el.matches("form")) {
@@ -171,27 +152,29 @@ var Plugin = function(Alpine) {
       });
     }
     if (isField(el) && !isButton(el)) {
-      const field = el;
-      let data = defaultData(field);
-      if (isCheckRadio(field) && hasModifier("group")) {
+      const formId2 = getFormId(el);
+      let data = defaultData(el);
+      if (el.type === "checkbox" && hasModifier("group")) {
         let checkGroupValid = function() {
-          let fieldDataArrayLength = formData[formId].filter((val) => val.name === field.name)[0].array.length;
-          fieldDataArrayLength = field.checked ? fieldDataArrayLength + 1 : fieldDataArrayLength - 1;
+          let fieldDataArrayLength = formData[formId2].filter((val) => val.name === el.name)[0].array.length;
+          fieldDataArrayLength = el.checked ? fieldDataArrayLength + 1 : fieldDataArrayLength - 1;
           const num = parseInt(expression && evaluate(expression)) || 1;
           let valid = fieldDataArrayLength >= num;
-          toggleErrorMessage(field, valid, { errorNode: field.parentNode.parentNode });
-          updateFormData(formId, { name: getName(field), value: field.value, valid });
+          toggleErrorMessage(el, valid, { errorNode: el.parentNode.parentNode });
+          updateFormData(formId2, { name: getName(el), value: el.value, valid });
         };
-        data = __spreadProps(__spreadValues({}, data), { valid: false, group: true });
-        addEvent(field, "click", checkGroupValid);
-      } else if (isClickField(field)) {
-        addEvent(field, "click", checkIfValid);
+        data = { ...data, valid: false, group: true };
+        addEvent(el, "click", checkGroupValid);
+      } else if (isClickField(el)) {
+        addEvent(el, "click", checkIfValid);
+        if (el.type === "radio" && hasModifier("group"))
+          data = { ...data, value: "", valid: false };
       } else {
-        addEvent(field, "blur", checkIfValid);
+        addEvent(el, "blur", checkIfValid);
         if (hasModifier("input"))
-          addEvent(field, "input", checkIfValid);
+          addEvent(el, "input", checkIfValid);
       }
-      updateFormData(getFormId(field), data);
+      updateFormData(getFormId(el), data);
     }
     function checkIfValid() {
       const field = this;
@@ -237,14 +220,14 @@ var Plugin = function(Alpine) {
   function toggleErrorMessage(field, valid, options = {}) {
     let { errorNode, errorMsg } = options;
     const name = getName(field) || "";
-    errorNode = errorNode || getAdjacentSibling(errorNode, ".error-msg") || errorNode.parentNode;
+    errorNode = errorNode || getAdjacentSibling(field, ".error-msg") || field.parentNode;
     errorMsg = errorMsg || getAttr(field, "data-error-msg") || `${name} required`;
     if (!valid) {
       setAttr(errorNode, "data-error", errorMsg);
-      setAttr(field, "invalid");
+      setAttr(field, "invalid", "");
     } else {
-      removeAttr(errorNode, "data-error");
-      removeAttr(field, "invalid");
+      errorNode.removeAttribute("data-error");
+      field.removeAttribute("invalid");
     }
   }
 };

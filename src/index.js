@@ -27,8 +27,6 @@ const Plugin = function (Alpine) {
 
     const setAttr = (el,attr,value = '') => el.setAttribute(attr,value)
 
-    const removeAttr = (el,attr) => el.removeAttribute(attr)
-
     function getAdjacentSibling (elem, selector) {
         // Get the next sibling element
         var sibling = elem.nextElementSibling;
@@ -80,7 +78,7 @@ const Plugin = function (Alpine) {
 
     const formData = Alpine.reactive({});
 
-    //  Non-reactive store for modifiers for each <form>
+    // non-reactive variable for modifiers on a per form basis
     const formModifiers = {}
 
     /* -------------------------------------------------------------------------- */
@@ -254,38 +252,39 @@ const Plugin = function (Alpine) {
 
         if (isField(el) && !isButton(el)) {
             // el is field element
-            const field = el
+            const formId = getFormId(el)
 
-            let data = defaultData(field)
+            let data = defaultData(el)
 
-            if (isCheckRadio(field) && hasModifier('group')) {
+            if (el.type === 'checkbox' && hasModifier('group')) {
                 data = {...data, valid: false, group:true}
 
                 function checkGroupValid () {
-                    // groupArray = (!field.checked) ? groupArray.filter(item => item !== field.value) : [...groupArray, field.value]
-                    let fieldDataArrayLength = formData[formId].filter(val => val.name === field.name)[0].array.length
+                    // groupArray = (!el.checked) ? groupArray.filter(item => item !== el.value) : [...groupArray, el.value]
+                    let fieldDataArrayLength = formData[formId].filter(val => val.name === el.name)[0].array.length
                     // if checked than it is adding 1, otherwise subtracting 1
-                    fieldDataArrayLength = (field.checked) ? fieldDataArrayLength + 1 : fieldDataArrayLength - 1
+                    fieldDataArrayLength = (el.checked) ? fieldDataArrayLength + 1 : fieldDataArrayLength - 1
                     
                     // get min number from expression
                     const num = parseInt(expression && evaluate(expression)) || 1
                     let valid = (fieldDataArrayLength >= num)
 
                     // click groups should set their error two parents up
-                    toggleErrorMessage(field, valid, {errorNode: field.parentNode.parentNode})
+                    toggleErrorMessage(el, valid, {errorNode: el.parentNode.parentNode})
 
-                    updateFormData(formId, {name:getName(field), value:field.value, valid:valid})
+                    updateFormData(formId, {name:getName(el), value:el.value, valid:valid})
                 }
-                addEvent(field,'click', checkGroupValid)
-                
-            } else if (isClickField(field)) {
-                addEvent(field,'click', checkIfValid)
-            } else {
-                addEvent(field,'blur',checkIfValid)
-                if (hasModifier('input')) addEvent(field,'input', checkIfValid)
-            }
 
-            updateFormData(getFormId(field), data)
+                addEvent(el,'click', checkGroupValid)
+                
+            } else if (isClickField(el)) {
+                addEvent(el,'click', checkIfValid)
+                if (el.type === 'radio' && hasModifier('group')) data = {...data, value: '', valid: false}
+            } else {
+                addEvent(el,'blur',checkIfValid)
+                if (hasModifier('input')) addEvent(el,'input', checkIfValid)
+            }
+            updateFormData(getFormId(el), data)
         }
 
         /* -------------------------------------------------------------------------- */
@@ -360,18 +359,19 @@ const Plugin = function (Alpine) {
         const name = getName(field) || '';
         /* ---------------------------- Add Error Message --------------------------- */
 
-        // If errorNode set use that, then check for adjacent .error-msg element; otherwise use parentNode.
-        errorNode = errorNode || getAdjacentSibling(errorNode,'.error-msg') || errorNode.parentNode;
+        // If adjacent element with .error-msg class use that. Otherwise use parent.
+        errorNode = errorNode || getAdjacentSibling(field,'.error-msg') || field.parentNode;
         errorMsg = errorMsg || getAttr(field,'data-error-msg') || `${name} required`;
+        // console.log("🚀 ~ file: index.js ~ line 312 ~ checkIfValid ~ errorNode", errorNode)
 
         if (!valid) {
             // console.log(`${name} not valid`);
             setAttr(errorNode,'data-error',errorMsg)
-            setAttr(field,'invalid')
+            setAttr(field,'invalid','')
         } else {
             // console.log(`${name} valid`);
-            removeAttr(errorNode,'data-error')
-            removeAttr(field,'invalid')
+            errorNode.removeAttribute('data-error')
+            field.removeAttribute('invalid')
         }
     }
 
