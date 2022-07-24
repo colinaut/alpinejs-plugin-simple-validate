@@ -27,6 +27,7 @@ It's still generally backwards compatible with a handful of small breaking chang
 * Form id no longer required since formData references the form node itself. Magic formData functions still work with id but $refs is now recommended
 * Fieldsets are detected when you use x-validate on form `<form>`
 * `$validate.isComplete()` can be used on either the form or individual fieldsets.
+* Improved number validation to avoid true/false from being shown as valid
 
 ## Simple Usage
 

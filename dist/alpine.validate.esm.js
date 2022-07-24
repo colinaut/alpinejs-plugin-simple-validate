@@ -39,9 +39,8 @@ var Plugin = function(Alpine) {
       return false;
     const date = new Date(isoFormattedStr);
     const timestamp = date.getTime();
-    if (typeof timestamp !== "number" || Number.isNaN(timestamp)) {
+    if (typeof timestamp !== "number" || Number.isNaN(timestamp))
       return false;
-    }
     return date.toISOString().startsWith(isoFormattedStr);
   }
   const formData = Alpine.reactive({});
@@ -74,8 +73,8 @@ var Plugin = function(Alpine) {
   validate.tel = (str) => /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/.test(cleanText(str));
   validate.website = (str) => /^(https?:\/\/)?(www\.)?([a-zA-Z0-9]+(-?[a-zA-Z0-9])*\.)+[\w]{2,}(\/\S*)?$/.test(cleanText(str));
   validate.url = (str) => /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()!@:%_\+.~#?&\/\/=]*)/.test(cleanText(str));
-  validate.number = (str) => parseFloat(str) == str;
-  validate.integer = (str) => Number.isInteger(Number(str));
+  validate.number = (str) => !isNaN(parseFloat(str)) && isFinite(str);
+  validate.integer = (str) => validate.number(str) && Number.isInteger(Number(str));
   validate.wholenumber = (str) => validate.integer(str) && Number(str) > 0;
   validate.date = (str) => isDate(str, dateFormats[0]);
   validate.date[dateFormats[0]] = (str) => isDate(str, dateFormats[0]);
