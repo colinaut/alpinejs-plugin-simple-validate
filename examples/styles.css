@@ -27,13 +27,22 @@ nav {
 }
 
 nav a {
-    color: blue;
+    color: white;
+    background-color: saddlebrown;
+    text-decoration: none;
+    display: block;
+    padding: 0.3rem 0.6rem;
+    border-radius: 0.5rem;
+}
+
+nav a:hover {
+    background-color: darkorange;
 }
 
 .active {
     text-decoration: none;
-    font-weight: 700;
-    color: darkslateblue;
+    color: white;
+    background-color: darkorange;
 }
 
 form {
@@ -121,12 +130,11 @@ input[type="checkbox"], input[type="radio"] {
 button, input[type="button"], input[type="submit"]{
     background-color: steelblue;
     color: white;
-    padding: .6rem;
+    padding: .6rem 2rem;
     border-radius: .4rem;
     border: 1px solid white;
     font-size: 1.2rem;
     text-transform: uppercase;
-    width: 12rem;
     margin: 0 auto;
     cursor: pointer;
     transition: all;
@@ -139,6 +147,9 @@ button:disabled, input[type="submit"]:disabled {
 
 button:hover {
     background-color: purple;
+}
+.button-group {
+    flex-direction: row;
 }
 
 .form-validation-log {
