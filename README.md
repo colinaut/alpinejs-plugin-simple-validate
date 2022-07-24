@@ -30,7 +30,7 @@ It's still generally backwards compatible with a handful of small breaking chang
 
 ## Simple Usage
 
-Add an id attribute, `x-data`, and `x-validate` to your `<form>` element (you don't need any variables on x-data ; it just needs to be initiated as an Alpine component). This automatically:
+Add an `x-data`, and `x-validate` to your `<form>` element (you don't need any variables on x-data ; it just needs to be initiated as an Alpine component). This automatically:
 
 * Captures all data to a reactive formData[form] array which updates on blur or click (depending on field type).
 * Validates onblur using basic browser checkValidity() checking `required` attribute and input types. 
