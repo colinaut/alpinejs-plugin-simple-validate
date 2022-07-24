@@ -14,21 +14,23 @@ __export(exports, {
 // src/index.js
 var Plugin = function(Alpine) {
   const pluginName = "validate";
+  const isHtmlElement = (el, type) => type ? el instanceof HTMLElement && el.matches(type) : el instanceof HTMLElement;
   const fieldSelector = `input:not([type="button"]):not([type="search"]):not([type="reset"]),select,textarea`;
-  const isField = (el) => el.matches(fieldSelector);
+  const isField = (el) => isHtmlElement(el, fieldSelector);
+  const isVarType = (x, type) => typeof x === type;
   const findFields = (el) => el.querySelectorAll(fieldSelector);
   const isClickField = (el) => ["checkbox", "radio", "range"].includes(el.type);
   const isCheckRadio = (el) => ["checkbox", "radio"].includes(el.type);
   const addEvent = (el, event, callback) => el.addEventListener(event, callback);
   const getAttr = (el, attr) => el.getAttribute(attr);
-  const getForm = (el) => typeof el === "string" ? document.querySelector(`form#${el}`) : el.matches("form") ? el : el.closest("form");
-  const getEl = (el) => typeof el === "string" ? document.querySelector(`#${el}`) : el instanceof HTMLElement ? el : false;
+  const getEl = (el) => isVarType(el, "string") ? document.querySelector(`#${el}`) : isHtmlElement(el) ? el : false;
+  const getForm = (el) => isHtmlElement(getEl(el), "form") ? el : isHtmlElement(getEl(el)) ? el.closest("form") : false;
   const setAttr = (el, attr, value = "") => el.setAttribute(attr, value);
   function getAdjacentSibling(elem, selector) {
     var sibling = elem.nextElementSibling;
     if (!selector)
       return sibling;
-    if (sibling == null ? void 0 : sibling.matches(selector))
+    if (isHtmlElement(sibling, selector))
       return sibling;
     return false;
   }
@@ -61,7 +63,7 @@ var Plugin = function(Alpine) {
     const form = getForm(field);
     const name = getName(field);
     data = { name, node: field, value: field.value, ...data };
-    if (form && form.nodeName === "FORM" && name) {
+    if (isHtmlElement(form, "form") && name) {
       let tempFormData = formData[form] || [];
       if (tempFormData.some((val) => val.name === name)) {
         let fieldData = tempFormData.filter((val) => val.name === name)[0];
@@ -126,7 +128,7 @@ var Plugin = function(Alpine) {
     const isRequired = (field) => hasModifier("required") || field.hasAttribute("required") || false;
     function defaultData(field, set) {
       let data = { value: field.value, valid: !isRequired(field) };
-      if (set instanceof HTMLElement)
+      if (isHtmlElement(set))
         data = { ...data, set };
       if (isCheckRadio(field))
         data = { ...data, value: "" };
@@ -134,7 +136,20 @@ var Plugin = function(Alpine) {
         data = { ...data, valid: false, group: true };
       return data;
     }
-    if (el.matches("form")) {
+    function addEvents(field) {
+      if (field.type === "checkbox" && hasModifier("group")) {
+        addEvent(field, "click", checkGroupValid);
+      } else if (isClickField(field)) {
+        addEvent(field, "click", checkIfValid);
+      } else if (isHtmlElement(field, "select")) {
+        addEvent(field, "change", checkIfValid);
+      } else {
+        addEvent(field, "blur", checkIfValid);
+        if (hasModifier("input"))
+          addEvent(field, "input", checkIfValid);
+      }
+    }
+    if (isHtmlElement(el, "form")) {
       formModifiers[form] = modifiers;
       const fieldsets = el.querySelectorAll("fieldset");
       const sets = fieldsets.length > 0 ? fieldsets : [el];
@@ -142,29 +157,14 @@ var Plugin = function(Alpine) {
         const fields = findFields(set);
         fields.forEach((field) => {
           updateFormData(field, defaultData(field, set));
-          if (!field.getAttributeNames().some((attr) => attr.includes("x-validate"))) {
-            if (isClickField(field)) {
-              addEvent(field, "click", checkIfValid);
-            } else {
-              addEvent(field, "blur", checkIfValid);
-              if (hasModifier("input"))
-                addEvent(field, "input", checkIfValid);
-            }
-          }
+          if (!field.getAttributeNames().some((attr) => attr.includes("x-validate")))
+            addEvents(field);
         });
       });
     }
     if (isField(el)) {
       updateFormData(el, defaultData(el));
-      if (el.type === "checkbox" && hasModifier("group")) {
-        addEvent(el, "click", checkGroupValid);
-      } else if (isClickField(el)) {
-        addEvent(el, "click", checkIfValid);
-      } else {
-        addEvent(el, "blur", checkIfValid);
-        if (hasModifier("input"))
-          addEvent(el, "input", checkIfValid);
-      }
+      addEvents(el);
     }
     function checkIfValid() {
       const field = this;
@@ -199,7 +199,7 @@ var Plugin = function(Alpine) {
       }
       toggleErrorMessage(field, valid);
       updateFormData(field, { value: field.value, valid });
-      if (!valid && field.matches("input, textarea") && !isClickField(field) && !hasModifier("bluronly"))
+      if (!valid && isHtmlElement(field, "input, textarea") && !isClickField(field) && !hasModifier("bluronly"))
         addEvent(field, "input", checkIfValid);
       if (!valid && hasModifier("refocus"))
         field.focus();

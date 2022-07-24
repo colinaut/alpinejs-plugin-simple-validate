@@ -1,7 +1,4 @@
 const Plugin = function (Alpine) {
-    // TODO: add support for groups of checkboxes and/or radio buttons with x-validate.group
-    // TODO: make way for fieldsets to know if every field in it is valid
-    // TODO: possibly use Alpine.bind() to make an x-bind disabled for the submit button
 
     const pluginName = 'validate'
 
@@ -9,9 +6,13 @@ const Plugin = function (Alpine) {
     /*                              Helper Functions                              */
     /* -------------------------------------------------------------------------- */
 
+    const isHtmlElement = (el,type) => (type) ? el instanceof HTMLElement && el.matches(type) : el instanceof HTMLElement
+
     const fieldSelector = `input:not([type="button"]):not([type="search"]):not([type="reset"]),select,textarea`
 
-    const isField = (el) => el.matches(fieldSelector)
+    const isField = (el) => isHtmlElement(el,fieldSelector)
+
+    const isVarType = (x,type) => typeof x === type
 
     const findFields = (el) => el.querySelectorAll(fieldSelector)
 
@@ -23,9 +24,11 @@ const Plugin = function (Alpine) {
 
     const getAttr = (el,attr) => el.getAttribute(attr)
 
-    const getForm = (el) => (typeof el === 'string') ? document.querySelector(`form#${el}`) : (el.matches('form')) ? el : el.closest('form')
+    // If it already is an element it returns itself, if it is a string it assumes it is an id and finds it, otherwise false
+    const getEl = (el) => (isVarType(el,'string')) ? document.querySelector(`#${el}`) : (isHtmlElement(el)) ? el : false
 
-    const getEl = (el) => (typeof el === 'string') ? document.querySelector(`#${el}`) : (el instanceof HTMLElement) ? el : false
+    // is it is a form it returns the form; otherwise it returns the closest form parent
+    const getForm = (el) => (isHtmlElement(getEl(el),'form')) ? el : (isHtmlElement(getEl(el))) ? el.closest('form') : false
 
     const setAttr = (el,attr,value = '') => el.setAttribute(attr,value)
 
@@ -35,7 +38,7 @@ const Plugin = function (Alpine) {
         // If there's no selector, return the first sibling
         if (!selector) return sibling;
         // If selector then return if matches, otherwise return false
-        if (sibling?.matches(selector)) return sibling;
+        if (isHtmlElement(sibling, selector)) return sibling;
         return false;
     };
 
@@ -95,7 +98,7 @@ const Plugin = function (Alpine) {
         const name = getName(field)
         // Add name, node, and value if it's not being passed along
         data = {name: name, node: field, value: field.value, ...data}
-        if (form && form.nodeName === 'FORM' && name) {
+        if (isHtmlElement(form,'form') && name) {
             // create a temp copy of formData array
             let tempFormData = formData[form] || []
 
@@ -207,7 +210,7 @@ const Plugin = function (Alpine) {
 
         function defaultData(field, set) {
             let data = {value:field.value, valid:!isRequired(field)}
-            if (set instanceof HTMLElement) data = {...data, set: set}
+            if (isHtmlElement(set)) data = {...data, set: set}
             // If this is a checkbox or radio we don't want it's value until checked
             if (isCheckRadio(field)) data = {...data, value: ''}
             // If this is a group then it is not valid and marked as a group
@@ -215,11 +218,24 @@ const Plugin = function (Alpine) {
             return data;
         }
 
+        function addEvents(field) {
+            if (field.type === 'checkbox' && hasModifier('group')) {
+                addEvent(field,'click', checkGroupValid)
+            } else if (isClickField(field)) {
+                addEvent(field,'click', checkIfValid)
+            } else if (isHtmlElement(field,'select')) {
+                addEvent(field,'change',checkIfValid)
+            } else {
+                addEvent(field,'blur',checkIfValid)
+                if (hasModifier('input')) addEvent(field,'input', checkIfValid)
+            }
+        }
+
         /* -------------------------------------------------------------------------- */
         /*                 If x-validate on <form> validate all fields                */
         /* -------------------------------------------------------------------------- */
 
-        if (el.matches('form')) {
+        if (isHtmlElement(el,'form')) {
             // el is form
             // save all form modifiers
             formModifiers[form] = modifiers
@@ -236,14 +252,7 @@ const Plugin = function (Alpine) {
                 fields.forEach((field) => {
                     updateFormData(field, defaultData(field, set))
                     // Don't add click events if it has x-validate on it so we aren't duplicating function
-                    if (!field.getAttributeNames().some(attr => attr.includes('x-validate'))) {
-                        if (isClickField(field)) {
-                            addEvent(field,'click', checkIfValid)
-                        } else {
-                            addEvent(field,'blur',checkIfValid)
-                            if (hasModifier('input')) addEvent(field,'input', checkIfValid)
-                        }
-                    }
+                    if (!field.getAttributeNames().some(attr => attr.includes('x-validate'))) addEvents(field)
                 })
             })
 
@@ -256,18 +265,8 @@ const Plugin = function (Alpine) {
 
         if (isField(el)) {
             // el is field element
-
             updateFormData(el, defaultData(el))
-
-            if (el.type === 'checkbox' && hasModifier('group')) {
-                addEvent(el,'click', checkGroupValid)
-            } else if (isClickField(el)) {
-                addEvent(el,'click', checkIfValid)
-            } else {
-                addEvent(el,'blur',checkIfValid)
-                if (hasModifier('input')) addEvent(el,'input', checkIfValid)
-            }
-
+            addEvents(el)
         }
 
         /* -------------------------------------------------------------------------- */
@@ -323,7 +322,7 @@ const Plugin = function (Alpine) {
             updateFormData(field, {value:field.value, valid:valid})
 
             // add input event to text fields once it fails the first time
-            if (!valid && field.matches('input, textarea') && !isClickField(field) && !hasModifier('bluronly')) addEvent(field,'input', checkIfValid)
+            if (!valid && isHtmlElement(field,'input, textarea') && !isClickField(field) && !hasModifier('bluronly')) addEvent(field,'input', checkIfValid)
 
             if (!valid && hasModifier('refocus')) field.focus()
 
