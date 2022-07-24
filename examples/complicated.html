@@ -21,7 +21,7 @@
     </nav>
     <form id="form" x-validate x-data @submit="$validate.submit" x-ref="form">
         <p><em>* required</em></p>
-        <fieldset id="fieldset1">
+        <fieldset id="fieldset1" x-ref="contact">
             <legend>Part 1: Contact Info</legend>
             <div>
                 <label for="name">Your Name *</label>
@@ -39,7 +39,7 @@
         <!-- only show fieldset if all above completed -->
         <!-- NOTE: slice only works for the above fields since they are in order in the array -->
         <!-- Below this the fields use x-validate which messes with the order of the fields in formData -->
-        <fieldset x-show="$validate.isComplete('fieldset1')" x-transition x-ref="fs2">
+        <fieldset x-show="$validate.isComplete('fieldset1')" x-transition x-ref="random">
             <legend>Part 2: Random Stuff</legend>
             <div>
                 <label for="animal">Favorite Animal *</label>
@@ -69,7 +69,7 @@
             </div>
         </fieldset>
         <!-- only show fieldset if all above completed -->
-        <fieldset x-show="$validate.isComplete($refs.fs2)" x-transition>
+        <fieldset x-show="$validate.isComplete($refs.random)" x-transition>
             <legend>Finale</legend>
             <div>
                 <label for="dob">Date of Birth *</label>
@@ -88,7 +88,9 @@
                 <template x-for="v in $validate.formData($refs.form)">
                     <li>field: <b x-text="v.name"></b> <span x-text="v.value"></span> <i x-text="v.valid"></i></li>
                 </template>
+                
             </ul>
+            <p>$validate.isComplete: <b x-text="$validate.isComplete($refs.form)"></b></p>
         </div>
 
     </form>

@@ -176,7 +176,12 @@ const Plugin = function (Alpine) {
     }
 
     // isComplete works for the form as a whole and fieldsets using either the node itself or the id
-    validateMagic.isComplete = (set) => !formData[getForm(getEl(set))]?.filter(val => val.set === getEl(set))?.some(val => !val.valid)
+    validateMagic.isComplete = (set) => {
+        set = getEl(set)
+        data = formData[getForm(set)]
+        if (isHtmlElement(set,'fieldset')) data = data?.filter(val => val.set === set)
+        return !data?.some(val => !val.valid)
+    }
 
     // Add validate functions to validateMagic object
     Object.keys(validate).forEach(key => validateMagic = {...validateMagic, [key]: validate[key]})

@@ -22,7 +22,7 @@ It's still generally backwards compatible with a handful of small breaking chang
  * Date format modifiers are renamed (see Directives below).
  * The modifier 'phone' is now 'tel' in keeping with the input type.
 
-## Update 1.5.2
+## Update Changes 1.5.x
 
 * Form id no longer required since formData references the form node itself. Magic formData functions still work with id but $refs is now recommended
 * Fieldsets are detected when you use x-validate on form `<form>`

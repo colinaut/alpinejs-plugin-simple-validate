@@ -59,10 +59,10 @@ var Plugin = function(Alpine) {
   }
   const formData = Alpine.reactive({});
   const formModifiers = {};
-  function updateFormData(field, data) {
+  function updateFormData(field, data2) {
     const form = getForm(field);
     const name = getName(field);
-    data = { name, node: field, value: field.value, ...data };
+    data2 = { name, node: field, value: field.value, ...data2 };
     if (isHtmlElement(form, "form") && name) {
       let tempFormData = formData[form] || [];
       if (tempFormData.some((val) => val.name === name)) {
@@ -70,15 +70,15 @@ var Plugin = function(Alpine) {
         tempFormData = tempFormData.filter((val) => val.name !== name);
         if (fieldData.type === "checkbox") {
           let tempArray = fieldData.array || [];
-          if (data.value !== "") {
-            tempArray = tempArray.some((val) => val === field.value) ? tempArray.filter((val) => val !== data.value) : [...tempArray, data.value];
+          if (data2.value !== "") {
+            tempArray = tempArray.some((val) => val === field.value) ? tempArray.filter((val) => val !== data2.value) : [...tempArray, data2.value];
           }
-          data = { ...fieldData, ...data, array: tempArray, value: tempArray.toString() };
+          data2 = { ...fieldData, ...data2, array: tempArray, value: tempArray.toString() };
         } else {
-          data = { ...fieldData, ...data };
+          data2 = { ...fieldData, ...data2 };
         }
       }
-      tempFormData.push(data);
+      tempFormData.push(data2);
       formData[form] = tempFormData;
     }
   }
@@ -95,8 +95,8 @@ var Plugin = function(Alpine) {
   validate.date[dateFormats[1]] = (str) => isDate(str, dateFormats[1]);
   validate.date[dateFormats[2]] = (str) => isDate(str, dateFormats[2]);
   let validateMagic = {};
-  validateMagic.formData = (form) => formData[getForm(form)].map((val) => Object.getOwnPropertyNames(val).reduce((data, key) => ({ ...data, [key]: val[key] }), {}));
-  validateMagic.updateFormData = (field, data) => updateFormData(getEl(field), data);
+  validateMagic.formData = (form) => formData[getForm(form)].map((val) => Object.getOwnPropertyNames(val).reduce((data2, key) => ({ ...data2, [key]: val[key] }), {}));
+  validateMagic.updateFormData = (field, data2) => updateFormData(getEl(field), data2);
   validateMagic.toggleErrorMessage = (field, valid, options) => toggleErrorMessage(getEl(field), valid, options);
   validateMagic.submit = (e) => {
     var _a;
@@ -110,8 +110,11 @@ var Plugin = function(Alpine) {
     });
   };
   validateMagic.isComplete = (set) => {
-    var _a, _b;
-    return !((_b = (_a = formData[getForm(getEl(set))]) == null ? void 0 : _a.filter((val) => val.set === getEl(set))) == null ? void 0 : _b.some((val) => !val.valid));
+    set = getEl(set);
+    data = formData[getForm(set)];
+    if (isHtmlElement(set, "fieldset"))
+      data = data == null ? void 0 : data.filter((val) => val.set === set);
+    return !(data == null ? void 0 : data.some((val) => !val.valid));
   };
   Object.keys(validate).forEach((key) => validateMagic = { ...validateMagic, [key]: validate[key] });
   Alpine.magic(pluginName, () => validateMagic);
@@ -127,14 +130,14 @@ var Plugin = function(Alpine) {
     const hasModifier = (type, mods = allModifiers) => mods.includes(type);
     const isRequired = (field) => hasModifier("required") || field.hasAttribute("required") || false;
     function defaultData(field, set) {
-      let data = { value: field.value, valid: !isRequired(field) };
+      let data2 = { value: field.value, valid: !isRequired(field) };
       if (isHtmlElement(set))
-        data = { ...data, set };
+        data2 = { ...data2, set };
       if (isCheckRadio(field))
-        data = { ...data, value: "" };
+        data2 = { ...data2, value: "" };
       if (isCheckRadio(field) && hasModifier("group"))
-        data = { ...data, valid: false, group: true };
-      return data;
+        data2 = { ...data2, valid: false, group: true };
+      return data2;
     }
     function addEvents(field) {
       if (field.type === "checkbox" && hasModifier("group")) {
