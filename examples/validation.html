@@ -19,7 +19,7 @@
             <a :href="'/' + a.page" x-text="a.name" :class="a.page === htmlPage && 'active'"></a>
         </template>
     </nav>
-    <form id="form" x-data x-validate @submit="$validate.submit">
+    <form id="form" x-data="{number: ''}" x-validate @submit="$validate.submit" x-ref="form">
         <p class="description">This form uses <code>@submit="$validate.submit"</code> to make sure the form is complete</p>
         <div>
             <label for="name">Your Name *</label>
@@ -31,11 +31,12 @@
         </div>
         <div>
             <label for="phone">Your Phone *</label>
-            <input type="phone" id="phone" name="phone" required />
+            <input type="tel" id="phone" name="phone" required />
         </div>
         <div>
             <label for="wholenumber">Whole Number</label>
-            <input type="wholenumber" id="wholenumber" name="wholenumber" x-validate.wholenumber />
+            <input type="wholenumber" id="wholenumber" name="wholenumber" x-validate.wholenumber x-model="number" />
+            <p x-show="number !== ''"><b x-text="number"></b> is <b x-show="!$validate.wholenumber(number)" style="color:darkred">not</b> a whole number</p>
         </div>
         <div class="checkbox-wrapper">
             <h4>You must click this! *</h4>
@@ -48,11 +49,13 @@
         </div>
         <div class="form-validation-log">
             <h3>Validations</h3>
+            <p><small>List of data from <code>$validate.formData($refs.form)</code></small></p>
             <ul>
-                <template x-for="v in $validate.formData('form')">
+                <template x-for="v in $validate.formData($refs.form)">
                     <li>field: <b x-text="v.name"></b> <span x-text="v.value"></span> <i x-text="v.valid"></i></li>
                 </template>
             </ul>
+            <p>$validate.isComplete: <b x-text="$validate.isComplete($refs.form)"></b></p>
         </div>
     </form>
 </body>

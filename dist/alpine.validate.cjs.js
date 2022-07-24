@@ -14,14 +14,15 @@ __export(exports, {
 // src/index.js
 var Plugin = function(Alpine) {
   const pluginName = "validate";
-  const isField = (el) => el.matches("input,textarea,select");
-  const findFields = (el) => el.querySelectorAll("input, select, text");
+  const fieldSelector = `input:not([type="button"]):not([type="search"]):not([type="reset"]),select,textarea`;
+  const isField = (el) => el.matches(fieldSelector);
+  const findFields = (el) => el.querySelectorAll(fieldSelector);
   const isClickField = (el) => ["checkbox", "radio", "range"].includes(el.type);
   const isCheckRadio = (el) => ["checkbox", "radio"].includes(el.type);
-  const isButton = (el) => ["button", "reset", "submit", "search"].includes(el.type);
   const addEvent = (el, event, callback) => el.addEventListener(event, callback);
   const getAttr = (el, attr) => el.getAttribute(attr);
-  const getFormId = (el) => el.matches("form") ? getAttr(el, "id") : getAttr(el.closest("form"), "id");
+  const getForm = (el) => typeof el === "string" ? document.querySelector(`form#${el}`) : el.matches("form") ? el : el.closest("form");
+  const getEl = (el) => typeof el === "string" ? document.querySelector(`#${el}`) : el instanceof HTMLElement ? el : false;
   const setAttr = (el, attr, value = "") => el.setAttribute(attr, value);
   function getAdjacentSibling(elem, selector) {
     var sibling = elem.nextElementSibling;
@@ -33,9 +34,9 @@ var Plugin = function(Alpine) {
   }
   ;
   const getName = (field) => field.name || getAttr(field, "id");
-  const dateFormats = ["mmddyyyy", "ddmmyyyy", "yyyymmdd"];
   const cleanText = (str) => String(str).trim();
   const isEmpty = (str) => cleanText(str) === "";
+  const dateFormats = ["mmddyyyy", "ddmmyyyy", "yyyymmdd"];
   function isDate(str, format) {
     const [p1, p2, p3] = str.split(/[-\/.]/);
     let isoFormattedStr;
@@ -56,16 +57,19 @@ var Plugin = function(Alpine) {
   }
   const formData = Alpine.reactive({});
   const formModifiers = {};
-  function updateFormData(formId, data) {
-    if (typeof formId === "string" && data.name) {
-      let tempFormData = formData[formId] || [];
-      if (tempFormData.some((val) => val.name === data.name)) {
-        let fieldData = tempFormData.filter((val) => val.name === data.name)[0];
-        tempFormData = tempFormData.filter((val) => val.name !== data.name);
+  function updateFormData(field, data) {
+    const form = getForm(field);
+    const name = getName(field);
+    data = { name, node: field, value: field.value, ...data };
+    if (form && form.nodeName === "FORM" && name) {
+      let tempFormData = formData[form] || [];
+      if (tempFormData.some((val) => val.name === name)) {
+        let fieldData = tempFormData.filter((val) => val.name === name)[0];
+        tempFormData = tempFormData.filter((val) => val.name !== name);
         if (fieldData.type === "checkbox") {
           let tempArray = fieldData.array || [];
           if (data.value !== "") {
-            tempArray = tempArray.some((val) => val === data.value) ? tempArray.filter((val) => val !== data.value) : [...tempArray, data.value];
+            tempArray = tempArray.some((val) => val === field.value) ? tempArray.filter((val) => val !== data.value) : [...tempArray, data.value];
           }
           data = { ...fieldData, ...data, array: tempArray, value: tempArray.toString() };
         } else {
@@ -73,7 +77,7 @@ var Plugin = function(Alpine) {
         }
       }
       tempFormData.push(data);
-      formData[formId] = tempFormData;
+      formData[form] = tempFormData;
     }
   }
   const validate = {};
@@ -81,39 +85,33 @@ var Plugin = function(Alpine) {
   validate.tel = (str) => /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/.test(cleanText(str));
   validate.website = (str) => /^(https?:\/\/)?(www\.)?([a-zA-Z0-9]+(-?[a-zA-Z0-9])*\.)+[\w]{2,}(\/\S*)?$/.test(cleanText(str));
   validate.url = (str) => /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()!@:%_\+.~#?&\/\/=]*)/.test(cleanText(str));
-  validate.number = (str) => Number(str);
-  validate.wholenumber = (str) => Number.isInteger(Number(str)) && Number(str) > 0;
+  validate.number = (str) => parseFloat(str) == str;
   validate.integer = (str) => Number.isInteger(Number(str));
+  validate.wholenumber = (str) => validate.integer(str) && Number(str) > 0;
   validate.date = (str) => isDate(str, dateFormats[0]);
   validate.date[dateFormats[0]] = (str) => isDate(str, dateFormats[0]);
   validate.date[dateFormats[1]] = (str) => isDate(str, dateFormats[1]);
   validate.date[dateFormats[2]] = (str) => isDate(str, dateFormats[2]);
   let validateMagic = {};
-  validateMagic.formData = (formId) => {
-    return formData[formId].map((val) => Object.getOwnPropertyNames(val).reduce((data, key) => ({ ...data, [key]: val[key] }), {}));
-  };
-  validateMagic.updateFormData = (formId, data) => updateFormData(formId, data);
-  validateMagic.toggleErrorMessage = (field, valid, options) => toggleErrorMessage(field, valid, options);
-  validateMagic.isFormComplete = (formId) => {
-    const dataArray = formData[formId].map((val) => Object.getOwnPropertyNames(val).reduce((data, key) => ({ ...data, [key]: val[key] }), {}));
-    return dataArray.every((val) => val.valid === true);
-  };
+  validateMagic.formData = (form) => formData[getForm(form)].map((val) => Object.getOwnPropertyNames(val).reduce((data, key) => ({ ...data, [key]: val[key] }), {}));
+  validateMagic.updateFormData = (field, data) => updateFormData(getEl(field), data);
+  validateMagic.toggleErrorMessage = (field, valid, options) => toggleErrorMessage(getEl(field), valid, options);
   validateMagic.submit = (e) => {
-    const form = e.target;
-    const formId = getFormId(form);
-    formData[formId].forEach((val) => {
+    var _a;
+    (_a = formData[e.target]) == null ? void 0 : _a.forEach((val) => {
       if (val.valid === false) {
-        const field = document.querySelector(`#${formId} [name='${val.name}'], #${formId} input#${val.name}`);
-        const options = val.group ? { errorNode: field.parentNode.parentNode } : {};
-        toggleErrorMessage(field, false, options);
+        const options = val.group ? { errorNode: val.node.parentNode.parentNode } : {};
+        toggleErrorMessage(val.node, false, options);
         e.preventDefault();
-        console.error(`${formId}:${val.name} not valid`);
+        console.error(`${val.name} not valid`);
       }
     });
   };
-  Object.keys(validate).forEach((key) => {
-    validateMagic = { ...validateMagic, [key]: validate[key] };
-  });
+  validateMagic.isComplete = (set) => {
+    var _a, _b;
+    return !((_b = (_a = formData[getForm(getEl(set))]) == null ? void 0 : _a.filter((val) => val.set === getEl(set))) == null ? void 0 : _b.some((val) => !val.valid));
+  };
+  Object.keys(validate).forEach((key) => validateMagic = { ...validateMagic, [key]: validate[key] });
   Alpine.magic(pluginName, () => validateMagic);
   Alpine.directive(pluginName, (el, {
     modifiers,
@@ -121,64 +119,55 @@ var Plugin = function(Alpine) {
   }, {
     evaluate
   }) => {
-    const formId = getFormId(el);
-    formModifiers[formId] = formModifiers[formId] || [];
-    const allModifiers = [...modifiers, ...formModifiers[formId]];
+    const form = getForm(el);
+    formModifiers[form] = formModifiers[form] || [];
+    const allModifiers = [...modifiers, ...formModifiers[form]];
     const hasModifier = (type, mods = allModifiers) => mods.includes(type);
     const isRequired = (field) => hasModifier("required") || field.hasAttribute("required") || false;
-    function defaultData(field) {
-      let data = { name: getName(field), type: field.type, value: field.value, valid: !isRequired(field) };
-      if (field.type === "checkbox")
-        data = { ...data, value: "", array: [] };
-      if (field.type === "radio")
+    function defaultData(field, set) {
+      let data = { value: field.value, valid: !isRequired(field) };
+      if (set instanceof HTMLElement)
+        data = { ...data, set };
+      if (isCheckRadio(field))
         data = { ...data, value: "" };
+      if (isCheckRadio(field) && hasModifier("group"))
+        data = { ...data, valid: false, group: true };
       return data;
     }
     if (el.matches("form")) {
-      const fields = findFields(el);
-      formModifiers[formId] = modifiers;
-      fields.forEach((field) => {
-        const xValidate = field.getAttributeNames().some((attr) => attr.includes("x-validate"));
-        if (!isButton(field) && !xValidate) {
-          updateFormData(formId, defaultData(field));
-          if (isClickField(field)) {
-            addEvent(field, "click", checkIfValid);
-          } else {
-            addEvent(field, "blur", checkIfValid);
-            if (hasModifier("input"))
-              addEvent(field, "input", checkIfValid);
+      formModifiers[form] = modifiers;
+      const fieldsets = el.querySelectorAll("fieldset");
+      const sets = fieldsets.length > 0 ? fieldsets : [el];
+      sets.forEach((set) => {
+        const fields = findFields(set);
+        fields.forEach((field) => {
+          updateFormData(field, defaultData(field, set));
+          if (!field.getAttributeNames().some((attr) => attr.includes("x-validate"))) {
+            if (isClickField(field)) {
+              addEvent(field, "click", checkIfValid);
+            } else {
+              addEvent(field, "blur", checkIfValid);
+              if (hasModifier("input"))
+                addEvent(field, "input", checkIfValid);
+            }
           }
-        }
+        });
       });
     }
-    if (isField(el) && !isButton(el)) {
-      const formId2 = getFormId(el);
-      let data = defaultData(el);
+    if (isField(el)) {
+      updateFormData(el, defaultData(el));
       if (el.type === "checkbox" && hasModifier("group")) {
-        let checkGroupValid = function() {
-          let fieldDataArrayLength = formData[formId2].filter((val) => val.name === el.name)[0].array.length;
-          fieldDataArrayLength = el.checked ? fieldDataArrayLength + 1 : fieldDataArrayLength - 1;
-          const num = parseInt(expression && evaluate(expression)) || 1;
-          let valid = fieldDataArrayLength >= num;
-          toggleErrorMessage(el, valid, { errorNode: el.parentNode.parentNode });
-          updateFormData(formId2, { name: getName(el), value: el.value, valid });
-        };
-        data = { ...data, valid: false, group: true };
         addEvent(el, "click", checkGroupValid);
       } else if (isClickField(el)) {
         addEvent(el, "click", checkIfValid);
-        if (el.type === "radio" && hasModifier("group"))
-          data = { ...data, value: "", valid: false };
       } else {
         addEvent(el, "blur", checkIfValid);
         if (hasModifier("input"))
           addEvent(el, "input", checkIfValid);
       }
-      updateFormData(getFormId(el), data);
     }
     function checkIfValid() {
       const field = this;
-      const formId2 = getFormId(field);
       let validators = [field.type];
       if (isField(el))
         validators = [...validators, ...modifiers];
@@ -209,12 +198,21 @@ var Plugin = function(Alpine) {
         }
       }
       toggleErrorMessage(field, valid);
-      updateFormData(formId2, { name: getName(field), value: field.value, valid });
+      updateFormData(field, { value: field.value, valid });
       if (!valid && field.matches("input, textarea") && !isClickField(field) && !hasModifier("bluronly"))
         addEvent(field, "input", checkIfValid);
       if (!valid && hasModifier("refocus"))
         field.focus();
       return valid;
+    }
+    function checkGroupValid() {
+      var _a;
+      const field = this;
+      let fieldDataArrayLength = ((_a = formData[getForm(field)].filter((val) => val.name === field.name)[0].array) == null ? void 0 : _a.length) || 0;
+      fieldDataArrayLength = field.checked ? fieldDataArrayLength + 1 : fieldDataArrayLength - 1;
+      const num = parseInt(expression && evaluate(expression)) || 1;
+      let valid = fieldDataArrayLength >= num;
+      toggleErrorMessage(field, valid, { errorNode: field.parentNode.parentNode });
     }
   });
   function toggleErrorMessage(field, valid, options = {}) {
@@ -224,7 +222,7 @@ var Plugin = function(Alpine) {
     errorMsg = errorMsg || getAttr(field, "data-error-msg") || `${name} required`;
     if (!valid) {
       setAttr(errorNode, "data-error", errorMsg);
-      setAttr(field, "invalid", "");
+      setAttr(field, "invalid");
     } else {
       errorNode.removeAttribute("data-error");
       field.removeAttribute("invalid");

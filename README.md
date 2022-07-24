@@ -22,11 +22,17 @@ It's still generally backwards compatible with a handful of small breaking chang
  * Date format modifiers are renamed (see Directives below).
  * The modifier 'phone' is now 'tel' in keeping with the input type.
 
+## Update 1.5.2
+
+* Form id no longer required since formData references the form node itself. Magic formData functions still work with id but $refs is now recommended
+* Fieldsets are detected when you use x-validate on form `<form>`
+* `$validate.isComplete()` can be used on either the form or individual fieldsets.
+
 ## Simple Usage
 
 Add an id attribute, `x-data`, and `x-validate` to your `<form>` element (you don't need any variables on x-data ; it just needs to be initiated as an Alpine component). This automatically:
 
-* Captures all data to a reactive formData[formId] array which updates on blur or click (depending on field type).
+* Captures all data to a reactive formData[form] array which updates on blur or click (depending on field type).
 * Validates onblur using basic browser checkValidity() checking `required` attribute and input types. 
 * Uses built-in improved regex validation for email, tel, and url type fields, since the browser versions are limited.
 * When the validity check fails, it...
@@ -43,6 +49,7 @@ Add an id attribute, `x-data`, and `x-validate` to your `<form>` element (you do
 * Add `data-error-msg='custom error message'` on form elements to add custom error message
 * Use `x-validate.group` on checkboxes or radio buttons to validate that at least one is selected.
 * Add a specific test to a field like `x-validate='$el.value === 'bunny'`; this can be paired up with other validations. For example: `x-validate.website='$el.includes('bunny')` for only websites with the word bunny in the name.
+* Use `$validate.isComplete()` to detect if `<fieldset>` groups or the form as a whole is completed
 * You can an skip `x-validate` on the `<form>` and just add `x-validate` on fields directly if you only want a couple fields validated. The x-data is still required on `<form>` and if you want formData captured you also need and id element on the `<form>`.
 
 ## Directive x-validate
@@ -103,21 +110,24 @@ You can add any specific validation like *email* or *tel*. Main difference betwe
 When used on `<form>`, the `x-validate` every field is added to a reactive formData[formId] array. If only used on individual fields, `x-validate` only adds those fields to the formData[formId] array.
 
 * `@submit="$validate.submit"` used on form element. Validates current form; if validation fails errors are shown and the submit event is prevented.
-* `$validate.isFormComplete('formId')` returns true or false depending on if every form field is validated or not
-* `$validate.formData('formId')` returns an array of form data {name,type,value,valid}; for checkbox groups {name,type,array,value: 'string of array',valid}
-* `$validate.updateFormData('formId',{data object})` allows you to directly add or update the formData array. If name matches one already in the array it updates it, if it doesn't already exist it adds it.
+* `$validate.isComplete(form)` returns true or false depending on if every form field is validated or not. $refs is recommended but using a string of the form id will work.
+* `$validate.isComplete(fieldset)` returns true or false depending on if every form field in a fieldset is validated or not. * $refs is recommended but using a string of the fieldset id will work.
+* `$validate.formData(form)` returns an array of form data {name,node,value,valid}; for checkbox/radio groups {name,node,array,value:'string of array',valid, group: true}
+* `$validate.updateFormData(field,data)` allows you to directly add/update the formData array for a field.
 * `$validate.toggleErrorMessage(field,valid,options = {errorNode,errorMsg})` allows you to toggle the error message on any field. The options.errorNode overrides where `data-error` is added. This is mainly for checkbox/radio button groups since their error message it added to the wrapper element.
+
+\* $refs is recommended for form, fieldset, and field variables, but a string of the id works as well.
 
 #### Example formData
 
 ```
-{name: 'name', type: 'text', value: 'Bunny', valid: true}
+{name: 'name', type: 'text', node: [HTMLElement], value: 'Fred', valid: true}
 ```
 ***Note:** name = name attribute || id attribute, because not everyone uses the name attribute.*
 
 #### Example formData for checkbox groups
 ```
-{name: 'animals', type: 'fieldgroup', value: 'cat,dog', array: ['cat', 'dog'], valid: true, group: true}
+{name: 'animals', type: 'checkbox', node: [HTMLElement], value: 'cat,dog', array: ['cat', 'dog'], valid: true, group: true}
 ```
 
 ## Example
@@ -213,7 +223,6 @@ eleventyConfig.addPassthroughCopy({
 
 ## Roadmap
 
-* Some sort of easy automatic validation check for each fieldset group of fields
 * Clean up the code more to get it down closer to 4KB minimized.
 
 Feel free to add any enhancement requests on github.

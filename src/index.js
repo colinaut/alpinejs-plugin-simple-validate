@@ -9,21 +9,23 @@ const Plugin = function (Alpine) {
     /*                              Helper Functions                              */
     /* -------------------------------------------------------------------------- */
 
-    const isField = (el) => el.matches('input,textarea,select')
+    const fieldSelector = `input:not([type="button"]):not([type="search"]):not([type="reset"]),select,textarea`
 
-    const findFields = (el) => el.querySelectorAll('input, select, text')
+    const isField = (el) => el.matches(fieldSelector)
+
+    const findFields = (el) => el.querySelectorAll(fieldSelector)
 
     const isClickField = (el) => ['checkbox', 'radio', 'range'].includes(el.type)
 
     const isCheckRadio = (el) => ['checkbox', 'radio'].includes(el.type)
 
-    const isButton = (el) => ['button','reset', 'submit','search'].includes(el.type)
-
     const addEvent = (el,event,callback) => el.addEventListener(event, callback)
 
     const getAttr = (el,attr) => el.getAttribute(attr)
 
-    const getFormId = (el) => (el.matches('form')) ? getAttr(el,'id') : getAttr(el.closest('form'),'id')
+    const getForm = (el) => (typeof el === 'string') ? document.querySelector(`form#${el}`) : (el.matches('form')) ? el : el.closest('form')
+
+    const getEl = (el) => (typeof el === 'string') ? document.querySelector(`#${el}`) : (el instanceof HTMLElement) ? el : false
 
     const setAttr = (el,attr,value = '') => el.setAttribute(attr,value)
 
@@ -39,8 +41,6 @@ const Plugin = function (Alpine) {
 
     const getName = (field) => field.name || getAttr(field,'id');
 
-    const dateFormats = ['mmddyyyy','ddmmyyyy','yyyymmdd']
-
     const cleanText = (str) => String(str).trim()
 
     const isEmpty = (str) => cleanText(str) === ''
@@ -48,6 +48,8 @@ const Plugin = function (Alpine) {
     /* -------------------------------------------------------------------------- */
     /*                                 Validators                                 */
     /* -------------------------------------------------------------------------- */
+
+    const dateFormats = ['mmddyyyy','ddmmyyyy','yyyymmdd']
 
     function isDate(str, format) {
         const [p1, p2, p3] = str.split(/[-\/.]/)
@@ -85,26 +87,30 @@ const Plugin = function (Alpine) {
     /*                           formData functions                               */
     /* -------------------------------------------------------------------------- */
 
-    function updateFormData(formId, data) {
+    function updateFormData(field, data) {
         // console.log("🚀 ~ file: index.js ~ line 86 ~ updateFormData ~ data", data)
-        // data = {name: 'field id or name if no id', type: 'field type', value:'field value', array:[optional used for groups], valid: true}
-        // Only run if has formId and data has name
-        if (typeof formId === 'string' && data.name) {
+        // data = {name: 'field id or name if no id', node: field, value:'field value', array:[optional used for groups], valid: true, set: form node or fieldset node}
+        // Only run if has form and field has name
+        const form = getForm(field)
+        const name = getName(field)
+        // Add name, node, and value if it's not being passed along
+        data = {name: name, node: field, value: field.value, ...data}
+        if (form && form.nodeName === 'FORM' && name) {
             // create a temp copy of formData array
-            let tempFormData = formData[formId] || []
+            let tempFormData = formData[form] || []
 
             // If the field name exists then replace it
-            if (tempFormData.some(val => val.name === data.name)) {
-                // Grab this data
-                let fieldData = tempFormData.filter(val => val.name === data.name)[0]
-                // filter out this data from the tempFormData
-                tempFormData = tempFormData.filter(val => val.name !== data.name)
+            if (tempFormData.some(val => val.name === name)) {
+                // Grab data matching name
+                let fieldData = tempFormData.filter(val => val.name === name)[0]
+                // filter out this data from the rest
+                tempFormData = tempFormData.filter(val => val.name !== name)
                 // If checkbox then assume it's a group so update array and string value
                 if (fieldData.type === 'checkbox') {
                     let tempArray = fieldData.array || []
                     if (data.value !== '') {
                         // If value exists remove it, otherwise add it
-                        tempArray = (tempArray.some(val => val === data.value)) ? tempArray.filter(val => val !== data.value) : [...tempArray, data.value]
+                        tempArray = (tempArray.some(val => val === field.value)) ? tempArray.filter(val => val !== data.value) : [...tempArray, data.value]
                     }
                     // update with revised array
                     data = {...fieldData, ...data, array: tempArray, value: tempArray.toString()}
@@ -112,14 +118,14 @@ const Plugin = function (Alpine) {
                     // update data
                     data = {...fieldData, ...data}
                 }
-                // console.log('replaceFormData',formId, data);
+                // console.log('replaceFormData',data);
             }
 
             // Add data to tempFormData
             tempFormData.push(data)
-            // Update formData[formId]
-            formData[formId] = tempFormData
-            // console.log(`formData[${formId}]`,formData[formId]);
+            // Update formData[form]
+            formData[form] = tempFormData
+            // console.log(`formData`,formData[form]);
         }
     }
 
@@ -133,9 +139,9 @@ const Plugin = function (Alpine) {
     validate.tel = str => /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/.test(cleanText(str))
     validate.website = str => /^(https?:\/\/)?(www\.)?([a-zA-Z0-9]+(-?[a-zA-Z0-9])*\.)+[\w]{2,}(\/\S*)?$/.test(cleanText(str))
     validate.url = str => /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()!@:%_\+.~#?&\/\/=]*)/.test(cleanText(str))
-    validate.number = str => Number(str)
-    validate.wholenumber = str => Number.isInteger(Number(str)) && Number(str) > 0
+    validate.number = str => parseFloat(str) == str
     validate.integer = str => Number.isInteger(Number(str))
+    validate.wholenumber = str => validate.integer(str) && Number(str) > 0
     validate.date = str => isDate(str,dateFormats[0])
     validate.date[dateFormats[0]] = str => isDate(str,dateFormats[0])
     validate.date[dateFormats[1]] = str => isDate(str,dateFormats[1])
@@ -146,39 +152,31 @@ const Plugin = function (Alpine) {
     /* -------------------------------------------------------------------------- */
     let validateMagic = {}
     // Display reactive formData
-    validateMagic.formData = formId => {
-        return formData[formId].map(val => Object.getOwnPropertyNames(val).reduce((data, key) => ({ ...data, [key]: val[key] }), {}))
-    }
+    validateMagic.formData = form => formData[getForm(form)].map(val => Object.getOwnPropertyNames(val).reduce((data, key) => ({ ...data, [key]: val[key] }), {}))
     // add or update formData
-    validateMagic.updateFormData = (formId,data) => updateFormData(formId,data)
+    validateMagic.updateFormData = (field,data) => updateFormData(getEl(field),data)
     // toggle error message
-    validateMagic.toggleErrorMessage = (field,valid,options) => toggleErrorMessage(field,valid,options)
+    validateMagic.toggleErrorMessage = (field,valid,options) => toggleErrorMessage(getEl(field),valid,options)
+
     // Check if form is completed
-    validateMagic.isFormComplete = formId => {
-        // Reactive proxies cause problems with validation, so we need to build our own array of objects
-        const dataArray = formData[formId].map(val => Object.getOwnPropertyNames(val).reduce((data, key) => ({ ...data, [key]: val[key] }), {}))
-        return dataArray.every(val => val.valid === true)
-    }
+
     validateMagic.submit = e => {
-        const form = e.target
-        // e.preventDefault();
-        const formId = getFormId(form)
-        formData[formId].forEach(val => {
+        formData[e.target]?.forEach(val => {
             if (val.valid === false) {
-                const field = document.querySelector(`#${formId} [name='${val.name}'], #${formId} input#${val.name}`)
                 // click groups should set their error two parents up.
-                const options = (val.group) ? {errorNode: field.parentNode.parentNode} : {}
-                toggleErrorMessage(field,false,options)
+                const options = (val.group) ? {errorNode: val.node.parentNode.parentNode} : {}
+                toggleErrorMessage(val.node,false,options)
                 e.preventDefault();
-                console.error(`${formId}:${val.name} not valid`)
+                console.error(`${val.name} not valid`)
             }
         })
     }
 
+    // isComplete works for the form as a whole and fieldsets using either the node itself or the id
+    validateMagic.isComplete = (set) => !formData[getForm(getEl(set))]?.filter(val => val.set === getEl(set))?.some(val => !val.valid)
+
     // Add validate functions to validateMagic object
-    Object.keys(validate).forEach(key => {
-        validateMagic = {...validateMagic, [key]: validate[key]}
-    })
+    Object.keys(validate).forEach(key => validateMagic = {...validateMagic, [key]: validate[key]})
 
     Alpine.magic(pluginName, () => validateMagic)
 
@@ -197,22 +195,23 @@ const Plugin = function (Alpine) {
         /*                  Directive Specific Helper Functions                       */
         /* -------------------------------------------------------------------------- */
 
-        const formId = getFormId(el)
+        const form = getForm(el)
 
-        formModifiers[formId] = formModifiers[formId] || []
+        formModifiers[form] = formModifiers[form] || []
 
-        const allModifiers = [...modifiers, ...formModifiers[formId]]
+        const allModifiers = [...modifiers, ...formModifiers[form]]
 
         const hasModifier = (type, mods = allModifiers) => mods.includes(type)
 
         const isRequired = (field) => hasModifier('required') || field.hasAttribute('required') || false
 
-        function defaultData(field) {
-            let data = {name:getName(field), type:field.type, value:field.value, valid:!isRequired(field)}
-            // If this is a checkbox we don't want the value until checked and need an array
-            if (field.type === 'checkbox') data = {...data, value: '', array:[]}
-            // If this is a radio we don't want it's value until checked
-            if (field.type === 'radio') data = {...data, value: ''}
+        function defaultData(field, set) {
+            let data = {value:field.value, valid:!isRequired(field)}
+            if (set instanceof HTMLElement) data = {...data, set: set}
+            // If this is a checkbox or radio we don't want it's value until checked
+            if (isCheckRadio(field)) data = {...data, value: ''}
+            // If this is a group then it is not valid and marked as a group
+            if (isCheckRadio(field) && hasModifier('group')) data = {...data, valid: false, group:true}
             return data;
         }
 
@@ -222,69 +221,53 @@ const Plugin = function (Alpine) {
 
         if (el.matches('form')) {
             // el is form
-            // get all input, select, and textareas
-            const fields = findFields(el)
             // save all form modifiers
-            formModifiers[formId] = modifiers
+            formModifiers[form] = modifiers
 
-            /* ---------------------------- Populate formData --------------------------- */
+
+            // Get all fieldsets; if none then default on form as one big 'set'
+            const fieldsets = el.querySelectorAll('fieldset')
+            const sets = (fieldsets.length > 0) ? fieldsets : [el]
+
+            // sort through each set and find fields
+            sets.forEach((set) => {
+                const fields = findFields(set)
+                // console.log("🚀 ~ file: index.js ~ line 241 ~ fieldsets.forEach ~ fields", fields)
+                fields.forEach((field) => {
+                    updateFormData(field, defaultData(field, set))
+                    // Don't add click events if it has x-validate on it so we aren't duplicating function
+                    if (!field.getAttributeNames().some(attr => attr.includes('x-validate'))) {
+                        if (isClickField(field)) {
+                            addEvent(field,'click', checkIfValid)
+                        } else {
+                            addEvent(field,'blur',checkIfValid)
+                            if (hasModifier('input')) addEvent(field,'input', checkIfValid)
+                        }
+                    }
+                })
+            })
 
             /* -------------------- Add event triggers and formData -------------------- */
-            fields.forEach(field => {
-                // check for x-validate on field so we don't add event listeners twice
-                const xValidate = field.getAttributeNames().some(attr => attr.includes('x-validate'))
-                // Don't add events to buttons nor fields with x-validate
-                if (!isButton(field) && !xValidate) {
-                    updateFormData(formId, defaultData(field))
-                    if (isClickField(field)) {
-                        addEvent(field,'click', checkIfValid)
-                    } else {
-                        addEvent(field,'blur',checkIfValid)
-                        if (hasModifier('input')) addEvent(field,'input', checkIfValid)
-                    }
-                }
-            })
         }
 
         /* -------------------------------------------------------------------------- */
         /*      If x-validate on input, select, or textarea validate this field       */
         /* -------------------------------------------------------------------------- */
 
-        if (isField(el) && !isButton(el)) {
+        if (isField(el)) {
             // el is field element
-            const formId = getFormId(el)
 
-            let data = defaultData(el)
+            updateFormData(el, defaultData(el))
 
             if (el.type === 'checkbox' && hasModifier('group')) {
-                data = {...data, valid: false, group:true}
-
-                function checkGroupValid () {
-                    // groupArray = (!el.checked) ? groupArray.filter(item => item !== el.value) : [...groupArray, el.value]
-                    let fieldDataArrayLength = formData[formId].filter(val => val.name === el.name)[0].array.length
-                    // if checked than it is adding 1, otherwise subtracting 1
-                    fieldDataArrayLength = (el.checked) ? fieldDataArrayLength + 1 : fieldDataArrayLength - 1
-                    
-                    // get min number from expression
-                    const num = parseInt(expression && evaluate(expression)) || 1
-                    let valid = (fieldDataArrayLength >= num)
-
-                    // click groups should set their error two parents up
-                    toggleErrorMessage(el, valid, {errorNode: el.parentNode.parentNode})
-
-                    updateFormData(formId, {name:getName(el), value:el.value, valid:valid})
-                }
-
                 addEvent(el,'click', checkGroupValid)
-                
             } else if (isClickField(el)) {
                 addEvent(el,'click', checkIfValid)
-                if (el.type === 'radio' && hasModifier('group')) data = {...data, value: '', valid: false}
             } else {
                 addEvent(el,'blur',checkIfValid)
                 if (hasModifier('input')) addEvent(el,'input', checkIfValid)
             }
-            updateFormData(getFormId(el), data)
+
         }
 
         /* -------------------------------------------------------------------------- */
@@ -293,7 +276,6 @@ const Plugin = function (Alpine) {
 
         function checkIfValid() {
             const field = this
-            const formId = getFormId(field)
 
             // validation default based on type
             let validators = [field.type]
@@ -338,7 +320,7 @@ const Plugin = function (Alpine) {
             toggleErrorMessage(field, valid)
 
             /* ----------------------------- Update formData ---------------------------- */
-            updateFormData(formId, {name:getName(field), value:field.value, valid:valid})
+            updateFormData(field, {value:field.value, valid:valid})
 
             // add input event to text fields once it fails the first time
             if (!valid && field.matches('input, textarea') && !isClickField(field) && !hasModifier('bluronly')) addEvent(field,'input', checkIfValid)
@@ -346,6 +328,25 @@ const Plugin = function (Alpine) {
             if (!valid && hasModifier('refocus')) field.focus()
 
             return valid
+        }
+
+        /* -------------------------------------------------------------------------- */
+        /*          Check Validity for Groups of Checkboxes or Radio Buttons          */
+        /* -------------------------------------------------------------------------- */
+
+        function checkGroupValid () {
+            const field = this
+            let fieldDataArrayLength = formData[getForm(field)].filter(val => val.name === field.name)[0].array?.length || 0
+            
+            // if checked than it is adding 1, otherwise subtracting 1
+            fieldDataArrayLength = (field.checked) ? fieldDataArrayLength + 1 : fieldDataArrayLength - 1
+
+            // get min number from expression
+            const num = parseInt(expression && evaluate(expression)) || 1
+            let valid = (fieldDataArrayLength >= num)
+
+            // click groups should set their error two parents up
+            toggleErrorMessage(field, valid, {errorNode: field.parentNode.parentNode})
         }
 
     });
@@ -367,7 +368,7 @@ const Plugin = function (Alpine) {
         if (!valid) {
             // console.log(`${name} not valid`);
             setAttr(errorNode,'data-error',errorMsg)
-            setAttr(field,'invalid','')
+            setAttr(field,'invalid')
         } else {
             // console.log(`${name} valid`);
             errorNode.removeAttribute('data-error')
