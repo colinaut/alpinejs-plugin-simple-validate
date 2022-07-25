@@ -54,7 +54,7 @@ var Plugin = function(Alpine) {
       if (tempFormData.some((val) => val.name === name)) {
         let fieldData = tempFormData.filter((val) => val.name === name)[0];
         tempFormData = tempFormData.filter((val) => val.name !== name);
-        if (fieldData.type === "checkbox") {
+        if (field.type === "checkbox") {
           let tempArray = fieldData.array || [];
           if (data2.value !== "") {
             tempArray = tempArray.some((val) => val === field.value) ? tempArray.filter((val) => val !== data2.value) : [...tempArray, data2.value];
@@ -63,6 +63,7 @@ var Plugin = function(Alpine) {
         } else {
           data2 = { ...fieldData, ...data2 };
         }
+        console.log("replaceFormData", data2);
       }
       tempFormData.push(data2);
       formData[form] = tempFormData;
@@ -202,6 +203,7 @@ var Plugin = function(Alpine) {
       const num = parseInt(expression && evaluate(expression)) || 1;
       let valid = fieldDataArrayLength >= num;
       toggleErrorMessage(field, valid, { errorNode: field.parentNode.parentNode });
+      updateFormData(field, { value: field.value, valid });
     }
   });
   function toggleErrorMessage(field, valid, options = {}) {

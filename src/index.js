@@ -107,7 +107,7 @@ const Plugin = function (Alpine) {
                 // filter out this data from the rest
                 tempFormData = tempFormData.filter(val => val.name !== name)
                 // If checkbox then assume it's a group so update array and string value
-                if (fieldData.type === 'checkbox') {
+                if (field.type === 'checkbox') {
                     let tempArray = fieldData.array || []
                     if (data.value !== '') {
                         // If value exists remove it, otherwise add it
@@ -119,7 +119,7 @@ const Plugin = function (Alpine) {
                     // update data
                     data = {...fieldData, ...data}
                 }
-                // console.log('replaceFormData',data);
+                console.log('replaceFormData',data);
             }
 
             // Add data to tempFormData
@@ -349,6 +349,7 @@ const Plugin = function (Alpine) {
 
             // click groups should set their error two parents up
             toggleErrorMessage(field, valid, {errorNode: field.parentNode.parentNode})
+            updateFormData(field, {value:field.value, valid:valid})
         }
 
     });
