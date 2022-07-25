@@ -85,7 +85,7 @@
         <div class="form-validation-log">
             <h3>Validations</h3>
             <ul>
-                <template x-for="v in $validate.formData($refs.form)">
+                <template x-for="v in $validate.data($refs.form)">
                     <li>field: <b x-text="v.name"></b> <span x-text="v.value"></span> <i x-text="v.valid"></i></li>
                 </template>
                 

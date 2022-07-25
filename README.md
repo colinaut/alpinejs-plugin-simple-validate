@@ -26,8 +26,9 @@ It's still generally backwards compatible with a handful of small breaking chang
 
 * Form id no longer required since formData references the form node itself. Magic formData functions still work with id but $refs is now recommended
 * Fieldsets are detected when you use x-validate on form `<form>`
-* `$validate.isComplete()` can be used on either the form or individual fieldsets.
+* `$validate.isComplete(el)` can be used on either the form, fieldsets, or forms.
 * Improved number validation to avoid true/false from being shown as valid
+* `$validate.data(el)` returns data for form, fieldsets, or fields
 
 ## Simple Usage
 
@@ -106,18 +107,22 @@ You can add any specific validation like *email* or *tel*. Main difference betwe
 * `$validate.email('hi@hello.com')` returns true
 * `val === '' || $validate.email(val)` returns true if val is empty string or is a valid email address
 
-### Magic formData functions
+### Magic formData Functions
 
 When used on `<form>`, the `x-validate` every field is added to a reactive formData[formId] array. If only used on individual fields, `x-validate` only adds those fields to the formData[formId] array.
 
 * `@submit="$validate.submit"` used on form element. Validates current form; if validation fails errors are shown and the submit event is prevented.
-* `$validate.isComplete(form)` returns true or false depending on if every form field is validated or not. $refs is recommended but using a string of the form id will work.
-* `$validate.isComplete(fieldset)` returns true or false depending on if every form field in a fieldset is validated or not. * $refs is recommended but using a string of the fieldset id will work.
-* `$validate.formData(form)` returns an array of form data {name,node,value,valid}; for checkbox/radio groups {name,node,array,value:'string of array',valid, group: true}
-* `$validate.updateFormData(field,data)` allows you to directly add/update the formData array for a field.
-* `$validate.toggleErrorMessage(field,valid,options = {errorNode,errorMsg})` allows you to toggle the error message on any field. The options.errorNode overrides where `data-error` is added. This is mainly for checkbox/radio button groups since their error message it added to the wrapper element.
+* `$validate.isComplete(el)` returns true or false validity for form, fieldsets, or fields. \*
+* `$validate.data(el)` returns an array of form, fieldset or field data \*
 
 \* $refs is recommended for form, fieldset, and field variables, but a string of the id works as well.
+
+### Advanced Magic Functions
+
+These grant access to some of the backend functions — use at your own risk.
+
+* `$validate.updateData(field,data)` allows you to directly add/update the formData array for a field.
+* `$validate.toggleError(field,valid,options)` allows you to toggle the error message on any field (or really any element since it's not tied to the validation)
 
 #### Example formData
 

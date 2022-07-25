@@ -38,6 +38,22 @@
             <input type="wholenumber" id="wholenumber" name="wholenumber" x-validate.wholenumber x-model="number" />
             <p x-show="number !== ''"><b x-text="number"></b> is <b x-show="!$validate.wholenumber(number)" style="color:darkred">not</b> a whole number</p>
         </div>
+        <div id="animals" class="checkbox-wrapper" data-error-msg="you must pick at least one animal">
+            <h4>Favorite Animals *</h4>
+            <label><input type="checkbox" x-validate.group name="animal" id="cat" value="cat" /> 
+                Cat</label>
+            <label><input type="checkbox" x-validate.group name="animal" id="dog" value="dog" /> 
+                Dog</label>
+            <label><input type="checkbox" x-validate.group name="animal" id="bunny" value="bunny" /> 
+                Bunny</label>
+        </div>
+        <div id="transport" class="checkbox-wrapper" data-error-msg="you must pick at least one transport">
+            <h4>Favorite Transport *</h4>
+            <label><input type="radio" x-validate.group name="transport" value="bus" /> 
+                Bus</label>
+            <label><input type="radio" x-validate.group name="transport" value="train" /> 
+                Train</label>
+        </div>
         <div class="checkbox-wrapper">
             <h4>You must click this! *</h4>
             <label><input type="checkbox" name="yolo" id="yolo" value="Sell all my secret data!" required /> Sell all my secret data!
@@ -49,9 +65,9 @@
         </div>
         <div class="form-validation-log">
             <h3>Validations</h3>
-            <p><small>List of data from <code>$validate.formData($refs.form)</code></small></p>
+            <p><small>List of data from <code>$validate.data($refs.form)</code></small></p>
             <ul>
-                <template x-for="v in $validate.formData($refs.form)">
+                <template x-for="v in $validate.data($refs.form)">
                     <li>field: <b x-text="v.name"></b> <span x-text="v.value"></span> <i x-text="v.valid"></i></li>
                 </template>
             </ul>
