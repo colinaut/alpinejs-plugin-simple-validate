@@ -44,13 +44,18 @@
         </div>
         <div>
             <label for="select">Pick your favorite cheese! *</label>
-            <select name="cheese" id="cheese" required title="select favorite cheese">
-                <option disabled selected value="">-- choose one --</option>
+            <select name="cheese" id="cheese" required title="select favorite cheese" @change="$validate.makeRequired($refs.othercheese,($el.value === 'other'))">
+                <option disabled selected value="" >-- choose one --</option>
                 <option value="brie">brie</option>
                 <option value="cheddar">cheddar</option>
                 <option value="swiss">swiss</option>
                 <option value="gouda">gouda</option>
+                <option value="other">other</option>
             </select>
+        </div>
+        <div x-show="$validate.isRequired($refs.othercheese)">
+            <label for="othercheese">Other Cheese *</label>
+            <input type="text" id="othercheese" name="othercheese" x-validate="!/american/i.test($el.value)" x-ref="othercheese" data-error-msg="any cheese other than American"/>
         </div>
         <div id="animals" class="checkbox-wrapper" data-error-msg="you must pick at least one animal">
             <h4>Favorite Animals *</h4>

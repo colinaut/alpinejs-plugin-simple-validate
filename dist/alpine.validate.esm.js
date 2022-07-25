@@ -55,7 +55,7 @@ var Plugin = function(Alpine) {
   }
   const formData = Alpine.reactive({});
   const formModifiers = {};
-  function updateFormData(field, data2) {
+  function updateFormData(field, data2, required) {
     const form = getForm(field);
     const name = getName(field);
     data2 = { name, node: field, value: field.value, ...data2 };
@@ -63,17 +63,25 @@ var Plugin = function(Alpine) {
       let tempFormData = getData(form);
       if (tempFormData.some((val) => val.name === name)) {
         data2 = { ...getData(field), ...data2 };
+        if (required === true) {
+          data2.mods = [...data2.mods, "required"];
+          data2.valid = !isEmpty(data2.value) && data2.valid;
+        }
+        if (required === false) {
+          data2.mods = data2.mods.filter((val) => val !== "required");
+          data2.valid = isEmpty(data2.value) ? true : data2.valid;
+        }
+        if (required === true && isEmpty(data2.value))
+          data2.valid = false;
         if (isCheckbox(field) && !isEmpty(data2.value)) {
           let tempArray = data2.array;
-          console.log("\u{1F680} ~ file: index.js ~ line 122 ~ updateFormData ~ tempArray", tempArray);
-          tempArray = tempArray.some((val) => val === field.value) ? tempArray.filter((val) => val !== data2.value) : [...tempArray, data2.value];
+          tempArray = tempArray.some((val) => val === data2.value) ? tempArray.filter((val) => val !== data2.value) : [...tempArray, data2.value];
           data2 = { ...data2, array: tempArray, value: tempArray.toString() };
         }
         tempFormData = tempFormData.map((val) => val.name === name ? data2 : val);
       } else
         tempFormData.push(data2);
       formData[form] = tempFormData;
-      console.log(`formData`, formData[form]);
     }
   }
   const validate = {};
@@ -91,6 +99,8 @@ var Plugin = function(Alpine) {
   let validateMagic = {};
   validateMagic.data = (el) => getData(el);
   validateMagic.updateData = (field, data2) => updateFormData(getEl(field), data2);
+  validateMagic.makeRequired = (field, boolean) => updateFormData(getEl(field), {}, boolean);
+  validateMagic.isRequired = (field) => getData(field).mods.includes("required");
   validateMagic.toggleError = (field, valid, options) => toggleError(getEl(field), valid, options);
   validateMagic.submit = (e) => {
     getData(e.target).forEach((val) => {

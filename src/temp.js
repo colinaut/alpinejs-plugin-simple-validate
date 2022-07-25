@@ -116,7 +116,9 @@ const Plugin = function (Alpine) {
                 data = {...getData(field), ...data}
                 // add/remove modifier if sent
                 if (mod) {
+                    console.log("🚀 ~ file: temp.js ~ line 119 ~ updateFormData ~ mod", mod)
                     let dataMods = data.mods
+                    console.log("🚀 ~ file: temp.js ~ line 120 ~ updateFormData ~ dataMods", dataMods)
                     dataMods = (dataMods.includes(mod)) ? dataMods.filter(val => val !== mod) : [...dataMods, mod]
                     data.mods = dataModifiers
                 }
@@ -168,7 +170,7 @@ const Plugin = function (Alpine) {
     // TODO: change formData to just data. Have it detect if it is a form, fieldset or field and return the appropriate data
     // add or update formData
     validateMagic.updateFormData = (field,data) => updateFormData(getEl(field),data)
-    validateMagic.toggleMod = (field,validation) => updateFormData(getEl(field),{},validation)
+    validateMagic.toggleMod = (field,mod) => updateFormData(getEl(field),{},mod)
     // toggle error message
     validateMagic.toggleErrorMessage = (field,valid,options) => toggleErrorMessage(getEl(field),valid,options)
 
