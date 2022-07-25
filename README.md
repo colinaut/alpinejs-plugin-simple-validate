@@ -93,7 +93,7 @@ Checkboxes and radio buttons that share the same name update the same formData r
 
 You can validate that at least one is selected by adding `x-validate.group` to every checkbox or radio button in a named group. If you want the user to select multiple checkboxes, use an added expression `x-validate.group="2"`.
 
-***Note:** Checkbox and radio button groups add their error message on the wrapper for the group. It's assumed that each checkbox/radio is wrapped in a label or list item, and then has a wrapper around the group.*
+***Note:** Checkbox and radio button groups add their error message on the wrapper for the group. It's assumed that each checkbox/radio is wrapped in a label or list item, and then has a wrapper around the group. Likewise, if you want to change the default error msg add `data-error-msg` to the group wrapper element.*
 
 ## Magic function $validate
 

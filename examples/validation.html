@@ -38,6 +38,20 @@
             <input type="wholenumber" id="wholenumber" name="wholenumber" x-validate.wholenumber x-model="number" />
             <p x-show="number !== ''"><b x-text="number"></b> is <b x-show="!$validate.wholenumber(number)" style="color:darkred">not</b> a whole number</p>
         </div>
+        <div>
+            <label for="date">Best date in 2000 (yyyy/mm/dd) *</label>
+            <input id="date" name="date" type="text" required x-validate.date.yyyymmdd="$el.value.includes('2000')" data-error-msg="year 2000 date in yyyy/mm/dd format required"/>
+        </div>
+        <div>
+            <label for="select">Pick your favorite cheese! *</label>
+            <select name="cheese" id="cheese" required title="select favorite cheese">
+                <option disabled selected value="">-- choose one --</option>
+                <option value="brie">brie</option>
+                <option value="cheddar">cheddar</option>
+                <option value="swiss">swiss</option>
+                <option value="gouda">gouda</option>
+            </select>
+        </div>
         <div id="animals" class="checkbox-wrapper" data-error-msg="you must pick at least one animal">
             <h4>Favorite Animals *</h4>
             <label><input type="checkbox" x-validate.group name="animal" id="cat" value="cat" /> 
