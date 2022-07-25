@@ -8,7 +8,7 @@ const Plugin = function (Alpine) {
 
     const isHtmlElement = (el,type) => (type) ? el instanceof HTMLElement && el.matches(type) : el instanceof HTMLElement
 
-    const fieldSelector = `input:not([type="button"]):not([type="search"]):not([type="reset"]),select,textarea`
+    const fieldSelector = `input:not([type="button"]):not([type="search"]):not([type="reset"]):not([type="submit"]),select,textarea`
 
     const isField = (el) => isHtmlElement(el,fieldSelector)
 
