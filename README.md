@@ -29,6 +29,7 @@ It's still generally backwards compatible with a handful of small breaking chang
 * `$validate.isComplete(el)` can be used on either the form, fieldsets, or forms.
 * Improved number validation to avoid true/false from being shown as valid
 * `$validate.data(el)` returns data for form, fieldsets, or fields
+* `$validate.isRequired(field)` and `$validate.makeRequired(field,boolean)` added to change required validation for any field
 
 ## Simple Usage
 
@@ -114,6 +115,8 @@ When used on `<form>`, the `x-validate` every field is added to a reactive formD
 * `@submit="$validate.submit"` used on form element. Validates current form; if validation fails errors are shown and the submit event is prevented.
 * `$validate.isComplete(el)` returns true or false validity for form, fieldsets, or fields. \*
 * `$validate.data(el)` returns an array of form, fieldset or field data \*
+* `$validate.isRequired(field)` checks if a field is required
+* `$validate.makeRequired(field,boolean)` set boolean true to make a field required. false to turn off required. This only works fo the plugin required modifier. If you set required as an attribute on the field it will be checked regardless. This function is useful for when you need to change the requirements of a field for instance if selection of other shows an other input field.
 
 \* $refs is recommended for form, fieldset, and field variables, but a string of the id works as well.
 
