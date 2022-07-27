@@ -1,7 +1,25 @@
 const Plugin = function (Alpine) {
     // TODO: build some tests for this
 
-    const pluginName = 'validate'
+    /* -------------------------------------------------------------------------- */
+    /*                              STRING CONSTANTS                              */
+    /* -------------------------------------------------------------------------- */
+    /* ------------------- Named attibutes used multiple times ------------------ */
+    const DATA_ERROR_MSG = 'data-error-msg'
+    const DATA_ERROR = 'data-error'
+    const INVALID = 'invalid'
+    const PLUGIN_NAME = 'validate'
+
+    /* ----------------- These are just for better minification ------------------ */
+
+    const REQUIRED = 'required'
+    const INPUT = 'input'
+    const CHECKBOX = 'checkbox'
+    const RADIO = 'radio'
+    const GROUP = 'group'
+    const FORM = 'form'
+    const FIELDSET = 'fieldset'
+    const FIELD_SELECTOR = `input:not([type="button"]):not([type="search"]):not([type="reset"]):not([type="submit"]),select,textarea`
 
     /* -------------------------------------------------------------------------- */
     /*                              Helper Functions                              */
@@ -9,19 +27,19 @@ const Plugin = function (Alpine) {
 
     const isHtmlElement = (el,type) => (type) ? el instanceof HTMLElement && el.matches(type) : el instanceof HTMLElement
 
-    const fieldSelector = `input:not([type="button"]):not([type="search"]):not([type="reset"]):not([type="submit"]),select,textarea`
-
-    const isField = (el) => isHtmlElement(el,fieldSelector)
+    const isField = (el) => isHtmlElement(el,FIELD_SELECTOR)
 
     const isVarType = (x,type) => typeof x === type
 
-    const findFields = (el) => el.querySelectorAll(fieldSelector)
+    const includes = (array, string) => array.includes(string)
 
-    const isClickField = (el) => ['checkbox', 'radio', 'range'].includes(el.type)
+    const querySelectorAll = (el,selector) => el.querySelectorAll(selector)
 
-    const isCheckRadio = (el) => ['checkbox', 'radio'].includes(el.type)
+    const isClickField = (el) => includes([CHECKBOX, RADIO, 'range'],el.type)
 
-    const isCheckbox = (el) => el.type === 'checkbox'
+    const isCheckRadio = (el) => includes([CHECKBOX, RADIO],el.type)
+
+    const isCheckbox = (el) => el.type === CHECKBOX
 
     const addEvent = (el,event,callback) => el.addEventListener(event, callback)
 
@@ -33,7 +51,7 @@ const Plugin = function (Alpine) {
     const getEl = (el) => (isVarType(el,'string')) ? document.querySelector(`#${el}`) : (isHtmlElement(el)) ? el : false
 
     // is it is a form it returns the form; otherwise it returns the closest form parent
-    const getForm = (el) => (isHtmlElement(getEl(el),'form')) ? el : (isHtmlElement(getEl(el))) ? el.closest('form') : false
+    const getForm = (el) => (isHtmlElement(getEl(el),FORM)) ? el : (isHtmlElement(getEl(el))) ? el.closest(FORM) : false
 
     function getAdjacentSibling (elem, selector) {
         // Get the next sibling element
@@ -49,12 +67,10 @@ const Plugin = function (Alpine) {
 
     const cleanText = (str) => String(str).trim()
 
-    const isEmpty = (str) => cleanText(str) === ''
-
     const getData = (el) => {
         el = getEl(el)
         const data = formData[getForm(el)] || []
-        if (isHtmlElement(el,'fieldset')) return data.filter(val => val.set === el)
+        if (isHtmlElement(el,FIELDSET)) return data.filter(val => val.set === el)
         if (isField(el)) return data.filter(val => val.name === getName(el))[0]
         return data
     }
@@ -78,11 +94,11 @@ const Plugin = function (Alpine) {
         } else return false
 
         const date = new Date(isoFormattedStr)
-        console.log("🚀 ~ file: index.js ~ line 81 ~ isDate ~ isoFormattedStr", isoFormattedStr)
+        // console.log("🚀 ~ file: index.js ~ line 81 ~ isDate ~ isoFormattedStr", isoFormattedStr)
 
         const timestamp = date.getTime()
 
-        if (typeof timestamp !== 'number' || Number.isNaN(timestamp)) return false
+        if (!isVarType(timestamp,'number') || Number.isNaN(timestamp)) return false
 
         return date.toISOString().startsWith(isoFormattedStr)
     }
@@ -110,7 +126,7 @@ const Plugin = function (Alpine) {
         data = {name: name, node: field, value: field.value, ...data}
 
         // only add data if form and name available
-        if (isHtmlElement(form,'form') && name) {
+        if (isHtmlElement(form,FORM) && name) {
             // create a temp copy of formData array
             let tempFormData = getData(form)
 
@@ -118,27 +134,28 @@ const Plugin = function (Alpine) {
             if (tempFormData.some(val => val.name === name)) {
                 // Update data with the new data
                 data = {...getData(field), ...data}
+                // value shortcut to lessen code
+                const value = data.value
+                const isEmpty = !value.trim()
 
                 // add/remove required if set from $validate.makeRequired()
                 if (required === true) {
-                    data.mods = [...data.mods, 'required']
-                    // if empty then invalid
-                    data.valid = !isEmpty(data.value) && data.valid
+                    data.mods = [...data.mods, REQUIRED]
+                    // if empty then invalid so set to false; otherwise fall back on previous value
+                    data.valid = !isEmpty && data.valid
                 }
 
                 if (required === false) {
-                    data.mods = data.mods.filter(val => val !== 'required')
+                    data.mods = data.mods.filter(val => val !== REQUIRED)
                     // if empty then valid otherwise use data.valid
-                    data.valid = (isEmpty(data.value)) ? true : data.valid
+                    data.valid = (isEmpty) ? true : data.valid
                 }
 
-                if (required === true && isEmpty(data.value)) data.valid = false
-
-                // If checkbox then assume it's a group so update array and string value
-                if (isCheckbox(field) && !isEmpty(data.value)) {
+                // If checkbox then assume it's a group so update array and string value as long as there is a value
+                if (isCheckbox(field) && !value) {
                     let tempArray = data.array
                     // If value exists remove it, otherwise add it
-                    tempArray = (tempArray.some(val => val === data.value)) ? tempArray.filter(val => val !== data.value) : [...tempArray, data.value]
+                    tempArray = (tempArray.some(val => val === value)) ? tempArray.filter(val => val !== value) : [...tempArray, value]
                     // update with revised array
                     data = {...data, array: tempArray, value: tempArray.toString()}
                 }
@@ -167,9 +184,10 @@ const Plugin = function (Alpine) {
     validate.integer = str => validate.number(str) && Number.isInteger(Number(str))
     validate.wholenumber = str => validate.integer(str) && Number(str) > 0
     validate.date = str => isDate(str,dateFormats[0])
-    validate.date[dateFormats[0]] = str => isDate(str,dateFormats[0])
-    validate.date[dateFormats[1]] = str => isDate(str,dateFormats[1])
-    validate.date[dateFormats[2]] = str => isDate(str,dateFormats[2])
+
+    dateFormats.forEach(format => {
+        validate.date[format] = str => isDate(str,format)
+    })
 
     /* -------------------------------------------------------------------------- */
     /*                          Validate Magic Function                           */
@@ -182,7 +200,7 @@ const Plugin = function (Alpine) {
     // Turn on or off required for a field; useful when a field makes another field required like selecting other adds an other input field
     validateMagic.makeRequired = (field,boolean) => updateFormData(getEl(field),{},boolean)
     // simple check for required
-    validateMagic.isRequired = (field) => getData(field).mods.includes('required')
+    validateMagic.isRequired = (field) => includes(getData(field).mods,REQUIRED)
     // toggle error message
     validateMagic.toggleError = (field,valid,options) => toggleError(getEl(field),valid,options)
 
@@ -206,13 +224,13 @@ const Plugin = function (Alpine) {
     // Add validate functions to validateMagic object
     Object.keys(validate).forEach(key => validateMagic = {...validateMagic, [key]: validate[key]})
 
-    Alpine.magic(pluginName, () => validateMagic)
+    Alpine.magic(PLUGIN_NAME, () => validateMagic)
 
     /* -------------------------------------------------------------------------- */
     /*                            x-validate directive                            */
     /* -------------------------------------------------------------------------- */
 
-    Alpine.directive(pluginName, (el, {
+    Alpine.directive(PLUGIN_NAME, (el, {
         modifiers,
         expression
     }, {
@@ -225,48 +243,47 @@ const Plugin = function (Alpine) {
 
         const form = getForm(el)
 
+        // grab modifiers from the form attribute or set is this is the first time it is run
         formModifiers[form] = formModifiers[form] || []
 
+        // add any extra modifiers if there are any on the field itself
         const allModifiers = [...modifiers, ...formModifiers[form]]
 
-        const hasModifier = (type, mods = allModifiers) => mods.includes(type)
-
-        const isRequired = (field) => hasModifier('required') || field.hasAttribute('required') || false
-
         const defaultData = (field, set) => {
-            let data = {array: isCheckbox(field) && [],value:(isCheckRadio(field)) ? "" : field.value, valid:!(isRequired(field) || hasModifier('group')), mods: allModifiers}
+            const isRequired = (field) => includes(allModifiers,REQUIRED) || includes(allModifiers,GROUP) || field.hasAttribute(REQUIRED) || false
+            let data = {array: isCheckbox(field) && [],value:(isCheckRadio(field)) ? "" : field.value, valid:!isRequired(field), mods: allModifiers}
             if (set) data = {...data, set: set}
             return data
         }
 
         function addEvents(field) {
-            let eventType = (isClickField(field)) ? 'click' : ((isHtmlElement(field,'select'))) ? 'change' :'blur'
+            const eventType = (isClickField(field)) ? 'click' : ((isHtmlElement(field,'select'))) ? 'change' :'blur'
             addEvent(field,eventType,checkIfValid)
-            if (hasModifier('input') && !isClickField(field)) addEvent(field,'input', checkIfValid)
+            if (includes(allModifiers,INPUT) && !isClickField(field)) addEvent(field,INPUT, checkIfValid)
         }
 
         /* -------------------------------------------------------------------------- */
         /*                 If x-validate on <form> validate all fields                */
         /* -------------------------------------------------------------------------- */
 
-        if (isHtmlElement(el,'form')) {
+        if (isHtmlElement(el,FORM)) {
             // el is form
             // save all form modifiers
             formModifiers[form] = modifiers
 
 
             // Get all fieldsets; if none then default on form as one big 'set'
-            const fieldsets = el.querySelectorAll('fieldset')
+            const fieldsets = querySelectorAll(el,FIELDSET)
             const sets = (fieldsets.length > 0) ? fieldsets : [el]
 
             // sort through each set and find fields
             sets.forEach((set) => {
-                const fields = findFields(set)
+                const fields = querySelectorAll(set,FIELD_SELECTOR)
                 // console.log("🚀 ~ file: index.js ~ line 241 ~ fieldsets.forEach ~ fields", fields)
                 fields.forEach((field) => {
                     updateFormData(field, defaultData(field, set))
                     // Don't add click events if it has x-validate on it so we aren't duplicating function
-                    if (!field.getAttributeNames().some(attr => attr.includes('x-validate'))) addEvents(field)
+                    if (!field.getAttributeNames().some(attr => includes(attr,'x-validate'))) addEvents(field)
                 })
             })
 
@@ -289,47 +306,44 @@ const Plugin = function (Alpine) {
 
         function checkIfValid() {
             const field = this
+            const value = field.value.trim()
             const fieldData = getData(field)
 
-            // validation default based on type
-            let validators = [field.type]
-
-            // If this x-validate is on a field then get add modifiers
-            const fieldDataModifiers = fieldData.mods
-            validators = (fieldDataModifiers) ? [...validators, ...fieldDataModifiers] : validators
-            // console.log("🚀 ~ file: index.js ~ line 294 ~ checkIfValid ~ validators", validators)
+            // validation default based on type and add mods from data
+            let validators = [field.type, ...fieldData.mods]
+            // add required if in attribute since our required is better as trims whitespace and doesn't get tricked by a bunch of spaces.
+            if (field.hasAttribute(REQUIRED)) validators = [...validators, REQUIRED]
 
             let valid = true
 
-            if (isCheckbox(field) && hasModifier('group',validators)) {
-                const field = this
+            if (isCheckbox(field) && includes(validators,GROUP)) {
                 // radio buttons don't have arrays so force it to have one so this test works
-                let fieldDataArrayLength = fieldData.array.length
+                let arrayLength = fieldData.array.length
 
                 // if checked than it is adding 1, otherwise subtracting 1
-                fieldDataArrayLength = (field.checked) ? fieldDataArrayLength + 1 : fieldDataArrayLength - 1
+                arrayLength = (field.checked) ? arrayLength + 1 : arrayLength - 1
 
                 // get min number from expression
                 const num = parseInt(expression && evaluate(expression)) || 1
-                valid = (fieldDataArrayLength >= num)
+                valid = (arrayLength >= num)
 
             } else {
                 /* --------------------- Check validity the browser way --------------------- */
                 valid = field.checkValidity();
 
-                // Allow for 'required' modifier if don't want to use the normal browser required attribute
+                // Allow for REQUIRED modifier if don't want to use the normal browser required attribute
                 // Note: note this also works for radio button groups since if it's clicked this triggers and it's valid
-                if (hasModifier('required',validators) && (isEmpty(field.value) || (isCheckRadio(field) && !field.checked))) valid = false;
+                if (includes(validators,REQUIRED) && (!value || (isCheckRadio(field) && !field.checked))) valid = false;
 
                 /* -------------- If field.value is still valid run other validators --------------- */
                 if (valid) {
                     for (let type of validators) {
-                        if (typeof validate[type] === 'function') {
+                        if (isVarType(validate[type],'function')) {
                             if(type === 'date') {
                                 const matchingFormat = validators.filter(val => dateFormats.indexOf(val) !== -1)
-                                valid = validate.date[matchingFormat[0] || dateFormats[0]](field.value);
+                                valid = validate.date[matchingFormat[0] || dateFormats[0]](value);
                             } else {
-                                valid = validate[type](field.value);
+                                valid = validate[type](value);
                             }
                             break;
                         }
@@ -348,9 +362,9 @@ const Plugin = function (Alpine) {
             updateFormData(field, {value:field.value, valid:valid})
 
             // add input event to text fields once it fails the first time
-            if (!valid && isHtmlElement(field,'input, textarea') && !isClickField(field) && !hasModifier('bluronly')) addEvent(field,'input', checkIfValid)
+            if (!valid && isHtmlElement(field,'input, textarea') && !isClickField(field) && !includes(validators,'bluronly')) addEvent(field,INPUT, checkIfValid)
 
-            if (!valid && hasModifier('refocus')) field.focus()
+            if (!valid && includes(validators,'refocus')) field.focus()
 
             return valid
         }
@@ -365,23 +379,23 @@ const Plugin = function (Alpine) {
         let {errorNode, errorMsg} = options
         const name = getName(field) || '';
         /* ---------------------------- Add Error Message --------------------------- */
-        if (getData(field).mods.includes('group')) {
+        if (includes(getData(field).mods,GROUP)) {
             errorNode = field.parentNode.parentNode
-            errorMsg = getAttr(errorNode, 'data-error-msg')
+            errorMsg = getAttr(errorNode, DATA_ERROR_MSG)
         }
         // If adjacent element with .error-msg class use that. Otherwise use parent.
         errorNode = errorNode || getAdjacentSibling(field,'.error-msg') || field.parentNode;
-        errorMsg = errorMsg || getAttr(field,'data-error-msg') || `${name} required`;
+        errorMsg = errorMsg || getAttr(field,DATA_ERROR_MSG) || `${name} required`;
         // console.log("🚀 ~ file: index.js ~ line 312 ~ checkIfValid ~ errorNode", errorNode)
 
         if (!valid) {
             // console.log(`${name} not valid`);
-            setAttr(errorNode,'data-error',errorMsg)
-            setAttr(field,'invalid')
+            setAttr(errorNode,DATA_ERROR,errorMsg)
+            setAttr(field,INVALID)
         } else {
             // console.log(`${name} valid`);
-            errorNode.removeAttribute('data-error')
-            field.removeAttribute('invalid')
+            errorNode.removeAttribute(DATA_ERROR)
+            field.removeAttribute(INVALID)
         }
     }
 
