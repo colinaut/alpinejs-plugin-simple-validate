@@ -28,7 +28,7 @@ var Plugin = function(Alpine) {
   const isEmpty = (str) => cleanText(str) === "";
   const getData = (el) => {
     el = getEl(el);
-    data = formData[getForm(el)] || [];
+    const data = formData[getForm(el)] || [];
     if (isHtmlElement(el, "fieldset"))
       return data.filter((val) => val.set === el);
     if (isField(el))
@@ -55,32 +55,32 @@ var Plugin = function(Alpine) {
   }
   const formData = Alpine.reactive({});
   const formModifiers = {};
-  function updateFormData(field, data2, required) {
+  function updateFormData(field, data, required) {
     const form = getForm(field);
     const name = getName(field);
-    data2 = { name, node: field, value: field.value, ...data2 };
+    data = { name, node: field, value: field.value, ...data };
     if (isHtmlElement(form, "form") && name) {
       let tempFormData = getData(form);
       if (tempFormData.some((val) => val.name === name)) {
-        data2 = { ...getData(field), ...data2 };
+        data = { ...getData(field), ...data };
         if (required === true) {
-          data2.mods = [...data2.mods, "required"];
-          data2.valid = !isEmpty(data2.value) && data2.valid;
+          data.mods = [...data.mods, "required"];
+          data.valid = !isEmpty(data.value) && data.valid;
         }
         if (required === false) {
-          data2.mods = data2.mods.filter((val) => val !== "required");
-          data2.valid = isEmpty(data2.value) ? true : data2.valid;
+          data.mods = data.mods.filter((val) => val !== "required");
+          data.valid = isEmpty(data.value) ? true : data.valid;
         }
-        if (required === true && isEmpty(data2.value))
-          data2.valid = false;
-        if (isCheckbox(field) && !isEmpty(data2.value)) {
-          let tempArray = data2.array;
-          tempArray = tempArray.some((val) => val === data2.value) ? tempArray.filter((val) => val !== data2.value) : [...tempArray, data2.value];
-          data2 = { ...data2, array: tempArray, value: tempArray.toString() };
+        if (required === true && isEmpty(data.value))
+          data.valid = false;
+        if (isCheckbox(field) && !isEmpty(data.value)) {
+          let tempArray = data.array;
+          tempArray = tempArray.some((val) => val === data.value) ? tempArray.filter((val) => val !== data.value) : [...tempArray, data.value];
+          data = { ...data, array: tempArray, value: tempArray.toString() };
         }
-        tempFormData = tempFormData.map((val) => val.name === name ? data2 : val);
+        tempFormData = tempFormData.map((val) => val.name === name ? data : val);
       } else
-        tempFormData.push(data2);
+        tempFormData.push(data);
       formData[form] = tempFormData;
     }
   }
@@ -98,7 +98,7 @@ var Plugin = function(Alpine) {
   validate.date[dateFormats[2]] = (str) => isDate(str, dateFormats[2]);
   let validateMagic = {};
   validateMagic.data = (el) => getData(el);
-  validateMagic.updateData = (field, data2) => updateFormData(getEl(field), data2);
+  validateMagic.updateData = (field, data) => updateFormData(getEl(field), data);
   validateMagic.makeRequired = (field, boolean) => updateFormData(getEl(field), {}, boolean);
   validateMagic.isRequired = (field) => getData(field).mods.includes("required");
   validateMagic.toggleError = (field, valid, options) => toggleError(getEl(field), valid, options);
@@ -127,10 +127,10 @@ var Plugin = function(Alpine) {
     const hasModifier = (type, mods = allModifiers) => mods.includes(type);
     const isRequired = (field) => hasModifier("required") || field.hasAttribute("required") || false;
     const defaultData = (field, set) => {
-      let data2 = { array: isCheckbox(field) && [], value: isCheckRadio(field) ? "" : field.value, valid: !(isRequired(field) || hasModifier("group")), mods: allModifiers };
+      let data = { array: isCheckbox(field) && [], value: isCheckRadio(field) ? "" : field.value, valid: !(isRequired(field) || hasModifier("group")), mods: allModifiers };
       if (set)
-        data2 = { ...data2, set };
-      return data2;
+        data = { ...data, set };
+      return data;
     };
     function addEvents(field) {
       let eventType = isClickField(field) ? "click" : isHtmlElement(field, "select") ? "change" : "blur";

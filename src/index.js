@@ -53,7 +53,7 @@ const Plugin = function (Alpine) {
 
     const getData = (el) => {
         el = getEl(el)
-        data = formData[getForm(el)] || []
+        const data = formData[getForm(el)] || []
         if (isHtmlElement(el,'fieldset')) return data.filter(val => val.set === el)
         if (isField(el)) return data.filter(val => val.name === getName(el))[0]
         return data
