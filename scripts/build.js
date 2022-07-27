@@ -29,7 +29,6 @@ build({
     entryPoints: [`builds/module.js`],
     outfile: `dist/${pluginName}.esm.js`,
     bundle: true,
-    bundle: true,
     platform: 'neutral',
     mainFields: ['main', 'module'],
     target: "es2019",

@@ -39,7 +39,11 @@
             <p x-show="number !== ''"><b x-text="number"></b> is <b x-show="!$validate.wholenumber(number)" style="color:darkred">not</b> a whole number</p>
         </div>
         <div>
-            <label for="date">Best date in 2000 (yyyy/mm/dd) *</label>
+            <label for="date">Favorite Website</label>
+            <input id="url" name="url" type="url" required />
+        </div>
+        <div>
+            <label for="url">Best date in 2000 (yyyy/mm/dd) *</label>
             <input id="date" name="date" type="text" required x-validate.date.yyyymmdd="$el.value.includes('2000')" data-error-msg="year 2000 date in yyyy/mm/dd format required"/>
         </div>
         <div>

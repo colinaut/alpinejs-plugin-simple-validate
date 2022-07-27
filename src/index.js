@@ -43,7 +43,7 @@ const Plugin = function (Alpine) {
         // If selector then return if matches, otherwise return false
         if (isHtmlElement(sibling, selector)) return sibling;
         return false;
-    };
+    }
 
     const getName = (field) => field.name || getAttr(field,'id');
 
@@ -66,18 +66,19 @@ const Plugin = function (Alpine) {
     const dateFormats = ['mmddyyyy','ddmmyyyy','yyyymmdd']
 
     function isDate(str, format) {
-        const [p1, p2, p3] = str.split(/[-\/.]/)
+        const [p1, p2, p3] = str.split(/[-/.]/)
 
         let isoFormattedStr
-        if (format === dateFormats[0] && /^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})$/.test(str)) {
+        if (format === dateFormats[0] && /^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/.test(str)) {
             isoFormattedStr = `${p3}-${p1}-${p2}`
-        } else if (format === dateFormats[1] && /^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})$/.test(str)) {
+        } else if (format === dateFormats[1] && /^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/.test(str)) {
             isoFormattedStr = `${p3}-${p2}-${p1}`
-        } else if (format === dateFormats[2] && /^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})$/.test(str)) {
+        } else if (format === dateFormats[2] && /^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/.test(str)) {
             isoFormattedStr = `${p1}-${p2}-${p3}`
         } else return false
 
         const date = new Date(isoFormattedStr)
+        console.log("🚀 ~ file: index.js ~ line 81 ~ isDate ~ isoFormattedStr", isoFormattedStr)
 
         const timestamp = date.getTime()
 
@@ -159,9 +160,9 @@ const Plugin = function (Alpine) {
     const validate = {}
 
     validate.email = str => /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(cleanText(str))
-    validate.tel = str => /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/.test(cleanText(str))
+    validate.tel = str => /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/.test(cleanText(str))
     validate.website = str => /^(https?:\/\/)?(www\.)?([a-zA-Z0-9]+(-?[a-zA-Z0-9])*\.)+[\w]{2,}(\/\S*)?$/.test(cleanText(str))
-    validate.url = str => /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()!@:%_\+.~#?&\/\/=]*)/.test(cleanText(str))
+    validate.url = str => /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()!@:%_+.~#?&/=]*)/.test(cleanText(str))
     validate.number = str => !isNaN(parseFloat(str)) && isFinite(str)
     validate.integer = str => validate.number(str) && Number.isInteger(Number(str))
     validate.wholenumber = str => validate.integer(str) && Number(str) > 0
