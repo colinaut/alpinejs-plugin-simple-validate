@@ -4,12 +4,10 @@ const Plugin = function (Alpine) {
     /* -------------------------------------------------------------------------- */
     /*                              STRING CONSTANTS                              */
     /* -------------------------------------------------------------------------- */
-    /* ------------------- Named attibutes used multiple times ------------------ */
+    /* ------------------- Named attributes used multiple times ------------------ */
     const DATA_ERROR_MSG = 'data-error-msg'
     const DATA_ERROR = 'data-error'
     const ERROR_MSG_CLASS = 'error-msg'
-    const INVALID = 'aria-invalid'
-    const ARIA_ERRORMESSAGE = 'aria-errormessage'
     const PLUGIN_NAME = 'validate'
 
     /* ----------------- These are just for better minification ------------------ */
@@ -90,6 +88,7 @@ const Plugin = function (Alpine) {
         const [p1, p2, p3] = str.split(/[-/.]/)
 
         let isoFormattedStr
+
         if (format === dateFormats[0] && /^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/.test(str)) {
             isoFormattedStr = `${p3}-${p1}-${p2}`
         } else if (format === dateFormats[1] && /^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/.test(str)) {
@@ -217,6 +216,7 @@ const Plugin = function (Alpine) {
                 // click groups should set their error two parents up.
                 toggleError(val.node,false)
                 e.preventDefault();
+                // eslint-disable-next-line no-console -- this error helps with submit and is the only one that should stay in production.
                 console.error(`${val.name} not valid`)
             }
         })
@@ -274,7 +274,6 @@ const Plugin = function (Alpine) {
             // el is form
             // save all form modifiers
             formModifiers[form] = modifiers
-
 
             // Get all fieldsets; if none then default on form as one big 'set'
             const fieldsets = querySelectorAll(el,FIELDSET)
@@ -344,7 +343,6 @@ const Plugin = function (Alpine) {
                 if (isRequired && (!value || (isCheckRadio(field) && !field.checked))) valid = false
                 // if valid and has value run it
                 if (valid && value) {
-                    // only run if valid currently
                     /* ----------------------------- run validators ----------------------------- */
                     for (let type of validators) {
                         if (isVarType(validate[type],'function')) {
@@ -382,7 +380,7 @@ const Plugin = function (Alpine) {
     /* ------------------------- End Validate Directive ------------------------- */
 
     /* -------------------------------------------------------------------------- */
-    /*                              Add Error Message                             */
+    /*                            Toggle Error Message                            */
     /* -------------------------------------------------------------------------- */
 
     function toggleError(field,valid) {
@@ -391,23 +389,27 @@ const Plugin = function (Alpine) {
         const isGroup = includes(getData(field).mods,'group')
         const parentNode = (isGroup) ? field.parentNode.parentNode : field.parentNode
 
-        const errorMsg = getAttr(field,DATA_ERROR_MSG) || `${name} required`
         const errorMsgNode = getEl(getErrorMsgId(name))
+
+        /* ---------------------------- Set aria-invalid ---------------------------- */
+        setAttr(field,'aria-invalid',!valid)
 
         /* ------------------ Check valid and set and remove error ------------------ */
         if (valid) {
             // console.log(`${name} valid`);
-            setAttr(field,INVALID,'false')
-            if (errorMsgNode) setAttr(errorMsgNode, HIDDEN)
+            setAttr(errorMsgNode, HIDDEN)
             parentNode.removeAttribute(DATA_ERROR)
             // hideErrorMsg()
         } else {
             // console.log(`${name} not valid`);
-            setAttr(field,INVALID,'true')
-            if (errorMsgNode) errorMsgNode.removeAttribute(HIDDEN)
-            setAttr(parentNode,DATA_ERROR, errorMsg)
+            errorMsgNode.removeAttribute(HIDDEN)
+            setAttr(parentNode,DATA_ERROR, errorMsgNode.textContent)
         }
     }
+
+    /* -------------------------------------------------------------------------- */
+    /*                        Set Up Error Msg Node in DOM                        */
+    /* -------------------------------------------------------------------------- */
 
     function addErrorMsg(field) {
         const name = getName(field)
@@ -421,22 +423,21 @@ const Plugin = function (Alpine) {
         const span = document.createElement('span')
         span.className = ERROR_MSG_CLASS
         const errorMsgNode = getAdjacentSibling(targetNode, `.${ERROR_MSG_CLASS}`) || span
+
         // add id tag, hidden attribute, and class name
         const errorMsgId = getErrorMsgId(name)
         setAttr(errorMsgNode, 'id', errorMsgId)
         setAttr(errorMsgNode, HIDDEN)
 
         // add error text if it isn't already there
-        if (!errorMsgNode.innerHTML) errorMsgNode.textContent = getAttr(field,DATA_ERROR_MSG) || `${name} required`
+        if (!errorMsgNode.innerHTML) errorMsgNode.textContent = getAttr(field,DATA_ERROR_MSG) || `${name.replace(/[-_]/g, ' ')} required`
 
         // Add aria-errormessage using the ID to field
-        setAttr(field,ARIA_ERRORMESSAGE,errorMsgId)
+        setAttr(field,'aria-errormessage',errorMsgId)
 
         //  Only add element does not yet exist
         if (!getEl(errorMsgId)) targetNode.after(errorMsgNode)
     }
-
-
 }
 
 export default Plugin
