@@ -117,13 +117,22 @@ input[type="checkbox"], input[type="radio"] {
     padding-right: .8rem;
 }
 [hidden] {
-    display: none;
+    visbility: hidden;
 }
-.error-msg:not([hidden]) {
+.error-msg[hidden] {
+    opacity: 0;
+    transform: scale(0);
+}
+.error-msg {
     font-size: 0.8rem;
     font-weight: 700;
     color: darkred;
+    transform-origin: left;
+    transition: all 200ms;
     display: block;
+}
+.error-msg:not([hidden]) {
+    visbility: visible;
 }
 
 input[aria-invalid="true"],

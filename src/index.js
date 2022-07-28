@@ -339,11 +339,11 @@ const Plugin = function (Alpine) {
             } else {
                 /* --------------------- Check validity the browser way --------------------- */
                 valid = field.checkValidity();
-    
+                console.log('🚀 checkIfValid 0', isRequired, valid, !value, !field.checked, (isRequired && (!value || !field.checked)));
                 /* -------------------------- Check validity my way ------------------------- */
                 // if required and empty or not checked then invalid
-                if (isRequired && (!value || !field.checked)) valid = false
-
+                if (isRequired && (!value || (isCheckRadio(field) && !field.checked))) valid = false
+                console.log('🚀 checkIfValid 1', valid);
                 // if valid and has value run it
                 if (valid && value) {
                     // only run if valid currently
@@ -366,6 +366,8 @@ const Plugin = function (Alpine) {
                     if (test === false) valid = false
                 }
             }
+
+            console.log('🚀 checkIfValid 2', valid);
 
             toggleError(field, valid)
 
