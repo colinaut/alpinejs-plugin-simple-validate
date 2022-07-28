@@ -9,7 +9,7 @@ The x-validate directive allows for simple validation and error display. It also
 
 ## Update 1.6
 
-Validation I've changed validation and error messages to comply with aria practices. You may need to change your css but this is otherwise backwards compatible from version 1.5.
+I've changed validation and error messages to comply with aria practices. You may need to change your css but this is otherwise backwards compatible from version 1.5.
 
 * `aria-invalid` and `aria-errormessage` are added.
 * Error messages are displayed in an adjacent element with `error-msg` class id matched with the `aria-errormessage`
