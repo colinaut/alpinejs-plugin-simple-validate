@@ -15,7 +15,9 @@ __export(exports, {
 var Plugin = function(Alpine) {
   const DATA_ERROR_MSG = "data-error-msg";
   const DATA_ERROR = "data-error";
-  const INVALID = "invalid";
+  const ERROR_MSG_CLASS = "error-msg";
+  const INVALID = "aria-invalid";
+  const ARIA_ERRORMESSAGE = "aria-errormessage";
   const PLUGIN_NAME = "validate";
   const REQUIRED = "required";
   const INPUT = "input";
@@ -25,6 +27,7 @@ var Plugin = function(Alpine) {
   const FORM = "form";
   const FIELDSET = "fieldset";
   const FIELD_SELECTOR = `input:not([type="button"]):not([type="search"]):not([type="reset"]):not([type="submit"]),select,textarea`;
+  const HIDDEN = "hidden";
   const isHtmlElement = (el, type) => type ? el instanceof HTMLElement && el.matches(type) : el instanceof HTMLElement;
   const isField = (el) => isHtmlElement(el, FIELD_SELECTOR);
   const isVarType = (x, type) => typeof x === type;
@@ -36,16 +39,8 @@ var Plugin = function(Alpine) {
   const addEvent = (el, event, callback) => el.addEventListener(event, callback);
   const getAttr = (el, attr) => el.getAttribute(attr);
   const setAttr = (el, attr, value = "") => el.setAttribute(attr, value);
-  const getEl = (el) => isVarType(el, "string") ? document.querySelector(`#${el}`) : isHtmlElement(el) ? el : false;
+  const getEl = (el) => isVarType(el, "string") ? document.getElementById(el) : isHtmlElement(el) ? el : false;
   const getForm = (el) => isHtmlElement(getEl(el), FORM) ? el : isHtmlElement(getEl(el)) ? el.closest(FORM) : false;
-  function getAdjacentSibling(elem, selector) {
-    var sibling = elem.nextElementSibling;
-    if (!selector)
-      return sibling;
-    if (isHtmlElement(sibling, selector))
-      return sibling;
-    return false;
-  }
   const getName = (field) => field.name || getAttr(field, "id");
   const cleanText = (str) => String(str).trim();
   const getData = (el) => {
@@ -57,6 +52,15 @@ var Plugin = function(Alpine) {
       return data.filter((val) => val.name === getName(el))[0];
     return data;
   };
+  function getAdjacentSibling(elem, selector) {
+    var sibling = elem.nextElementSibling;
+    if (!selector)
+      return sibling;
+    if (isHtmlElement(sibling, selector))
+      return sibling;
+    return false;
+  }
+  const getErrorMsgId = (name) => `error-msg-${name}`;
   const dateFormats = ["mmddyyyy", "ddmmyyyy", "yyyymmdd"];
   function isDate(str, format) {
     const [p1, p2, p3] = str.split(/[-/.]/);
@@ -123,12 +127,11 @@ var Plugin = function(Alpine) {
   validateMagic.updateData = (field, data) => updateFormData(getEl(field), data);
   validateMagic.makeRequired = (field, boolean) => updateFormData(getEl(field), {}, boolean);
   validateMagic.isRequired = (field) => includes(getData(field).mods, REQUIRED);
-  validateMagic.toggleError = (field, valid, options) => toggleError(getEl(field), valid, options);
+  validateMagic.toggleError = (field, valid) => toggleError(getEl(field), valid);
   validateMagic.submit = (e) => {
     getData(e.target).forEach((val) => {
       if (val.valid === false) {
-        const options = val.group ? { errorNode: val.node.parentNode.parentNode } : {};
-        toggleError(val.node, false, options);
+        toggleError(val.node, false);
         e.preventDefault();
         console.error(`${val.name} not valid`);
       }
@@ -167,13 +170,16 @@ var Plugin = function(Alpine) {
         const fields = querySelectorAll(set, FIELD_SELECTOR);
         fields.forEach((field) => {
           updateFormData(field, defaultData(field, set));
-          if (!field.getAttributeNames().some((attr) => includes(attr, "x-validate")))
+          if (!field.getAttributeNames().some((attr) => includes(attr, "x-validate"))) {
             addEvents(field);
+            addErrorMsg(field);
+          }
         });
       });
     }
     if (isField(el)) {
       updateFormData(el, defaultData(el));
+      addErrorMsg(el);
       addEvents(el);
     }
     function checkIfValid() {
@@ -183,6 +189,7 @@ var Plugin = function(Alpine) {
       let validators = [field.type, ...fieldData.mods];
       if (field.hasAttribute(REQUIRED))
         validators = [...validators, REQUIRED];
+      const isRequired = includes(validators, REQUIRED);
       let valid = true;
       if (isCheckbox(field) && includes(validators, GROUP)) {
         let arrayLength = fieldData.array.length;
@@ -191,9 +198,9 @@ var Plugin = function(Alpine) {
         valid = arrayLength >= num;
       } else {
         valid = field.checkValidity();
-        if (includes(validators, REQUIRED) && (!value || isCheckRadio(field) && !field.checked))
+        if (isRequired && (!value || !field.checked))
           valid = false;
-        if (valid) {
+        if (valid && value) {
           for (let type of validators) {
             if (isVarType(validate[type], "function")) {
               if (type === "date") {
@@ -219,22 +226,38 @@ var Plugin = function(Alpine) {
       return valid;
     }
   });
-  function toggleError(field, valid, options = {}) {
-    let { errorNode, errorMsg } = options;
-    const name = getName(field) || "";
-    if (includes(getData(field).mods, GROUP)) {
-      errorNode = field.parentNode.parentNode;
-      errorMsg = getAttr(errorNode, DATA_ERROR_MSG);
-    }
-    errorNode = errorNode || getAdjacentSibling(field, ".error-msg") || field.parentNode;
-    errorMsg = errorMsg || getAttr(field, DATA_ERROR_MSG) || `${name} required`;
-    if (!valid) {
-      setAttr(errorNode, DATA_ERROR, errorMsg);
-      setAttr(field, INVALID);
+  function toggleError(field, valid) {
+    const name = getName(field);
+    const isGroup = includes(getData(field).mods, "group");
+    const parentNode = isGroup ? field.parentNode.parentNode : field.parentNode;
+    const errorMsg = getAttr(field, DATA_ERROR_MSG) || `${name} required`;
+    const errorMsgNode = getEl(getErrorMsgId(name));
+    if (valid) {
+      setAttr(field, INVALID, "false");
+      if (errorMsgNode)
+        setAttr(errorMsgNode, HIDDEN);
+      parentNode.removeAttribute(DATA_ERROR);
     } else {
-      errorNode.removeAttribute(DATA_ERROR);
-      field.removeAttribute(INVALID);
+      setAttr(field, INVALID, "true");
+      if (errorMsgNode)
+        errorMsgNode.removeAttribute(HIDDEN);
+      setAttr(parentNode, DATA_ERROR, errorMsg);
     }
+  }
+  function addErrorMsg(field) {
+    const name = getName(field);
+    const targetNode = includes(getData(field).mods, "group") ? field.parentNode.parentNode : field;
+    const span = document.createElement("span");
+    span.className = ERROR_MSG_CLASS;
+    const errorMsgNode = getAdjacentSibling(targetNode, `.${ERROR_MSG_CLASS}`) || span;
+    const errorMsgId = getErrorMsgId(name);
+    setAttr(errorMsgNode, "id", errorMsgId);
+    setAttr(errorMsgNode, HIDDEN);
+    if (!errorMsgNode.innerHTML)
+      errorMsgNode.textContent = getAttr(field, DATA_ERROR_MSG) || `${name} required`;
+    setAttr(field, ARIA_ERRORMESSAGE, errorMsgId);
+    if (!getEl(errorMsgId))
+      targetNode.after(errorMsgNode);
   }
 };
 var src_default = Plugin;

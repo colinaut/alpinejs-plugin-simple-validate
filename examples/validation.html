@@ -39,8 +39,9 @@
             <p x-show="number !== ''"><b x-text="number"></b> is <b x-show="!$validate.wholenumber(number)" style="color:darkred">not</b> a whole number</p>
         </div>
         <div>
-            <label for="date">Favorite Website</label>
+            <label for="date">Favorite Website *</label>
             <input id="url" name="url" type="url" required />
+            <span class="error-msg" hidden>full url with http required</span>
         </div>
         <div>
             <label for="url">Best date in 2000 (yyyy/mm/dd) *</label>

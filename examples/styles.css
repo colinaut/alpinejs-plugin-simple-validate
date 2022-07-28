@@ -112,18 +112,23 @@ input[type="checkbox"], input[type="radio"] {
     display: block;
     line-height: 1.4;
 }
-
-[data-error]:after {
-    content: attr(data-error);
+[data-error] {
+    border-right: .4rem solid darkred;
+    padding-right: .8rem;
+}
+[hidden] {
+    display: none;
+}
+.error-msg:not([hidden]) {
     font-size: 0.8rem;
     font-weight: 700;
     color: darkred;
     display: block;
 }
 
-[data-error] input,
-[data-error] select,
-[data-error] textarea {
+input[aria-invalid="true"],
+textarea[aria-invalid="true"],
+select[aria-invalid="true"] {
     background-color: lightyellow;
 }
 

@@ -7,53 +7,43 @@ Very simple form validation plugin for [AlpineJS](https://alpinejs.dev). This pl
 
 The x-validate directive allows for simple validation and error display. It also captures all form data in a reactive formData. The $validate magic function grants access to validation functions, formData, and simple submit validation check.
 
-## Update Changes From 1.4 to 1.5
+## Update 1.6
 
-I've completely refactored this plugin. It's now simpler to use then before and has some new functionality:
+Validation I've changed validation and error messages to comply with aria practices. You may need to change your css but this is otherwise backwards compatible from version 1.5.
 
-* You only need to add `x-validate` to the `<form>` element to get basic validation functionality and reactive formData!
-* It still works if you only want to add `x-validate` to the fields themselves!
-* It now also automatically includes group validation for groups of checkboxes and radio buttons!
-* There are a few new UI modifiers..
-
-It's still generally backwards compatible with a handful of small breaking changes:  
-
- * `x-validate.checked` isn't needed since `required` now works on checkboxes. 
- * Date format modifiers are renamed (see Directives below).
- * The modifier 'phone' is now 'tel' in keeping with the input type.
-
-## Update Changes 1.5.x
-
-* Form id no longer required since formData references the form node itself. Magic formData functions still work with id but $refs is now recommended
-* Fieldsets are detected when you use x-validate on form `<form>`
-* `$validate.isComplete(el)` can be used on either the form, fieldsets, or forms.
-* Improved number validation to avoid true/false from being shown as valid
-* `$validate.data(el)` returns data for form, fieldsets, or fields
-* `$validate.isRequired(field)` and `$validate.makeRequired(field,boolean)` added to change required validation for any field
+* `aria-invalid` and `aria-errormessage` are added.
+* Error messages are displayed in an adjacent element with `error-msg` class id matched with the `aria-errormessage`
+  * If this element already exists it uses it. Otherwise it creates a new element.
+  * This element is hidden or shown using the `hidden` attribute.
 
 ## Simple Usage
 
 Add an `x-data`, and `x-validate` to your `<form>` element (you don't need any variables on x-data ; it just needs to be initiated as an Alpine component). This automatically:
 
 * Captures all data to a reactive formData[form] array which updates on blur or click (depending on field type).
-* Validates onblur using basic browser checkValidity() checking `required` attribute and input types. 
-* Uses built-in improved regex validation for email, tel, and url type fields, since the browser versions are limited.
+* Validates onblur using basic browser checkValidity() checking `required` attribute and input types.
+* Uses built-in improved regex validation for required, email, tel, and url type fields, since the browser versions are limited.
+* Automatically adds a hidden `span.error-msg` with error message adjacent to the field.  
+  * You will need to style this yourself (*see Example below*)
 * When the validity check fails, it...
-  * Adds `invalid` attribute on the form field element
-  * Also adds `data-error='required'` on either an adjacent sibling `.error-msg` class element, or if it doesn't find that then it uses the field's parentNode element. ***Note:** doing it this way as `:after` does not work consistently on form elements*
-  * The attributes above can be used for easy css styled error messages (see Example below for css)
+  * Adds `aria-invalid="true"` and `aria-errormessage` attributes to the field element.
+  * Reveals the error message in by removing the `hidden` attribute.
+  * Also adds a superfluous `data-error="{error message}"` on the field's parent element for any additional styling you may want.
   * After blur triggers invalid, it adds 'input' event listener for validation as well as 'blur'
-* If valid is triggered, it removes the `data-error` and `invalid` attributes
-* Use `:disabled="$v`alidate.isFormComplete('formId')"` to disable submit button and/or use `@submit="$validate.submit"` to prevent submit from submitting if form not completed
+* If valid is triggered, it reverses all the above
+* Use `:disabled="$validate.isFormComplete('formId')"` to disable submit button and/or use `@submit="$validate.submit"` to automatically check validity of all fields prior to submitting.
 
 ## Custom Usage
 
 * Use `x-validate` directive along with modifiers directly on form fields to add additional validation, such as  `x-validate.wholenumber`
-* Add `data-error-msg='custom error message'` on form elements to add custom error message
+* Write a custom error message one of two ways:
+  * Add `data-error-msg='custom error message'` on field itself
+  * Add an adjacent element with `error-msg` class and write your own error message there. The plugin will detect this and not add it's own. It will add the proper aria-errormessage linked id tags for you.
 * Use `x-validate.group` on checkboxes or radio buttons to validate that at least one is selected.
 * Add a specific test to a field like `x-validate='$el.value === 'bunny'`; this can be paired up with other validations. For example: `x-validate.website='$el.includes('bunny')` for only websites with the word bunny in the name.
-* Use `$validate.isComplete()` to detect if `<fieldset>` groups or the form as a whole is completed
-* You can an skip `x-validate` on the `<form>` and just add `x-validate` on fields directly if you only want a couple fields validated. The x-data is still required on `<form>` and if you want formData captured you also need and id element on the `<form>`.
+* Use `$validate.isComplete(el)` to detect if the form, `<fieldset>` groups or any field is completed
+* You can an skip `x-validate` on the `<form>` and just add `x-validate` on fields directly if you only want a couple fields validated. The x-data is still required on `<form>`.
+* The examples folder in the git repo shows some of what you can do with this plugin.
 
 ## Directive x-validate
 
@@ -94,7 +84,7 @@ Checkboxes and radio buttons that share the same name update the same formData r
 
 You can validate that at least one is selected by adding `x-validate.group` to every checkbox or radio button in a named group. If you want the user to select multiple checkboxes, use an added expression `x-validate.group="2"`.
 
-***Note:** Checkbox and radio button groups add their error message on the wrapper for the group. It's assumed that each checkbox/radio is wrapped in a label or list item, and then has a wrapper around the group. Likewise, if you want to change the default error msg add `data-error-msg` to the group wrapper element.*
+***Note:** Checkbox and radio button groups add their error message after the wrapper for the group. It's assumed that each checkbox/radio is wrapped in a label or list item, and then has a wrapper around the group. If you want to change the default error msg add `data-error-msg` to the group wrapper element or add the element yourself.*
 
 ## Magic function $validate
 
@@ -125,7 +115,7 @@ When used on `<form>`, the `x-validate` every field is added to a reactive formD
 These grant access to some of the backend functions — use at your own risk.
 
 * `$validate.updateData(field,data)` allows you to directly add/update the formData array for a field.
-* `$validate.toggleError(field,valid,options)` allows you to toggle the error message on any field (or really any element since it's not tied to the validation)
+* `$validate.toggleError(field,valid)` allows you to toggle the error message on any field
 
 #### Example formData
 
@@ -173,11 +163,12 @@ More complicated examples in examples folder. run `npm run serve` to view.
     </form>
 <style type="text/css">
     /* style to display the error message */
-    [data-error]:after {
-        margin-left: 0.5rem;
+    [hidden] {
+        display: none;
+    }
+    .error-msg:not([hidden]) {
         color: red;
-        font-weight: bold;
-        content: attr(data-error);
+        display: block;
     }
 </style>
 

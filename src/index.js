@@ -7,7 +7,9 @@ const Plugin = function (Alpine) {
     /* ------------------- Named attibutes used multiple times ------------------ */
     const DATA_ERROR_MSG = 'data-error-msg'
     const DATA_ERROR = 'data-error'
-    const INVALID = 'invalid'
+    const ERROR_MSG_CLASS = 'error-msg'
+    const INVALID = 'aria-invalid'
+    const ARIA_ERRORMESSAGE = 'aria-errormessage'
     const PLUGIN_NAME = 'validate'
 
     /* ----------------- These are just for better minification ------------------ */
@@ -20,6 +22,7 @@ const Plugin = function (Alpine) {
     const FORM = 'form'
     const FIELDSET = 'fieldset'
     const FIELD_SELECTOR = `input:not([type="button"]):not([type="search"]):not([type="reset"]):not([type="submit"]),select,textarea`
+    const HIDDEN = 'hidden'
 
     /* -------------------------------------------------------------------------- */
     /*                              Helper Functions                              */
@@ -48,20 +51,10 @@ const Plugin = function (Alpine) {
     const setAttr = (el,attr,value = '') => el.setAttribute(attr,value)
 
     // If it already is an element it returns itself, if it is a string it assumes it is an id and finds it, otherwise false
-    const getEl = (el) => (isVarType(el,'string')) ? document.querySelector(`#${el}`) : (isHtmlElement(el)) ? el : false
+    const getEl = (el) => (isVarType(el,'string')) ? document.getElementById(el) : (isHtmlElement(el)) ? el : false
 
     // is it is a form it returns the form; otherwise it returns the closest form parent
     const getForm = (el) => (isHtmlElement(getEl(el),FORM)) ? el : (isHtmlElement(getEl(el))) ? el.closest(FORM) : false
-
-    function getAdjacentSibling (elem, selector) {
-        // Get the next sibling element
-        var sibling = elem.nextElementSibling;
-        // If there's no selector, return the first sibling
-        if (!selector) return sibling;
-        // If selector then return if matches, otherwise return false
-        if (isHtmlElement(sibling, selector)) return sibling;
-        return false;
-    }
 
     const getName = (field) => field.name || getAttr(field,'id');
 
@@ -74,6 +67,18 @@ const Plugin = function (Alpine) {
         if (isField(el)) return data.filter(val => val.name === getName(el))[0]
         return data
     }
+
+    function getAdjacentSibling (elem, selector) {
+        // Get the next sibling element
+        var sibling = elem.nextElementSibling;
+        // If there's no selector, return the first sibling
+        if (!selector) return sibling;
+        // If selector then return if matches, otherwise return false
+        if (isHtmlElement(sibling, selector)) return sibling;
+        return false;
+    }
+
+    const getErrorMsgId = (name) => `error-msg-${name}`
 
     /* -------------------------------------------------------------------------- */
     /*                                 Validators                                 */
@@ -202,7 +207,7 @@ const Plugin = function (Alpine) {
     // simple check for required
     validateMagic.isRequired = (field) => includes(getData(field).mods,REQUIRED)
     // toggle error message
-    validateMagic.toggleError = (field,valid,options) => toggleError(getEl(field),valid,options)
+    validateMagic.toggleError = (field,valid) => toggleError(getEl(field),valid)
 
     // Check if form is completed
 
@@ -210,8 +215,7 @@ const Plugin = function (Alpine) {
         getData(e.target).forEach(val => {
             if (val.valid === false) {
                 // click groups should set their error two parents up.
-                const options = (val.group) ? {errorNode: val.node.parentNode.parentNode} : {}
-                toggleError(val.node,false,options)
+                toggleError(val.node,false)
                 e.preventDefault();
                 console.error(`${val.name} not valid`)
             }
@@ -282,8 +286,11 @@ const Plugin = function (Alpine) {
                 // console.log("🚀 ~ file: index.js ~ line 241 ~ fieldsets.forEach ~ fields", fields)
                 fields.forEach((field) => {
                     updateFormData(field, defaultData(field, set))
-                    // Don't add click events if it has x-validate on it so we aren't duplicating function
-                    if (!field.getAttributeNames().some(attr => includes(attr,'x-validate'))) addEvents(field)
+                    // Don't add events or error msgs if it has x-validate on it so we aren't duplicating function
+                    if (!field.getAttributeNames().some(attr => includes(attr,'x-validate'))) {
+                        addEvents(field)
+                        addErrorMsg(field)
+                    }
                 })
             })
 
@@ -297,6 +304,7 @@ const Plugin = function (Alpine) {
         if (isField(el)) {
             // el is field element
             updateFormData(el, defaultData(el))
+            addErrorMsg(el)
             addEvents(el)
         }
 
@@ -313,6 +321,7 @@ const Plugin = function (Alpine) {
             let validators = [field.type, ...fieldData.mods]
             // add required if in attribute since our required is better as trims whitespace and doesn't get tricked by a bunch of spaces.
             if (field.hasAttribute(REQUIRED)) validators = [...validators, REQUIRED]
+            const isRequired = includes(validators,REQUIRED)
 
             let valid = true
 
@@ -330,13 +339,15 @@ const Plugin = function (Alpine) {
             } else {
                 /* --------------------- Check validity the browser way --------------------- */
                 valid = field.checkValidity();
+    
+                /* -------------------------- Check validity my way ------------------------- */
+                // if required and empty or not checked then invalid
+                if (isRequired && (!value || !field.checked)) valid = false
 
-                // Allow for REQUIRED modifier if don't want to use the normal browser required attribute
-                // Note: note this also works for radio button groups since if it's clicked this triggers and it's valid
-                if (includes(validators,REQUIRED) && (!value || (isCheckRadio(field) && !field.checked))) valid = false;
-
-                /* -------------- If field.value is still valid run other validators --------------- */
-                if (valid) {
+                // if valid and has value run it
+                if (valid && value) {
+                    // only run if valid currently
+                    /* ----------------------------- run validators ----------------------------- */
                     for (let type of validators) {
                         if (isVarType(validate[type],'function')) {
                             if(type === 'date') {
@@ -370,36 +381,63 @@ const Plugin = function (Alpine) {
         }
 
     });
+    /* ------------------------- End Validate Directive ------------------------- */
 
     /* -------------------------------------------------------------------------- */
     /*                              Add Error Message                             */
     /* -------------------------------------------------------------------------- */
 
-    function toggleError(field,valid,options = {}) {
-        let {errorNode, errorMsg} = options
-        const name = getName(field) || '';
-        /* ---------------------------- Add Error Message --------------------------- */
-        if (includes(getData(field).mods,GROUP)) {
-            errorNode = field.parentNode.parentNode
-            errorMsg = getAttr(errorNode, DATA_ERROR_MSG)
-        }
-        // If adjacent element with .error-msg class use that. Otherwise use parent.
-        errorNode = errorNode || getAdjacentSibling(field,'.error-msg') || field.parentNode;
-        errorMsg = errorMsg || getAttr(field,DATA_ERROR_MSG) || `${name} required`;
-        // console.log("🚀 ~ file: index.js ~ line 312 ~ checkIfValid ~ errorNode", errorNode)
+    function toggleError(field,valid) {
+        const name = getName(field)
 
-        if (!valid) {
-            // console.log(`${name} not valid`);
-            setAttr(errorNode,DATA_ERROR,errorMsg)
-            setAttr(field,INVALID)
-        } else {
+        const isGroup = includes(getData(field).mods,'group')
+        const parentNode = (isGroup) ? field.parentNode.parentNode : field.parentNode
+
+        const errorMsg = getAttr(field,DATA_ERROR_MSG) || `${name} required`
+        const errorMsgNode = getEl(getErrorMsgId(name))
+
+        /* ------------------ Check valid and set and remove error ------------------ */
+        if (valid) {
             // console.log(`${name} valid`);
-            errorNode.removeAttribute(DATA_ERROR)
-            field.removeAttribute(INVALID)
+            setAttr(field,INVALID,'false')
+            if (errorMsgNode) setAttr(errorMsgNode, HIDDEN)
+            parentNode.removeAttribute(DATA_ERROR)
+            // hideErrorMsg()
+        } else {
+            // console.log(`${name} not valid`);
+            setAttr(field,INVALID,'true')
+            if (errorMsgNode) errorMsgNode.removeAttribute(HIDDEN)
+            setAttr(parentNode,DATA_ERROR, errorMsg)
         }
     }
 
-    /* ------------------------- End Validate Directive ------------------------- */
+    function addErrorMsg(field) {
+        const name = getName(field)
+
+        // set targetNode. The span.error-msg typically appears after the field but groups assign it to set after the wrapper
+        const targetNode = (includes(getData(field).mods,'group')) ? field.parentNode.parentNode : field
+
+        /* --------------------- Find or Make Error Message Node -------------------- */
+
+        // If there is an adjacent error message with the right class then use that. If not create one.
+        const span = document.createElement('span')
+        span.className = ERROR_MSG_CLASS
+        const errorMsgNode = getAdjacentSibling(targetNode, `.${ERROR_MSG_CLASS}`) || span
+        // add id tag, hidden attribute, and class name
+        const errorMsgId = getErrorMsgId(name)
+        setAttr(errorMsgNode, 'id', errorMsgId)
+        setAttr(errorMsgNode, HIDDEN)
+
+        // add error text if it isn't already there
+        if (!errorMsgNode.innerHTML) errorMsgNode.textContent = getAttr(field,DATA_ERROR_MSG) || `${name} required`
+
+        // Add aria-errormessage using the ID to field
+        setAttr(field,ARIA_ERRORMESSAGE,errorMsgId)
+
+        //  Only add element does not yet exist
+        if (!getEl(errorMsgId)) targetNode.after(errorMsgNode)
+    }
+
 
 }
 
