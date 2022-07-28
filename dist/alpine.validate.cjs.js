@@ -198,10 +198,8 @@ var Plugin = function(Alpine) {
         valid = arrayLength >= num;
       } else {
         valid = field.checkValidity();
-        console.log("\u{1F680} checkIfValid 0", isRequired, valid, !value, !field.checked, isRequired && (!value || !field.checked));
         if (isRequired && (!value || isCheckRadio(field) && !field.checked))
           valid = false;
-        console.log("\u{1F680} checkIfValid 1", valid);
         if (valid && value) {
           for (let type of validators) {
             if (isVarType(validate[type], "function")) {
@@ -219,7 +217,6 @@ var Plugin = function(Alpine) {
             valid = false;
         }
       }
-      console.log("\u{1F680} checkIfValid 2", valid);
       toggleError(field, valid);
       updateFormData(field, { value: field.value, valid });
       if (!valid && isHtmlElement(field, "input, textarea") && !isClickField(field) && !includes(validators, "bluronly"))
