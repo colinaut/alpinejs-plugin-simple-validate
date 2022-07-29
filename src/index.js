@@ -74,6 +74,8 @@ const Plugin = function (Alpine) {
         // If selector then return if matches, otherwise return false
         while (sibling) {
             if (isHtmlElement(sibling, selector)) return sibling;
+            // Stop if it hits a label or field
+            if (isHtmlElement(sibling, `label,${FIELD_SELECTOR}`)) return false;
             sibling = sibling.nextElementSibling;
         }
         return false;

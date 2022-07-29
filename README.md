@@ -38,7 +38,8 @@ Add an `x-data`, and `x-validate` to your `<form>` element (you don't need any v
 * Use `x-validate` directive along with modifiers directly on form fields to add additional validation, such as  `x-validate.wholenumber`
 * Write a custom error message one of two ways:
   * Add `data-error-msg='custom error message'` on field itself
-  * Add an adjacent element with `error-msg` class and write your own error message there. The plugin will detect this and not add it's own. It will add the proper aria-errormessage linked id tags for you.
+  * Add an sibling element with `error-msg` class and write your own error message there. It will add the proper aria-errormessage linked id tags for you. 
+* Another advantage of adding your own `error-msg` class element is if you want the error message after another element. The plugin searches all next siblings, so if want a description text element or label right after the field then add `<span class="error-msg"></span>` after the description and it will use that.
 * Use `x-validate.group` on checkboxes or radio buttons to validate that at least one is selected.
 * Add a specific test to a field like `x-validate='$el.value === 'bunny'`; this can be paired up with other validations. For example: `x-validate.website='$el.includes('bunny')` for only websites with the word bunny in the name.
 * Use `$validate.isComplete(el)` to detect if the form, `<fieldset>` groups or any field is completed
