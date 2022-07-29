@@ -66,13 +66,16 @@ const Plugin = function (Alpine) {
         return data
     }
 
-    function getAdjacentSibling (elem, selector) {
+    function getNextSibling (elem, selector) {
         // Get the next sibling element
         var sibling = elem.nextElementSibling;
         // If there's no selector, return the first sibling
         if (!selector) return sibling;
         // If selector then return if matches, otherwise return false
-        if (isHtmlElement(sibling, selector)) return sibling;
+        while (sibling) {
+            if (isHtmlElement(sibling, selector)) return sibling;
+            sibling = sibling.nextElementSibling;
+        }
         return false;
     }
 
@@ -415,7 +418,7 @@ const Plugin = function (Alpine) {
         // If there is an adjacent error message with the right class then use that. If not create one.
         const span = document.createElement('span')
         span.className = ERROR_MSG_CLASS
-        const errorMsgNode = getAdjacentSibling(targetNode, `.${ERROR_MSG_CLASS}`) || span
+        const errorMsgNode = getNextSibling(targetNode, `.${ERROR_MSG_CLASS}`) || span
 
         // add id tag, hidden attribute, and class name
         const errorMsgId = getErrorMsgId(name)

@@ -6,7 +6,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta name="description" content="example page for simple form validation alpinejs plugin" />
-    <script defer src="/alpine.validate.min.js"></script>
+    <script defer src="/alpine.validate.js"></script>
     <script defer src="https://unpkg.com/alpinejs@3.10.2/dist/cdn.min.js"></script>
     <link href="https://unpkg.com/@csstools/normalize.css" rel="stylesheet" />
     <link href="/styles.css" rel="stylesheet" />
@@ -78,7 +78,7 @@
                 <input id="dob" name="dob" type="text" required x-validate.date data-error-msg="DOB in mm-dd-yyyy formate required"/>
             </div>
             <div class="checkbox-wrapper">
-                <label><input id="yolo" name="yolo" type="checkbox" value="yolo" required /> Sell all my secrets! YOLO! *</label>
+                <label><input id="yolo" name="yolo" type="checkbox" value="yolo" required /> Sell all my secrets! YOLO! * <span class="error-msg"></span></label>
             </div>
             <div class="button-group">
                 <button type="button" @click="--step" :disabled="!$validate.isComplete($refs.contact)">Prev</button><button type="submit" :disabled="!$validate.isComplete($refs.form)">Submit</button>

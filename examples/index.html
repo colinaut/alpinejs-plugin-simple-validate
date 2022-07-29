@@ -6,7 +6,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta name="description" content="example page for simple form validation alpinejs plugin" />
-    <script defer src="/alpine.validate.min.js"></script>
+    <script defer src="/alpine.validate.js"></script>
     <script defer src="https://unpkg.com/alpinejs@3.10.2/dist/cdn.min.js"></script>
     <link href="https://unpkg.com/@csstools/normalize.css" rel="stylesheet" />
     <link href="/styles.css" rel="stylesheet" />
@@ -52,7 +52,7 @@
         <div class="checkbox-wrapper">
             <h4>You must click this! *</h4>
             <label><input type="checkbox" required name="yolo" id="yolo" value="yolo" /> Sell all my secret data!
-                YOLO!</label>
+                YOLO! <span class="error-msg"></span></label>
         </div>
         <div>
             <input type="submit"  value="submit">

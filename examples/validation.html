@@ -6,7 +6,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta name="description" content="example page for simple form validation alpinejs plugin" />
-    <script defer src="/alpine.validate.min.js"></script>
+    <script defer src="/alpine.validate.js"></script>
     <script defer src="https://unpkg.com/alpinejs@3.10.2/dist/cdn.min.js"></script>
     <link href="https://unpkg.com/@csstools/normalize.css" rel="stylesheet" />
     <link href="/styles.css" rel="stylesheet" />
@@ -32,9 +32,10 @@
         <div>
             <label for="phone">Your Phone *</label>
             <input type="tel" id="phone" name="phone" required />
-            <p><em>random description text</em></p>
-            <span class="error-msg">Please enter a valid phone number</span
+            <div><em>random description text</em></div>
+            <span class="error-msg">Please enter a valid phone number</span>
         </div>
+        
         <div>
             <label for="whole-number">Whole Number</label>
             <input type="text" id="whole-number" name="whole-number" x-validate.wholenumber x-model="number" />
@@ -48,6 +49,10 @@
         <div>
             <label for="url">Best date in 2000 (yyyy/mm/dd) *</label>
             <input id="date" name="date" type="text" required x-validate.date.yyyymmdd="$el.value.includes('2000')" data-error-msg="year 2000 date in yyyy/mm/dd format required"/>
+        </div>
+        <div>
+            <label for="favorite-food">Favorite Food <span x-show="$validate.isRequired('favorite-food')">*</span></label>
+            <input type="text" id="favorite-food" favorite-food="favorite-food" required />
         </div>
         <div>
             <label for="select">Pick your favorite cheese! *</label>
@@ -83,7 +88,7 @@
         <div class="checkbox-wrapper">
             <h4>You must click this! *</h4>
             <label><input type="checkbox" name="yolo" id="yolo" value="Sell all my secret data!" required /> Sell all my secret data!
-                YOLO!</label>
+                YOLO! <span class="error-msg"></span></label>
         </div>
         <!-- submit button is disabled until email and phone are added -->
         <div>

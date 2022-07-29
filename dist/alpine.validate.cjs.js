@@ -50,12 +50,15 @@ var Plugin = function(Alpine) {
       return data.filter((val) => val.name === getName(el))[0];
     return data;
   };
-  function getAdjacentSibling(elem, selector) {
+  function getNextSibling(elem, selector) {
     var sibling = elem.nextElementSibling;
     if (!selector)
       return sibling;
-    if (isHtmlElement(sibling, selector))
-      return sibling;
+    while (sibling) {
+      if (isHtmlElement(sibling, selector))
+        return sibling;
+      sibling = sibling.nextElementSibling;
+    }
     return false;
   }
   const getErrorMsgId = (name) => `error-msg-${name}`;
@@ -236,7 +239,7 @@ var Plugin = function(Alpine) {
     const targetNode = includes(getData(field).mods, "group") ? field.parentNode.parentNode : field;
     const span = document.createElement("span");
     span.className = ERROR_MSG_CLASS;
-    const errorMsgNode = getAdjacentSibling(targetNode, `.${ERROR_MSG_CLASS}`) || span;
+    const errorMsgNode = getNextSibling(targetNode, `.${ERROR_MSG_CLASS}`) || span;
     const errorMsgId = getErrorMsgId(name);
     setAttr(errorMsgNode, "id", errorMsgId);
     setAttr(errorMsgNode, HIDDEN);
