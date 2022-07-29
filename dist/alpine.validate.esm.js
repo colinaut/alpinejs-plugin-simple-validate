@@ -42,10 +42,10 @@ var Plugin = function(Alpine) {
     if (!selector)
       return sibling;
     while (sibling) {
+      if (isHtmlElement(sibling, FIELD_SELECTOR))
+        return false;
       if (isHtmlElement(sibling, selector))
         return sibling;
-      if (isHtmlElement(sibling, `label,${FIELD_SELECTOR}`))
-        return false;
       sibling = sibling.nextElementSibling;
     }
     return false;

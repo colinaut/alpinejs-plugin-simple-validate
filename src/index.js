@@ -73,12 +73,14 @@ const Plugin = function (Alpine) {
         if (!selector) return sibling;
         // If selector then return if matches, otherwise return false
         while (sibling) {
+            // Stop if it hits another field
+            if (isHtmlElement(sibling, FIELD_SELECTOR)) return false;
+            // return sibling if matches
             if (isHtmlElement(sibling, selector)) return sibling;
-            // Stop if it hits a label or field
-            if (isHtmlElement(sibling, `label,${FIELD_SELECTOR}`)) return false;
+
             sibling = sibling.nextElementSibling;
         }
-        return false;
+        return false
     }
 
     const getErrorMsgId = (name) => `error-msg-${name}`
