@@ -1,3 +1,4 @@
+/* eslint-disable */
 let fs = require('fs')
 
 const pluginName = 'alpine.validate'
@@ -16,7 +17,7 @@ build({
 //Example
 build({
     entryPoints: [`builds/cdn.js`],
-    outfile: `examples/${pluginName}.min.js`,
+    outfile: `examples/${pluginName}.js`,
     bundle: true,
     minify: false,
     sourcemap: false,
@@ -33,6 +34,7 @@ build({
     mainFields: ['main', 'module'],
     target: "es2019",
 })
+
 build({
     entryPoints: [`builds/module.js`],
     outfile: `dist/${pluginName}.cjs.js`,

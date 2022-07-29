@@ -22,7 +22,7 @@
     <form id="form" x-data="{number: ''}" x-validate @submit="$validate.submit" x-ref="form">
         <p class="description">This form uses <code>@submit="$validate.submit"</code> to make sure the form is complete</p>
         <div>
-            <label for="name">Your Name *</label>
+            <label for="name">Your Name <span x-show="$validate.isRequired('name')">*</span></label>
             <input type="text" id="name" name="name" required />
         </div>
         <div>
@@ -32,11 +32,13 @@
         <div>
             <label for="phone">Your Phone *</label>
             <input type="tel" id="phone" name="phone" required />
+            <p><em>random description text</em></p>
+            <span class="error-msg">Please enter a valid phone number</span
         </div>
         <div>
-            <label for="wholenumber">Whole Number</label>
-            <input type="wholenumber" id="wholenumber" name="wholenumber" x-validate.wholenumber x-model="number" />
-            <p x-show="number !== ''"><b x-text="number"></b> is <b x-show="!$validate.wholenumber(number)" style="color:darkred">not</b> a whole number</p>
+            <label for="whole-number">Whole Number</label>
+            <input type="text" id="whole-number" name="whole-number" x-validate.wholenumber x-model="number" />
+            <span class="error-msg"><b x-text="number"></b> is <b x-show="!$validate.wholenumber(number)" style="color:darkred">not</b> a whole number</span>
         </div>
         <div>
             <label for="date">Favorite Website *</label>
@@ -86,6 +88,7 @@
         <!-- submit button is disabled until email and phone are added -->
         <div>
             <button type="submit" class="btn btn-primary">Submit</button>
+            <button type="button" class="btn btn-primary" @click="$validate.runValidation">Run Validation</button>
         </div>
         <div class="form-validation-log">
             <h3>Validations</h3>

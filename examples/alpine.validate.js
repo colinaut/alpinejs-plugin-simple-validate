@@ -114,31 +114,16 @@
     validateMagic.makeRequired = (field, boolean) => updateFormData(getEl(field), {}, boolean);
     validateMagic.isRequired = (field) => includes(getData(field).mods, REQUIRED) || getEl(field).hasAttribute(REQUIRED);
     validateMagic.toggleError = (field, valid) => toggleError(getEl(field), valid);
-    validateMagic.isComplete = (el) => !getData(el).some((val) => !val.valid);
-    function runValidation(e) {
-      console.log("\u{1F680} ~ file: index.js ~ line 215 ~ runValidation ~ e", e);
-      const el = isHtmlElement(e) ? e : e.target;
-      getData(el).forEach((val) => {
-        if (val.valid === false) {
-          toggleError(val.node, false);
-          e.preventDefault;
-          console.error(`${val.name} not valid`);
-        }
-      });
-    }
     validateMagic.submit = (e) => {
-      e.preventDefault;
-      runValidation(e);
-    };
-    validateMagic.runValidation = (el) => {
-      el = isHtmlElement(el) ? el : el.target;
-      getData(el).forEach((val) => {
+      getData(e.target).forEach((val) => {
         if (val.valid === false) {
           toggleError(val.node, false);
+          e.preventDefault();
           console.error(`${val.name} not valid`);
         }
       });
     };
+    validateMagic.isComplete = (set) => !getData(set).some((val) => !val.valid);
     Object.keys(validate).forEach((key) => validateMagic = { ...validateMagic, [key]: validate[key] });
     Alpine.magic(PLUGIN_NAME, () => validateMagic);
     Alpine.directive(PLUGIN_NAME, (el, {

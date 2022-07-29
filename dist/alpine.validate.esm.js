@@ -3,8 +3,6 @@ var Plugin = function(Alpine) {
   const DATA_ERROR_MSG = "data-error-msg";
   const DATA_ERROR = "data-error";
   const ERROR_MSG_CLASS = "error-msg";
-  const INVALID = "aria-invalid";
-  const ARIA_ERRORMESSAGE = "aria-errormessage";
   const PLUGIN_NAME = "validate";
   const REQUIRED = "required";
   const INPUT = "input";
@@ -113,7 +111,7 @@ var Plugin = function(Alpine) {
   validateMagic.data = (el) => getData(el);
   validateMagic.updateData = (field, data) => updateFormData(getEl(field), data);
   validateMagic.makeRequired = (field, boolean) => updateFormData(getEl(field), {}, boolean);
-  validateMagic.isRequired = (field) => includes(getData(field).mods, REQUIRED);
+  validateMagic.isRequired = (field) => includes(getData(field).mods, REQUIRED) || getEl(field).hasAttribute(REQUIRED);
   validateMagic.toggleError = (field, valid) => toggleError(getEl(field), valid);
   validateMagic.submit = (e) => {
     getData(e.target).forEach((val) => {
@@ -136,14 +134,12 @@ var Plugin = function(Alpine) {
     const form = getForm(el);
     formModifiers[form] = formModifiers[form] || [];
     const allModifiers = [...modifiers, ...formModifiers[form]];
-    const defaultData = (field, set) => {
+    const defaultData = (field) => {
       const isRequired = (field2) => includes(allModifiers, REQUIRED) || includes(allModifiers, GROUP) || field2.hasAttribute(REQUIRED) || false;
-      let data = { array: isCheckbox(field) && [], value: isCheckRadio(field) ? "" : field.value, valid: !isRequired(field), mods: allModifiers };
-      if (set)
-        data = { ...data, set };
-      return data;
+      return { array: isCheckbox(field) && [], value: isCheckRadio(field) ? "" : field.value, valid: !isRequired(field), mods: allModifiers, set: field.closest("fieldset") };
     };
     function addEvents(field) {
+      addErrorMsg(field);
       const eventType = isClickField(field) ? "click" : isHtmlElement(field, "select") ? "change" : "blur";
       addEvent(field, eventType, checkIfValid);
       if (includes(allModifiers, INPUT) && !isClickField(field))
@@ -151,22 +147,16 @@ var Plugin = function(Alpine) {
     }
     if (isHtmlElement(el, FORM)) {
       formModifiers[form] = modifiers;
-      const fieldsets = querySelectorAll(el, FIELDSET);
-      const sets = fieldsets.length > 0 ? fieldsets : [el];
-      sets.forEach((set) => {
-        const fields = querySelectorAll(set, FIELD_SELECTOR);
-        fields.forEach((field) => {
-          updateFormData(field, defaultData(field, set));
-          if (!field.getAttributeNames().some((attr) => includes(attr, "x-validate"))) {
-            addEvents(field);
-            addErrorMsg(field);
-          }
-        });
+      const fields = querySelectorAll(el, FIELD_SELECTOR);
+      fields.forEach((field) => {
+        updateFormData(field, defaultData(field));
+        if (!field.getAttributeNames().some((attr) => includes(attr, "x-validate"))) {
+          addEvents(field);
+        }
       });
     }
     if (isField(el)) {
       updateFormData(el, defaultData(el));
-      addErrorMsg(el);
       addEvents(el);
     }
     function checkIfValid() {
@@ -206,8 +196,9 @@ var Plugin = function(Alpine) {
       }
       toggleError(field, valid);
       updateFormData(field, { value: field.value, valid });
-      if (!valid && isHtmlElement(field, "input, textarea") && !isClickField(field) && !includes(validators, "bluronly"))
+      if (!valid && isHtmlElement(field, "input, textarea") && !isClickField(field) && !includes(validators, "bluronly")) {
         addEvent(field, INPUT, checkIfValid);
+      }
       if (!valid && includes(validators, "refocus"))
         field.focus();
       return valid;
@@ -217,18 +208,14 @@ var Plugin = function(Alpine) {
     const name = getName(field);
     const isGroup = includes(getData(field).mods, "group");
     const parentNode = isGroup ? field.parentNode.parentNode : field.parentNode;
-    const errorMsg = getAttr(field, DATA_ERROR_MSG) || `${name} required`;
     const errorMsgNode = getEl(getErrorMsgId(name));
+    setAttr(field, "aria-invalid", !valid);
     if (valid) {
-      setAttr(field, INVALID, "false");
-      if (errorMsgNode)
-        setAttr(errorMsgNode, HIDDEN);
+      setAttr(errorMsgNode, HIDDEN);
       parentNode.removeAttribute(DATA_ERROR);
     } else {
-      setAttr(field, INVALID, "true");
-      if (errorMsgNode)
-        errorMsgNode.removeAttribute(HIDDEN);
-      setAttr(parentNode, DATA_ERROR, errorMsg);
+      errorMsgNode.removeAttribute(HIDDEN);
+      setAttr(parentNode, DATA_ERROR, errorMsgNode.textContent);
     }
   }
   function addErrorMsg(field) {
@@ -241,8 +228,8 @@ var Plugin = function(Alpine) {
     setAttr(errorMsgNode, "id", errorMsgId);
     setAttr(errorMsgNode, HIDDEN);
     if (!errorMsgNode.innerHTML)
-      errorMsgNode.textContent = getAttr(field, DATA_ERROR_MSG) || `${name} required`;
-    setAttr(field, ARIA_ERRORMESSAGE, errorMsgId);
+      errorMsgNode.textContent = getAttr(field, DATA_ERROR_MSG) || `${name.replace(/[-_]/g, " ")} required`;
+    setAttr(field, "aria-errormessage", errorMsgId);
     if (!getEl(errorMsgId))
       targetNode.after(errorMsgNode);
   }

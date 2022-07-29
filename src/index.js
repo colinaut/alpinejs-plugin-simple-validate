@@ -201,10 +201,10 @@ const Plugin = function (Alpine) {
     validateMagic.data = el => getData(el)
     // add or update formData
     validateMagic.updateData = (field,data) => updateFormData(getEl(field),data)
-    // Turn on or off required for a field; useful when a field makes another field required like selecting other adds an other input field
+    // Turn on or off required for a field; useful when a field makes another field required like selecting 'other' adds another input field
     validateMagic.makeRequired = (field,boolean) => updateFormData(getEl(field),{},boolean)
-    // simple check for required
-    validateMagic.isRequired = (field) => includes(getData(field).mods,REQUIRED)
+    // simple check for required as a modifier or as attribute
+    validateMagic.isRequired = (field) => includes(getData(field).mods,REQUIRED) || getEl(field).hasAttribute(REQUIRED)
     // toggle error message
     validateMagic.toggleError = (field,valid) => toggleError(getEl(field),valid)
 
@@ -253,14 +253,13 @@ const Plugin = function (Alpine) {
         // add any extra modifiers if there are any on the field itself
         const allModifiers = [...modifiers, ...formModifiers[form]]
 
-        const defaultData = (field, set) => {
+        const defaultData = (field) => {
             const isRequired = (field) => includes(allModifiers,REQUIRED) || includes(allModifiers,GROUP) || field.hasAttribute(REQUIRED) || false
-            let data = {array: isCheckbox(field) && [],value:(isCheckRadio(field)) ? "" : field.value, valid:!isRequired(field), mods: allModifiers}
-            if (set) data = {...data, set: set}
-            return data
+            return {array: isCheckbox(field) && [],value:(isCheckRadio(field)) ? "" : field.value, valid:!isRequired(field), mods: allModifiers, set: field.closest('fieldset')}
         }
 
         function addEvents(field) {
+            addErrorMsg(field)
             const eventType = (isClickField(field)) ? 'click' : ((isHtmlElement(field,'select'))) ? 'change' :'blur'
             addEvent(field,eventType,checkIfValid)
             if (includes(allModifiers,INPUT) && !isClickField(field)) addEvent(field,INPUT, checkIfValid)
@@ -275,22 +274,14 @@ const Plugin = function (Alpine) {
             // save all form modifiers
             formModifiers[form] = modifiers
 
-            // Get all fieldsets; if none then default on form as one big 'set'
-            const fieldsets = querySelectorAll(el,FIELDSET)
-            const sets = (fieldsets.length > 0) ? fieldsets : [el]
+            const fields = querySelectorAll(el,FIELD_SELECTOR)
 
-            // sort through each set and find fields
-            sets.forEach((set) => {
-                const fields = querySelectorAll(set,FIELD_SELECTOR)
-                // console.log("🚀 ~ file: index.js ~ line 241 ~ fieldsets.forEach ~ fields", fields)
-                fields.forEach((field) => {
-                    updateFormData(field, defaultData(field, set))
-                    // Don't add events or error msgs if it has x-validate on it so we aren't duplicating function
-                    if (!field.getAttributeNames().some(attr => includes(attr,'x-validate'))) {
-                        addEvents(field)
-                        addErrorMsg(field)
-                    }
-                })
+            fields.forEach((field) => {
+                // Don't add events or error msgs if it has x-validate on it so we aren't duplicating function
+                updateFormData(field, defaultData(field))
+                if (!field.getAttributeNames().some(attr => includes(attr,'x-validate'))) {
+                    addEvents(field)
+                }
             })
 
             /* -------------------- Add event triggers and formData -------------------- */
@@ -303,7 +294,6 @@ const Plugin = function (Alpine) {
         if (isField(el)) {
             // el is field element
             updateFormData(el, defaultData(el))
-            addErrorMsg(el)
             addEvents(el)
         }
 
@@ -321,6 +311,7 @@ const Plugin = function (Alpine) {
             // add required if in attribute since our required is better as trims whitespace and doesn't get tricked by a bunch of spaces.
             if (field.hasAttribute(REQUIRED)) validators = [...validators, REQUIRED]
             const isRequired = includes(validators,REQUIRED)
+            // console.log("🚀 ~ file: index.js ~ line 341 ~ checkIfValid ~ validators", validators)
 
             let valid = true
 
@@ -369,7 +360,9 @@ const Plugin = function (Alpine) {
             updateFormData(field, {value:field.value, valid:valid})
 
             // add input event to text fields once it fails the first time
-            if (!valid && isHtmlElement(field,'input, textarea') && !isClickField(field) && !includes(validators,'bluronly')) addEvent(field,INPUT, checkIfValid)
+            if (!valid && isHtmlElement(field,'input, textarea') && !isClickField(field) && !includes(validators,'bluronly')) {
+                addEvent(field,INPUT, checkIfValid)
+            }
 
             if (!valid && includes(validators,'refocus')) field.focus()
 

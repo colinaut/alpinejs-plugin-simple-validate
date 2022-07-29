@@ -1,3 +1,4 @@
+/* eslint-disable */
 module.exports = {
     "env": {
         "browser": true,
@@ -6,8 +7,9 @@ module.exports = {
     "extends": "eslint:recommended",
     "parserOptions": {
         "ecmaVersion": "latest",
-        "sourceType": "module"
+        "sourceType": "module",
     },
     "rules": {
+        'no-console': 'warn',
     }
 }

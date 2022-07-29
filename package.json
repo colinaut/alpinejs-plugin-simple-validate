@@ -24,9 +24,11 @@
     "test": "echo \"No test specified\"",
     "build": "node scripts/build.js",
     "dev": "node scripts/build.js --watch",
-    "serve": "npx browser-sync start -c 'bs-config.js'"
+    "serve": "npx browser-sync start -c 'bs-config.js'",
+    "prepare": "husky install"
   },
   "devDependencies": {
-    "eslint": "^8.20.0"
+    "eslint": "^8.20.0",
+    "husky": "^8.0.1"
   }
 }
