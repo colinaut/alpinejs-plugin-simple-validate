@@ -7,14 +7,15 @@ Very simple form validation plugin for [AlpineJS](https://alpinejs.dev). This pl
 
 The x-validate directive allows for simple validation and error display. It also captures all form data in a reactive formData. The $validate magic function grants access to validation functions, formData, and simple submit validation check.
 
-## Update 1.6
+## Update 1.6.x
 
-I've changed validation and error messages to comply with aria practices. You may need to change your css but this is otherwise backwards compatible from version 1.5.
+Version 1.6 changes validation and error messages to comply with aria practices. You may need to change your css but this is otherwise backwards compatible from version 1.5.
 
 * `aria-invalid` and `aria-errormessage` are added.
 * Error messages are displayed in an adjacent element with `error-msg` class id matched with the `aria-errormessage`
-  * If this element already exists it uses it. Otherwise it creates a new element.
-  * This element is hidden or shown using the `hidden` attribute.
+  * If a following sibling `error-msg` class element already exists it uses that; otherwise it creates a new `error-msg` element.
+  * This `error-msg` element is hidden or shown using the `hidden` attribute.
+* The generic error messages are more usable as is. It now uses the name || id of the field and converts dashes or underscores to spaces. `name='favorite-cheese'` becomes `favorite cheese required`'
 
 ## Simple Usage
 
@@ -23,7 +24,7 @@ Add an `x-data`, and `x-validate` to your `<form>` element (you don't need any v
 * Captures all data to a reactive formData[form] array which updates on blur or click (depending on field type).
 * Validates onblur using basic browser checkValidity() checking `required` attribute and input types.
 * Uses built-in improved regex validation for required, email, tel, and url type fields, since the browser versions are limited.
-* Automatically adds a hidden `span.error-msg` with error message adjacent to the field.  
+* Automatically adds a hidden `span.error-msg` with error message adjacent to the field.
   * You will need to style this yourself (*see Example below*)
 * When the validity check fails, it...
   * Adds `aria-invalid="true"` and `aria-errormessage` attributes to the field element.
