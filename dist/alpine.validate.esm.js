@@ -52,12 +52,13 @@ var Plugin = function(Alpine) {
   }
   const getErrorMsgId = (name) => `error-msg-${name}`;
   const dateFormats = ["mmddyyyy", "ddmmyyyy", "yyyymmdd"];
+  const yearLastDateRegex = /^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/;
   function isDate(str, format) {
     const [p1, p2, p3] = str.split(/[-/.]/);
     let isoFormattedStr;
-    if (format === dateFormats[0] && /^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/.test(str)) {
+    if (format === dateFormats[0] && yearLastDateRegex.test(str)) {
       isoFormattedStr = `${p3}-${p1}-${p2}`;
-    } else if (format === dateFormats[1] && /^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/.test(str)) {
+    } else if (format === dateFormats[1] && yearLastDateRegex.test(str)) {
       isoFormattedStr = `${p3}-${p2}-${p1}`;
     } else if (format === dateFormats[2] && /^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/.test(str)) {
       isoFormattedStr = `${p1}-${p2}-${p3}`;
@@ -211,8 +212,9 @@ var Plugin = function(Alpine) {
   });
   function toggleError(field, valid) {
     const name = getName(field);
-    const isGroup = includes(getData(field).mods, "group");
-    const parentNode = isGroup ? field.parentNode.parentNode : field.parentNode;
+    let parentNode = field.parentNode;
+    if (includes(getData(field).mods, "group"))
+      parentNode = parentNode.parentNode;
     const errorMsgNode = getEl(getErrorMsgId(name));
     setAttr(field, "aria-invalid", !valid);
     if (valid) {
