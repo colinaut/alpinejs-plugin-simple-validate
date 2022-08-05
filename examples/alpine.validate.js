@@ -82,7 +82,7 @@
             data.mods = data.mods.filter((val) => val !== REQUIRED);
             data.valid = isEmpty ? true : data.valid;
           }
-          if (isCheckbox(field) && !value) {
+          if (isCheckbox(field) && value) {
             let tempArray = data.array;
             tempArray = tempArray.some((val) => val === value) ? tempArray.filter((val) => val !== value) : [...tempArray, value];
             data.array = tempArray;

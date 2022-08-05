@@ -117,13 +117,14 @@ const Plugin = function (Alpine) {
     /* -------------------------------------------------------------------------- */
 
     function updateFormData(field, data, required) {
-        // console.log("🚀 ~ file: index.js ~ line 86 ~ updateFormData ~ data", field, data, mod)
+        // console.log("🚀 ~ file: index.js ~ line 86 ~ updateFormData ~ data", field, data, required)
         // data = {name: 'field id or name if no id', node: field, value:'field value', array:[optional used for groups], valid: true, set: form node or fieldset node}
         // Only run if has form and field has name
         const form = getForm(field)
         const name = getName(field)
         // Add name, node, and value if it's not being passed along
         data = {name: name, node: field, value: field.value, ...data}
+        // console.log("🚀 ~ file: index.js ~ line 127 ~ updateFormData ~ data", data)
 
         // only add data if form and name available
         if (isHtmlElement(form,FORM) && name) {
@@ -134,6 +135,7 @@ const Plugin = function (Alpine) {
             if (tempFormData.some(val => val.name === name)) {
                 // Update data with the new data
                 data = {...getData(field), ...data}
+                // console.log("🚀 ~ file: index.js ~ line 138 ~ updateFormData ~ data", data)
                 // value shortcut to lessen code
                 const value = data.value
                 const isEmpty = !value.trim()
@@ -152,12 +154,13 @@ const Plugin = function (Alpine) {
                 }
 
                 // If checkbox then assume it's a group so update array and string value as long as there is a value
-                if (isCheckbox(field) && !value) {
+                if (isCheckbox(field) && value) {
                     let tempArray = data.array
                     // If value exists remove it, otherwise add it
                     tempArray = (tempArray.some(val => val === value)) ? tempArray.filter(val => val !== value) : [...tempArray, value]
                     // update with revised array
                     data.array = tempArray
+                    // console.log("🚀 ~ file: index.js ~ line 161 ~ updateFormData ~ tempArray", tempArray)
                     data.value = tempArray.toString()
                 }
                 // Update data in array
@@ -315,6 +318,7 @@ const Plugin = function (Alpine) {
 
             if (isCheckbox(field) && includes(validators,GROUP)) {
                 let arrayLength = fieldData.array.length
+                // console.log("🚀 ~ file: index.js ~ line 319 ~ checkIfValid ~ fieldData.array", fieldData.array)
 
                 // if checked than it is adding 1, otherwise subtracting 1
                 if (isChecked) { arrayLength++ } else { arrayLength-- }
