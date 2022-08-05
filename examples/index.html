@@ -19,7 +19,7 @@
             <a :href="'/' + a.page" x-text="a.name" :class="a.page === htmlPage && 'active'"></a>
         </template>
     </nav>
-    <form id="form" x-data x-validate @submit="$validate.submit">
+    <form id="form" x-data x-validate.bluronly @submit="$validate.submit">
         <p><em>* required</em></p>
         <div>
             <label for="name">Your Name *</label>

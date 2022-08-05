@@ -66,22 +66,7 @@ const Plugin = function (Alpine) {
         return data
     }
 
-    function getNextSibling (elem, selector) {
-        // Get the next sibling element
-        var sibling = elem.nextElementSibling;
-        // If there's no selector, return the first sibling
-        if (!selector) return sibling;
-        // If selector then return if matches, otherwise return false
-        while (sibling) {
-            // Stop if it hits another field
-            if (isHtmlElement(sibling, FIELD_SELECTOR)) return false;
-            // return sibling if matches
-            if (isHtmlElement(sibling, selector)) return sibling;
-
-            sibling = sibling.nextElementSibling;
-        }
-        return false
-    }
+    const isGroup = (field) => includes(getData(field).mods,'group')
 
     const getErrorMsgId = (name) => `error-msg-${name}`
 
@@ -92,20 +77,22 @@ const Plugin = function (Alpine) {
     const dateFormats = ['mmddyyyy','ddmmyyyy','yyyymmdd']
 
     const yearLastDateRegex = /^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/
+    const yearFirstDateRegex = /^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/
 
     function isDate(str, format) {
-        const [p1, p2, p3] = str.split(/[-/.]/)
+        const dateArray = str.split(/[-/.]/)
+        const formatIndexInArray = dateFormats.indexOf(format)
 
-        let isoFormattedStr
+        let mm,dd,yyyy
 
-        if (format === dateFormats[0] && yearLastDateRegex.test(str)) {
-            isoFormattedStr = `${p3}-${p1}-${p2}`
-        } else if (format === dateFormats[1] && yearLastDateRegex.test(str)) {
-            isoFormattedStr = `${p3}-${p2}-${p1}`
-        } else if (format === dateFormats[2] && /^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/.test(str)) {
-            isoFormattedStr = `${p1}-${p2}-${p3}`
-        } else return false
+        if (yearLastDateRegex.test(str)) {
+            if (formatIndexInArray === 0) [mm,dd,yyyy] = dateArray
+            if (formatIndexInArray === 1) [dd,mm,yyyy] = dateArray
+        } else if (yearFirstDateRegex.test(str) && formatIndexInArray === 2) {
+            [yyyy,mm,dd] = dateArray
+        }
 
+        const isoFormattedStr = `${yyyy}-${mm}-${dd}`
         const date = new Date(isoFormattedStr)
         // console.log("🚀 ~ file: index.js ~ line 81 ~ isDate ~ isoFormattedStr", isoFormattedStr)
 
@@ -170,7 +157,8 @@ const Plugin = function (Alpine) {
                     // If value exists remove it, otherwise add it
                     tempArray = (tempArray.some(val => val === value)) ? tempArray.filter(val => val !== value) : [...tempArray, value]
                     // update with revised array
-                    data = {...data, array: tempArray, value: tempArray.toString()}
+                    data.array = tempArray
+                    data.value = tempArray.toString()
                 }
                 // Update data in array
                 tempFormData = tempFormData.map(val => (val.name === name) ? data : val)
@@ -256,22 +244,16 @@ const Plugin = function (Alpine) {
 
         const form = getForm(el)
 
-        // grab modifiers from the form attribute or set is this is the first time it is run
-        formModifiers[form] = formModifiers[form] || []
-
-        // add any extra modifiers if there are any on the field itself
-        const allModifiers = [...modifiers, ...formModifiers[form]]
-
         const defaultData = (field) => {
-            const isRequired = (field) => includes(allModifiers,REQUIRED) || includes(allModifiers,GROUP) || field.hasAttribute(REQUIRED) || false
-            return {array: isCheckbox(field) && [],value:(isCheckRadio(field)) ? "" : field.value, valid:!isRequired(field), mods: allModifiers, set: field.closest('fieldset')}
+            const isRequired = (field) => includes(modifiers,REQUIRED) || includes(modifiers,GROUP) || field.hasAttribute(REQUIRED) || false
+            return {array: isCheckbox(field) && [],value:(isCheckRadio(field)) ? "" : field.value, valid:!isRequired(field), mods: modifiers, set: field.closest('fieldset')}
         }
 
         function addEvents(field) {
             addErrorMsg(field)
             const eventType = (isClickField(field)) ? 'click' : ((isHtmlElement(field,'select'))) ? 'change' :'blur'
             addEvent(field,eventType,checkIfValid)
-            if (includes(allModifiers,INPUT) && !isClickField(field)) addEvent(field,INPUT, checkIfValid)
+            if (includes(modifiers,INPUT) && !isClickField(field)) addEvent(field,INPUT, checkIfValid)
         }
 
         /* -------------------------------------------------------------------------- */
@@ -286,8 +268,8 @@ const Plugin = function (Alpine) {
             const fields = querySelectorAll(el,FIELD_SELECTOR)
 
             fields.forEach((field) => {
-                // Don't add events or error msgs if it has x-validate on it so we aren't duplicating function
                 updateFormData(field, defaultData(field))
+                // Don't add events or error msgs if it has x-validate on it so we aren't duplicating function
                 if (!field.getAttributeNames().some(attr => includes(attr,'x-validate'))) {
                     addEvents(field)
                 }
@@ -301,6 +283,8 @@ const Plugin = function (Alpine) {
         /* -------------------------------------------------------------------------- */
 
         if (isField(el)) {
+            // include form level modifiers so they are also referenced
+            modifiers = [...modifiers, ...(formModifiers[form] || [])]
             // el is field element
             updateFormData(el, defaultData(el))
             addEvents(el)
@@ -310,7 +294,7 @@ const Plugin = function (Alpine) {
         /*                           Check Validity Function                          */
         /* -------------------------------------------------------------------------- */
 
-        function checkIfValid() {
+        function checkIfValid(e) {
             const field = this
             const value = field.value.trim()
             const fieldData = getData(field)
@@ -319,20 +303,24 @@ const Plugin = function (Alpine) {
             let validators = [field.type, ...fieldData.mods]
             // add required if in attribute since our required is better as trims whitespace and doesn't get tricked by a bunch of spaces.
             if (field.hasAttribute(REQUIRED)) validators = [...validators, REQUIRED]
-            const isRequired = includes(validators,REQUIRED)
             // console.log("🚀 ~ file: index.js ~ line 341 ~ checkIfValid ~ validators", validators)
 
+            // default valid is true
             let valid = true
 
+            // evaluate expression if it exists
+            const evalExp = expression && evaluate(expression)
+            // shortcut for checked
+            const isChecked = field.checked
+
             if (isCheckbox(field) && includes(validators,GROUP)) {
-                // radio buttons don't have arrays so force it to have one so this test works
                 let arrayLength = fieldData.array.length
 
                 // if checked than it is adding 1, otherwise subtracting 1
-                arrayLength = (field.checked) ? arrayLength + 1 : arrayLength - 1
+                if (isChecked) { arrayLength++ } else { arrayLength-- }
 
                 // get min number from expression
-                const num = parseInt(expression && evaluate(expression)) || 1
+                const num = parseInt(evalExp) || 1
                 valid = (arrayLength >= num)
 
             } else {
@@ -340,15 +328,16 @@ const Plugin = function (Alpine) {
                 valid = field.checkValidity();
                 /* -------------------------- Check validity my way ------------------------- */
                 // if required and empty or not checked then invalid
-                if (isRequired && (!value || (isCheckRadio(field) && !field.checked))) valid = false
-                // if valid and has value run it
+                if (includes(validators,REQUIRED) && (!value || (isCheckRadio(field) && !isChecked))) valid = false
+                // if valid and has value run validators and ad hoc tests
                 if (valid && value) {
                     /* ----------------------------- run validators ----------------------------- */
                     for (let type of validators) {
                         if (isVarType(validate[type],'function')) {
                             if(type === 'date') {
-                                const matchingFormat = validators.filter(val => dateFormats.indexOf(val) !== -1)
-                                valid = validate.date[matchingFormat[0] || dateFormats[0]](value);
+                                // search for data format modifier; if none assume mmddyyyy
+                                const matchingFormat = validators.filter(val => dateFormats.indexOf(val) !== -1)[0] || dateFormats[0]
+                                valid = validate.date[matchingFormat](value);
                             } else {
                                 valid = validate[type](value);
                             }
@@ -358,8 +347,7 @@ const Plugin = function (Alpine) {
 
                     /* -------------------- Run any ad hoc tests ------------------- */
                     // get optional test from expression
-                    const test = expression && evaluate(expression)
-                    if (test === false) valid = false
+                    if (evalExp === false) valid = false
                 }
             }
 
@@ -368,8 +356,8 @@ const Plugin = function (Alpine) {
             /* ----------------------------- Update formData ---------------------------- */
             updateFormData(field, {value:field.value, valid:valid})
 
-            // add input event to text fields once it fails the first time
-            if (!valid && isHtmlElement(field,'input, textarea') && !isClickField(field) && !includes(validators,'bluronly')) {
+            // add input event to blur events once it fails the first time
+            if (!valid && !includes(validators,'bluronly') && e.type === 'blur') {
                 addEvent(field,INPUT, checkIfValid)
             }
 
@@ -390,7 +378,7 @@ const Plugin = function (Alpine) {
 
         let parentNode = field.parentNode
         // if is group then use the parent's parent
-        if (includes(getData(field).mods,'group')) parentNode = parentNode.parentNode
+        if (isGroup(field)) parentNode = parentNode.parentNode
 
         const errorMsgNode = getEl(getErrorMsgId(name))
 
@@ -414,18 +402,35 @@ const Plugin = function (Alpine) {
     /*                        Set Up Error Msg Node in DOM                        */
     /* -------------------------------------------------------------------------- */
 
+    /* ----------------- Helper function to find error msg node ----------------- */
+
+    function findErrorMsgNode(el) {
+
+        while (el) {
+            // jump to next sibling element
+            el = el.nextElementSibling;
+            // return el if matches class name
+            if (isHtmlElement(el, `.${ERROR_MSG_CLASS}`)) return el;
+            // Stop searching if it hits another field
+            if (isHtmlElement(el, FIELD_SELECTOR)) return false;
+        }
+        return false
+    }
+
+    /* ------ Function to setup errorMsgNode by finding it or creating one ------ */
+
     function addErrorMsg(field) {
         const name = getName(field)
 
         // set targetNode. The span.error-msg typically appears after the field but groups assign it to set after the wrapper
-        const targetNode = (includes(getData(field).mods,'group')) ? field.parentNode.parentNode : field
+        const targetNode = (isGroup(field)) ? field.parentNode.parentNode : field
 
         /* --------------------- Find or Make Error Message Node -------------------- */
 
         // If there is an adjacent error message with the right class then use that. If not create one.
         const span = document.createElement('span')
         span.className = ERROR_MSG_CLASS
-        const errorMsgNode = getNextSibling(targetNode, `.${ERROR_MSG_CLASS}`) || span
+        const errorMsgNode = findErrorMsgNode(targetNode) || span
 
         // add id tag, hidden attribute, and class name
         const errorMsgId = getErrorMsgId(name)
