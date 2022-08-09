@@ -78,7 +78,8 @@
             <label><input type="checkbox" x-validate.group name="animal" id="bunny" value="bunny" /> 
                 Bunny</label>
         </div>
-        <div id="transport" class="checkbox-wrapper" data-error-msg="you must pick at least one transport">
+        <div x-text="$validate.data('animal').value && `You choose a ${$validate.data('animal').value}!!!`"></div>
+        <div id="transports" class="checkbox-wrapper" data-error-msg="you must pick at least one transport">
             <h4>Favorite Transport *</h4>
             <label><input type="radio" x-validate.group name="transport" value="bus" /> 
                 Bus</label>

@@ -48,9 +48,8 @@ const Plugin = function (Alpine) {
 
     const setAttr = (el,attr,value = '') => el.setAttribute(attr,value)
 
-    // If it already is an element it returns itself, if it is a string it assumes it is an id and finds it, otherwise false
-    const getEl = (el) => (isVarType(el,'string')) ? document.getElementById(el) : (isHtmlElement(el)) ? el : false
-
+    const getEl = (el) => (isHtmlElement(el)) ? el : document.getElementById(el) || querySelectorAll(document, `[name ="${el}"]`)[0]
+    
     // is it is a form it returns the form; otherwise it returns the closest form parent
     const getForm = (el) => (isHtmlElement(getEl(el),FORM)) ? el : (isHtmlElement(getEl(el))) ? el.closest(FORM) : false
 
@@ -58,9 +57,10 @@ const Plugin = function (Alpine) {
 
     const cleanText = (str) => String(str).trim()
 
-    const getData = (el) => {
-        el = getEl(el)
+    const getData = (strOrEl) => {
+        const el = getEl(strOrEl)
         const data = formData[getForm(el)] || []
+        // if (strOrEl === 'transport') console.log(strOrEl, data.filter(val => val.name === strOrEl)[0])
         if (isHtmlElement(el,FIELDSET)) return data.filter(val => val.set === el)
         if (isField(el)) return data.filter(val => val.name === getName(el))[0]
         return data
@@ -223,6 +223,7 @@ const Plugin = function (Alpine) {
     }
 
     // isComplete works for the form as a whole and fieldsets using either the node itself or the id
+    // TODO: figure out why this fails for checkboxes when there is x-model on it
     validateMagic.isComplete = (el) => {
         const data = getData(el)
         return (data.length >= 0) ? !data.some(val => !val.valid) : data.valid

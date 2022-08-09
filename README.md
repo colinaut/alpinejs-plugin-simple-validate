@@ -110,7 +110,7 @@ When used on `<form>`, the `x-validate` every field is added to a reactive formD
 * `$validate.isRequired(field)` checks if a field is required
 * `$validate.makeRequired(field,boolean)` set boolean true to make a field required. false to turn off required. This only works fo the plugin required modifier. If you set required as an attribute on the field it will be checked regardless. This function is useful for when you need to change the requirements of a field for instance if selection of other shows an other input field.
 
-\* $refs is recommended for form, fieldset, and field variables, but a string of the id works as well.
+\* $refs is recommended for form, fieldset, and field variables, but a string of the name/id works as well.
 
 ### Advanced Magic Functions
 

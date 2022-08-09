@@ -37,12 +37,12 @@ var Plugin = function(Alpine) {
   const addEvent = (el, event, callback) => el.addEventListener(event, callback);
   const getAttr = (el, attr) => el.getAttribute(attr);
   const setAttr = (el, attr, value = "") => el.setAttribute(attr, value);
-  const getEl = (el) => isVarType(el, "string") ? document.getElementById(el) : isHtmlElement(el) ? el : false;
+  const getEl = (el) => isHtmlElement(el) ? el : document.getElementById(el) || querySelectorAll(document, `[name ="${el}"]`)[0];
   const getForm = (el) => isHtmlElement(getEl(el), FORM) ? el : isHtmlElement(getEl(el)) ? el.closest(FORM) : false;
   const getName = (field) => field.name || getAttr(field, "id");
   const cleanText = (str) => String(str).trim();
-  const getData = (el) => {
-    el = getEl(el);
+  const getData = (strOrEl) => {
+    const el = getEl(strOrEl);
     const data = formData[getForm(el)] || [];
     if (isHtmlElement(el, FIELDSET))
       return data.filter((val) => val.set === el);
