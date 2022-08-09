@@ -90,6 +90,7 @@
             <label><input type="checkbox" name="yolo" id="yolo" value="Sell all my secret data!" required /> Sell all my secret data!
                 YOLO! <span class="error-msg"></span></label>
         </div>
+        <div x-text="($validate.isComplete('yolo')) ? 'Yes Yolo!' : 'Come on Yolo!'" ></div>
         <!-- submit button is disabled until email and phone are added -->
         <div>
             <button type="submit" class="btn btn-primary">Submit</button>

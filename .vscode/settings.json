@@ -11,5 +11,6 @@
         "fieldgroup",
         "textareas",
         "wholenumber"
-    ]
+    ],
+    "editor.experimental.stickyScroll.enabled": true
 }

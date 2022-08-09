@@ -87,7 +87,7 @@ var Plugin = function(Alpine) {
         const value = data.value;
         const isEmpty = !value.trim();
         if (required === true) {
-          data.mods = [...data.mods, REQUIRED];
+          data.mods.push(REQUIRED);
           data.valid = !isEmpty && data.valid;
         }
         if (required === false) {
@@ -133,7 +133,10 @@ var Plugin = function(Alpine) {
       }
     });
   };
-  validateMagic.isComplete = (set) => !getData(set).some((val) => !val.valid);
+  validateMagic.isComplete = (el) => {
+    const data = getData(el);
+    return data.length >= 0 ? !data.some((val) => !val.valid) : data.valid;
+  };
   Object.keys(validate).forEach((key) => validateMagic = { ...validateMagic, [key]: validate[key] });
   Alpine.magic(PLUGIN_NAME, () => validateMagic);
   Alpine.directive(PLUGIN_NAME, (el, {
@@ -175,7 +178,7 @@ var Plugin = function(Alpine) {
       const fieldData = getData(field);
       let validators = [field.type, ...fieldData.mods];
       if (field.hasAttribute(REQUIRED))
-        validators = [...validators, REQUIRED];
+        validators.push(REQUIRED);
       let valid = true;
       const evalExp = expression && evaluate(expression);
       const isChecked = field.checked;

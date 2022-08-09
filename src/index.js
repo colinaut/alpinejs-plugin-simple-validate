@@ -142,7 +142,7 @@ const Plugin = function (Alpine) {
 
                 // add/remove required if set from $validate.makeRequired()
                 if (required === true) {
-                    data.mods = [...data.mods, REQUIRED]
+                    data.mods.push(REQUIRED)
                     // if empty then invalid so set to false; otherwise fall back on previous value
                     data.valid = !isEmpty && data.valid
                 }
@@ -223,7 +223,10 @@ const Plugin = function (Alpine) {
     }
 
     // isComplete works for the form as a whole and fieldsets using either the node itself or the id
-    validateMagic.isComplete = (set) => !getData(set).some(val => !val.valid)
+    validateMagic.isComplete = (el) => {
+        const data = getData(el)
+        return (data.length >= 0) ? !data.some(val => !val.valid) : data.valid
+    }
 
     // Add validate functions to validateMagic object
     Object.keys(validate).forEach(key => validateMagic = {...validateMagic, [key]: validate[key]})
@@ -305,7 +308,7 @@ const Plugin = function (Alpine) {
             // validation default based on type and add mods from data
             let validators = [field.type, ...fieldData.mods]
             // add required if in attribute since our required is better as trims whitespace and doesn't get tricked by a bunch of spaces.
-            if (field.hasAttribute(REQUIRED)) validators = [...validators, REQUIRED]
+            if (field.hasAttribute(REQUIRED)) validators.push(REQUIRED)
             // console.log("🚀 ~ file: index.js ~ line 341 ~ checkIfValid ~ validators", validators)
 
             // default valid is true
