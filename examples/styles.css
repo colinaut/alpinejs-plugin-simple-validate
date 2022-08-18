@@ -46,7 +46,7 @@ nav a:hover {
 }
 
 form {
-    width: 20rem;
+    width: 22rem;
     margin: 2rem auto;
     display: flex;
     flex-direction: column;
@@ -132,7 +132,7 @@ input[type="checkbox"], input[type="radio"] {
     display: block;
 }
 .error-msg:not([hidden]) {
-    visbility: visible;
+    visibility: visible;
 }
 
 input[aria-invalid="true"],
@@ -172,6 +172,28 @@ button:hover {
     padding: 1rem;
     margin: 1rem 0;
     background-color: lightyellow;
+}
+
+.form-validation-log table {
+    font-size: .9rem;
+    border-collapse: collapse;
+}
+
+.form-validation-log td {
+    text-align: center;
+    border-top: 1px solid #aaa;
+    padding: .2rem .2rem .2rem 0;
+}
+.form-validation-log td:first-child {
+    text-align: left;
+}
+
+.form-validation-log th {
+    padding: .2rem .2rem .2rem 0;
+}
+
+.form-validation-log th:first-child {
+    text-align: left;
 }
 
 code {

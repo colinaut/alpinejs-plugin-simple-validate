@@ -1,12 +1,13 @@
 const Plugin = function (Alpine) {
     // TODO: build some tests for this
+    // TODO: back button holds values in form elements but fails isComplete validation
 
     /* -------------------------------------------------------------------------- */
     /*                              STRING CONSTANTS                              */
     /* -------------------------------------------------------------------------- */
     /* ------------------- Named attributes used multiple times ------------------ */
-    const DATA_ERROR_MSG = 'data-error-msg'
     const DATA_ERROR = 'data-error'
+    const DATA_ERROR_MSG = `${DATA_ERROR}-msg`
     const ERROR_MSG_CLASS = 'error-msg'
     const PLUGIN_NAME = 'validate'
 
@@ -59,16 +60,14 @@ const Plugin = function (Alpine) {
 
     const getData = (strOrEl) => {
         const el = getEl(strOrEl)
-        const data = formData[getForm(el)] || []
-        // if (strOrEl === 'transport') console.log(strOrEl, data.filter(val => val.name === strOrEl)[0])
-        if (isHtmlElement(el,FIELDSET)) return data.filter(val => val.set === el)
-        if (isField(el)) return data.filter(val => val.name === getName(el))[0]
+        const data = formData[getForm(el)] || {}
+        if (isHtmlElement(el, FORM)) return Object.values(data)
+        if (isHtmlElement(el,FIELDSET)) return Object.values(data).filter(val => val.set === el)
+        if (isField(el)) return data[getName(el)]
         return data
     }
 
-    const isGroup = (field) => includes(getData(field).mods,'group')
-
-    const getErrorMsgId = (name) => `error-msg-${name}`
+    const getErrorMsgId = (name) => `${ERROR_MSG_CLASS}-${name}`
 
     /* -------------------------------------------------------------------------- */
     /*                                 Validators                                 */
@@ -116,62 +115,53 @@ const Plugin = function (Alpine) {
     /*                           formData functions                               */
     /* -------------------------------------------------------------------------- */
 
-    function updateFormData(field, data, required) {
+    function updateFormData(field, data, triggerErrorMsg) {
         // console.log("🚀 ~ file: index.js ~ line 86 ~ updateFormData ~ data", field, data, required)
         // data = {name: 'field id or name if no id', node: field, value:'field value', array:[optional used for groups], valid: true, set: form node or fieldset node}
         // Only run if has form and field has name
         const form = getForm(field)
         const name = getName(field)
-        // Add name, node, and value if it's not being passed along
-        data = {name: name, node: field, value: field.value, ...data}
-        // console.log("🚀 ~ file: index.js ~ line 127 ~ updateFormData ~ data", data)
 
-        // only add data if form and name available
-        if (isHtmlElement(form,FORM) && name) {
-            // create a temp copy of formData array
-            let tempFormData = getData(form)
+        // only add data if has form and is proper field and field has name
+        if (isHtmlElement(form,FORM) && isHtmlElement(field,FIELD_SELECTOR) && name) {
+            // make sure form object exists
+            formData[form] = formData[form] || {}
+            // Add any data from formData, then name, node, and value if it's not being passed along
+            data = {...formData[form][name], name: name, node: field, value: field.value, ...data}
 
-            // If the field name exists then replace it
-            if (tempFormData.some(val => val.name === name)) {
-                // Update data with the new data
-                data = {...getData(field), ...data}
-                // console.log("🚀 ~ file: index.js ~ line 138 ~ updateFormData ~ data", data)
-                // value shortcut to lessen code
-                const value = data.value
-                const isEmpty = !value.trim()
+            const value = data.value
+            const isEmpty = !value.trim()
 
-                // add/remove required if set from $validate.makeRequired()
-                if (required === true) {
-                    data.mods.push(REQUIRED)
-                    // if empty then invalid so set to false; otherwise fall back on previous value
-                    data.valid = !isEmpty && data.valid
+            // Rewrite valid based on required value and empty status; used for makeRequired and x-required
+            if (data.required) data.valid = !isEmpty && data.valid
+            if (!data.required) data.valid = (isEmpty) ? true : data.valid
+
+            // If checkbox/radio then assume it's a group so update array and string value based on checked
+            if (isCheckRadio(field)) {
+                // data.array acts as a store of current selected values
+                let tempArray = data.array || []
+
+                if (isCheckbox(field)) {
+                    if (field.checked && !tempArray.includes(value)) tempArray.push(value)
+                    if (!field.checked) tempArray = tempArray.filter(val => val !== value)
                 }
 
-                if (required === false) {
-                    data.mods = data.mods.filter(val => val !== REQUIRED)
-                    // if empty then valid otherwise use data.valid
-                    data.valid = (isEmpty) ? true : data.valid
-                }
+                // Radio buttons only can select one so max array is 1.
+                if (field.type === RADIO && field.checked) tempArray = [value]
 
-                // If checkbox then assume it's a group so update array and string value as long as there is a value
-                if (isCheckbox(field) && value) {
-                    let tempArray = data.array
-                    // If value exists remove it, otherwise add it
-                    tempArray = (tempArray.some(val => val === value)) ? tempArray.filter(val => val !== value) : [...tempArray, value]
-                    // update with revised array
-                    data.array = tempArray
-                    // console.log("🚀 ~ file: index.js ~ line 161 ~ updateFormData ~ tempArray", tempArray)
-                    data.value = tempArray.toString()
-                }
-                // Update data in array
-                tempFormData = tempFormData.map(val => (val.name === name) ? data : val)
-                // console.log('replaceFormData',data);
-            } else tempFormData.push(data)
+                // update with revised array
+                data.array = tempArray
+                // update value with string of array items
+                data.value = tempArray.toString()
+                // set valid based on group min number
+                if (data.group) data.valid = tempArray.length >= data.group
+            }
 
-            // Update formData[form]
-            formData[form] = tempFormData
-            // console.log(`formData`,formData[form]);
+            // update with new data
+            formData[form][name] = data
         }
+
+        if (triggerErrorMsg) toggleError(field, data.valid)
     }
 
     /* -------------------------------------------------------------------------- */
@@ -199,12 +189,10 @@ const Plugin = function (Alpine) {
     let validateMagic = {}
     // Display reactive formData
     validateMagic.data = el => getData(el)
+    validateMagic.fieldData = el => formData[getForm(el)].find(val => val.name === getName(el))
+
     // add or update formData
-    validateMagic.updateData = (field,data) => updateFormData(getEl(field),data)
-    // Turn on or off required for a field; useful when a field makes another field required like selecting 'other' adds another input field
-    validateMagic.makeRequired = (field,boolean) => updateFormData(getEl(field),{},boolean)
-    // simple check for required as a modifier or as attribute
-    validateMagic.isRequired = (field) => includes(getData(field).mods,REQUIRED) || getEl(field).hasAttribute(REQUIRED)
+    validateMagic.updateData = (field,data,triggerErrorMsg) => updateFormData(getEl(field),data, triggerErrorMsg)
     // toggle error message
     validateMagic.toggleError = (field,valid) => toggleError(getEl(field),valid)
 
@@ -226,6 +214,7 @@ const Plugin = function (Alpine) {
     // TODO: figure out why this fails for checkboxes when there is x-model on it
     validateMagic.isComplete = (el) => {
         const data = getData(el)
+        // if this is array then data is form or fieldset
         return (data.length >= 0) ? !data.some(val => !val.valid) : data.valid
     }
 
@@ -233,6 +222,34 @@ const Plugin = function (Alpine) {
     Object.keys(validate).forEach(key => validateMagic = {...validateMagic, [key]: validate[key]})
 
     Alpine.magic(PLUGIN_NAME, () => validateMagic)
+
+    /* -------------------------------------------------------------------------- */
+    /*                            x-required directive                            */
+    /* -------------------------------------------------------------------------- */
+
+    Alpine.directive(REQUIRED, (el, {
+        // modifiers,
+        value,
+        expression
+    }, {
+        evaluate,
+        Alpine
+    }) => {
+
+        // only run if has expression
+        if (expression) {
+            // Alpine effect watches values for changes
+            Alpine.effect(()=>{
+                const evalExp = evaluate(expression)
+                // if it has value than use that as the field name to test; otherwise evaluate the expression
+                const required = (value) ? getData(value)?.value === evalExp : evalExp
+                updateFormData(el,{required:required})
+                // hide error message if not required
+                if (!required) toggleError(el,true)
+            })
+        }
+
+    })
 
     /* -------------------------------------------------------------------------- */
     /*                            x-validate directive                            */
@@ -252,13 +269,16 @@ const Plugin = function (Alpine) {
         const form = getForm(el)
 
         const defaultData = (field) => {
+            const groupMin = includes(modifiers,GROUP) ? (expression && evaluate(expression)) || 1 : false
             const isRequired = (field) => includes(modifiers,REQUIRED) || includes(modifiers,GROUP) || field.hasAttribute(REQUIRED) || false
-            return {array: isCheckbox(field) && [],value:(isCheckRadio(field)) ? "" : field.value, valid:!isRequired(field), mods: modifiers, set: field.closest('fieldset')}
+            const parentNode = field.closest('.field-parent') || includes(modifiers,GROUP) ? field.parentNode.parentNode : field.parentNode
+            return {valid:!isRequired(field), required: isRequired(field), mods: modifiers, set: field.closest(FIELDSET), group: groupMin, parentNode: parentNode}
         }
 
         function addEvents(field) {
             addErrorMsg(field)
             const eventType = (isClickField(field)) ? 'click' : ((isHtmlElement(field,'select'))) ? 'change' :'blur'
+            // console.log("🚀 ~ file: index.js ~ line 308 ~ addEvents ~ eventType", field, eventType)
             addEvent(field,eventType,checkIfValid)
             if (includes(modifiers,INPUT) && !isClickField(field)) addEvent(field,INPUT, checkIfValid)
         }
@@ -277,7 +297,7 @@ const Plugin = function (Alpine) {
             fields.forEach((field) => {
                 updateFormData(field, defaultData(field))
                 // Don't add events or error msgs if it has x-validate on it so we aren't duplicating function
-                if (!field.getAttributeNames().some(attr => includes(attr,'x-validate'))) {
+                if (!field.getAttributeNames().some(attr => includes(attr,`x-${PLUGIN_NAME}`))) {
                     addEvents(field)
                 }
             })
@@ -305,38 +325,31 @@ const Plugin = function (Alpine) {
             const field = this
             const value = field.value.trim()
             const fieldData = getData(field)
+            // console.log("🚀 ~ file: index.js ~ line 330 ~ checkIfValid ~ fieldData", fieldData)
 
             // validation default based on type and add mods from data
             let validators = [field.type, ...fieldData.mods]
             // add required if in attribute since our required is better as trims whitespace and doesn't get tricked by a bunch of spaces.
-            if (field.hasAttribute(REQUIRED)) validators.push(REQUIRED)
             // console.log("🚀 ~ file: index.js ~ line 341 ~ checkIfValid ~ validators", validators)
 
             // default valid is true
             let valid = true
+            let data = {value:field.value}
 
             // evaluate expression if it exists
             const evalExp = expression && evaluate(expression)
             // shortcut for checked
             const isChecked = field.checked
 
-            if (isCheckbox(field) && includes(validators,GROUP)) {
-                let arrayLength = fieldData.array.length
-                // console.log("🚀 ~ file: index.js ~ line 319 ~ checkIfValid ~ fieldData.array", fieldData.array)
-
-                // if checked than it is adding 1, otherwise subtracting 1
-                if (isChecked) { arrayLength++ } else { arrayLength-- }
-
-                // get min number from expression
-                const num = parseInt(evalExp) || 1
-                valid = (arrayLength >= num)
-
+            if (isCheckRadio(field) && includes(validators,GROUP)) {
+                // update group min in case the expression has changed
+                data.group = parseInt(evalExp) || 1
             } else {
                 /* --------------------- Check validity the browser way --------------------- */
                 valid = field.checkValidity();
                 /* -------------------------- Check validity my way ------------------------- */
                 // if required and empty or not checked then invalid
-                if (includes(validators,REQUIRED) && (!value || (isCheckRadio(field) && !isChecked))) valid = false
+                if (fieldData.required && (!value || (isCheckRadio(field) && !isChecked))) valid = false
                 // if valid and has value run validators and ad hoc tests
                 if (valid && value) {
                     /* ----------------------------- run validators ----------------------------- */
@@ -354,21 +367,20 @@ const Plugin = function (Alpine) {
                     }
 
                     /* -------------------- Run any ad hoc tests ------------------- */
-                    // get optional test from expression
+                    // get test from expression
                     if (evalExp === false) valid = false
                 }
+                data.valid = valid;
             }
 
-            toggleError(field, valid)
-
             /* ----------------------------- Update formData ---------------------------- */
-            updateFormData(field, {value:field.value, valid:valid})
+            updateFormData(field, data, true)
 
             // add input event to blur events once it fails the first time
             if (!valid && !includes(validators,'bluronly') && e.type === 'blur') {
                 addEvent(field,INPUT, checkIfValid)
             }
-
+            // refocus if modifier is enabled
             if (!valid && includes(validators,'refocus')) field.focus()
 
             return valid
@@ -384,9 +396,7 @@ const Plugin = function (Alpine) {
     function toggleError(field,valid) {
         const name = getName(field)
 
-        let parentNode = field.parentNode
-        // if is group then use the parent's parent
-        if (isGroup(field)) parentNode = parentNode.parentNode
+        const parentNode = getData(field).parentNode
 
         const errorMsgNode = getEl(getErrorMsgId(name))
 
@@ -429,24 +439,25 @@ const Plugin = function (Alpine) {
 
     function addErrorMsg(field) {
         const name = getName(field)
+        const errorMsgId = getErrorMsgId(name)
+        const fieldData = getData(field)
 
         // set targetNode. The span.error-msg typically appears after the field but groups assign it to set after the wrapper
-        const targetNode = (isGroup(field)) ? field.parentNode.parentNode : field
+        const targetNode = (fieldData.group) ? fieldData.parentNode : field
 
         /* --------------------- Find or Make Error Message Node -------------------- */
 
-        // If there is an adjacent error message with the right class then use that. If not create one.
+        // If there is an adjacent error message with the right id or class then use that. If not create one.
         const span = document.createElement('span')
         span.className = ERROR_MSG_CLASS
-        const errorMsgNode = findErrorMsgNode(targetNode) || span
+        const errorMsgNode = getEl(errorMsgId) || findErrorMsgNode(targetNode) || span
 
         // add id tag, hidden attribute, and class name
-        const errorMsgId = getErrorMsgId(name)
         setAttr(errorMsgNode, 'id', errorMsgId)
         setAttr(errorMsgNode, HIDDEN)
 
         // add error text if it isn't already there
-        if (!errorMsgNode.innerHTML) errorMsgNode.textContent = getAttr(field,DATA_ERROR_MSG) || `${name.replace(/[-_]/g, ' ')} required`
+        if (!errorMsgNode.innerHTML) errorMsgNode.textContent = getAttr(targetNode,DATA_ERROR_MSG) || `${name.replace(/[-_]/g, ' ')} ${REQUIRED}`
 
         // Add aria-errormessage using the ID to field
         setAttr(field,'aria-errormessage',errorMsgId)
