@@ -12,6 +12,7 @@ The x-validate directive allows for simple validation and error display. It also
 Version 1.7 adds x-required directive for toggling if the field is required.
 
 * The magic functions isRequired and makeRequired have been removed. You can check if the field is required by using `$validate.data('name').required`
+* Added some customization options for targeting parent element and placement of error message.
 
 
 ## Simple Usage
@@ -113,7 +114,7 @@ When used on `<form>`, the `x-validate` every field is added to a reactive formD
 * `$validate.isComplete(el)` returns true or false validity for form, fieldsets, or fields. \*
 * `$validate.data(el)` returns an array of form, fieldset or field data \*
 
-\* $refs is recommended for form, fieldset, and field variables, but a string of the name/id works as well.
+\* either $refs or a string of the name/id works for getting data for form, fieldset, and field variables.
 
 ### Advanced Magic Functions
 
