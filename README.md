@@ -43,6 +43,7 @@ Add an `x-data`, and `x-validate` to your `<form>` element (you don't need any v
 * Use `x-validate.group` on checkboxes or radio buttons to validate that at least one is selected.
 * Add a specific test to a field like `x-validate='$el.value === 'bunny'`; this can be paired up with other validations. For example: `x-validate.website='$el.includes('bunny')` for only websites with the word bunny in the name.
 * Use `$validate.isComplete(el)` to detect if the form, `<fieldset>` groups or any field is completed
+* Use `x-required` directive with a boolean function to set if a field is required or not. This is useful for if you have a field that only shows when another field is set to a certain value. For example if a select field has an other option and you want an other text field.
 * You can an skip `x-validate` on the `<form>` and just add `x-validate` on fields directly if you only want a couple fields validated. The x-data is still required on `<form>`.
 * The examples folder in the git repo shows some of what you can do with this plugin.
 
