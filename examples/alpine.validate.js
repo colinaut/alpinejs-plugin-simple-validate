@@ -27,11 +27,11 @@
     const setAttr = (el, attr, value = "") => el.setAttribute(attr, value);
     const getEl = (el) => isHtmlElement(el) ? el : document.getElementById(el) || querySelectorAll(document, `[name ="${el}"]`)[0];
     const getForm = (el) => isHtmlElement(getEl(el), FORM) ? el : isHtmlElement(getEl(el)) ? el.closest(FORM) : false;
-    const getName = (field) => field.name || getAttr(field, "id");
+    const getName = (el) => getAttr(el, "name") || getAttr(el, "id");
     const cleanText = (str) => String(str).trim();
     const getData = (strOrEl) => {
       const el = getEl(strOrEl);
-      const data = formData[getForm(el)] || {};
+      const data = formData[getName(getForm(el))] || {};
       if (isHtmlElement(el, FORM))
         return Object.values(data);
       if (isHtmlElement(el, FIELDSET))
@@ -66,9 +66,9 @@
     const formData = Alpine.reactive({});
     const formModifiers = {};
     function updateFormData(field, data, triggerErrorMsg) {
-      const form = getForm(field);
+      const form = getName(getForm(field));
       const name = getName(field);
-      if (isHtmlElement(form, FORM) && isHtmlElement(field, FIELD_SELECTOR) && name) {
+      if (form && name) {
         formData[form] = formData[form] || {};
         data = { ...formData[form][name], name, node: field, value: field.value, ...data };
         const value = data.value;

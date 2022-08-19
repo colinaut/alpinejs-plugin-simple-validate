@@ -54,13 +54,13 @@ const Plugin = function (Alpine) {
     // is it is a form it returns the form; otherwise it returns the closest form parent
     const getForm = (el) => (isHtmlElement(getEl(el),FORM)) ? el : (isHtmlElement(getEl(el))) ? el.closest(FORM) : false
 
-    const getName = (field) => field.name || getAttr(field,'id');
+    const getName = (el) => getAttr(el,'name') || getAttr(el,'id');
 
     const cleanText = (str) => String(str).trim()
 
     const getData = (strOrEl) => {
         const el = getEl(strOrEl)
-        const data = formData[getForm(el)] || {}
+        const data = formData[getName(getForm(el))] || {}
         if (isHtmlElement(el, FORM)) return Object.values(data)
         if (isHtmlElement(el,FIELDSET)) return Object.values(data).filter(val => val.set === el)
         if (isField(el)) return data[getName(el)]
@@ -118,14 +118,14 @@ const Plugin = function (Alpine) {
     function updateFormData(field, data, triggerErrorMsg) {
         // console.log("🚀 ~ file: index.js ~ line 86 ~ updateFormData ~ data", field, data, required)
         // data = {name: 'field id or name if no id', node: field, value:'field value', array:[optional used for groups], valid: true, set: form node or fieldset node}
-        // Only run if has form and field has name
-        const form = getForm(field)
+        const form = getName(getForm(field))
         const name = getName(field)
 
-        // only add data if has form and is proper field and field has name
-        if (isHtmlElement(form,FORM) && isHtmlElement(field,FIELD_SELECTOR) && name) {
+        // only add data if has form and field name
+        if (form && name) {
             // make sure form object exists
             formData[form] = formData[form] || {}
+            
             // Add any data from formData, then name, node, and value if it's not being passed along
             data = {...formData[form][name], name: name, node: field, value: field.value, ...data}
 

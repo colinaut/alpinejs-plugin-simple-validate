@@ -17,7 +17,7 @@ Version 1.7 adds x-required directive for toggling if the field is required.
 
 ## Simple Usage
 
-Add an `x-data`, and `x-validate` to your `<form>` element (you don't need any variables on x-data ; it just needs to be initiated as an Alpine component). This automatically:
+Add a name or id attribute, `x-data`, and `x-validate` to your `<form>` element (you don't need any variables on x-data ; it just needs to be initiated as an Alpine component). This automatically:
 
 * Captures all data to a reactive formData[form] array which updates on blur or click (depending on field type).
 * Validates onblur using basic browser checkValidity() checking `required` attribute and input types.
@@ -238,8 +238,8 @@ eleventyConfig.addPassthroughCopy({
 
 ## Roadmap
 
+* Test changing from using name/id to using root for formData
 * Clean up the code more.
-* Rewire validation
 
 Feel free to add any enhancement requests on github.
 

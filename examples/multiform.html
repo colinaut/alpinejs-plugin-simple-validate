@@ -35,7 +35,7 @@
         </div>
         <div class="checkbox-wrapper">
             <label><input type="checkbox" required name="yolo" id="yolo" value="Sell all my secret data!" /> Sell all my secret data!
-                YOLO!</label>
+                YOLO! <span class="error-msg"></span></label>
         </div>
         <div>
             <button type="submit" :disabled="!$validate.isComplete($refs.form)">Submit</button>
