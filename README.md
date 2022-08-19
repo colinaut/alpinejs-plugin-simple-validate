@@ -27,7 +27,7 @@ Add an `x-data`, and `x-validate` to your `<form>` element (you don't need any v
 * When the validity check fails, it...
   * Adds `aria-invalid="true"` and `aria-errormessage` attributes to the field element.
   * Reveals the error message in by removing the `hidden` attribute.
-  * Also adds a superfluous `data-error="{error message}"` on the field's parent element for any additional styling you may want (searches for closest `field-parent` class parent element or failing that uses `.parentNode').
+  * Also adds a superfluous `data-error="{error message}"` on the field's parent element for any additional styling you may want (searches for closest `field-parent` class parent element or failing that uses `.parentNode`).
   * After blur triggers invalid, it adds 'input' event listener for validation as well as 'blur'
 * If valid is triggered, it reverses all the above
 * Use `:disabled="$validate.isFormComplete('formId')"` to disable submit button and/or use `@submit="$validate.submit"` to automatically check validity of all fields prior to submitting.
@@ -37,13 +37,12 @@ Add an `x-data`, and `x-validate` to your `<form>` element (you don't need any v
 * Use `x-validate` directive along with modifiers directly on form fields to add additional validation, such as  `x-validate.wholenumber`
 * Write a custom error message one of two ways:
   * Add `data-error-msg='custom error message'` on field itself
-  * Add an sibling element with `error-msg` class and write your own error message there. It will add the proper aria-errormessage linked id tags for you.
+  * Add a sibling element with `error-msg` class and write your own error message there. The plugin searches all next siblings and will add the proper aria-errormessage linked id tags for you. This is also useful if you want some descriptive text or other element before the error message.
   * Add an element with the correct id attribute anywhere on the page (id is `error-msg-${name}`) and it will use that.
-* Another advantage of adding your own `error-msg` class element is if you want the error message after another element. The plugin searches all next siblings, so if want a description text element or label right after the field then add `<span class="error-msg"></span>` after the description and it will use that.
-* Use `x-validate.group` on checkboxes or radio buttons to validate that at least one is selected.
+* Use `x-validate.group` on groups of checkboxes or radio buttons to validate that at least one is selected.
 * Add a specific test to a field like `x-validate='$el.value === 'bunny'`; this can be paired up with other validations. For example: `x-validate.website='$el.includes('bunny')` for only websites with the word bunny in the name.
 * Use `$validate.isComplete(el)` to detect if the form, `<fieldset>` groups or any field is completed
-* Use `x-required` directive with a boolean function to set if a field is required or not. This is useful for if you have a field that only shows when another field is set to a certain value. For example if a select field has an other option and you want an other text field.
+* Use `x-required` directive with a boolean function to set if a field is required or not. This is useful for if you have a field that only shows when another field is set to a certain value. For example if a select field has an 'other' option and you want an 'other' text field.
 * You can an skip `x-validate` on the `<form>` and just add `x-validate` on fields directly if you only want a couple fields validated. The x-data is still required on `<form>`.
 * The examples folder in the git repo shows some of what you can do with this plugin.
 
@@ -90,7 +89,7 @@ You can validate that at least one is selected by adding `x-validate.group` to e
 
 ## Directive x-required
 
-The x-required directive is used on a field if you want to have it required depending on another field value or other variable.
+The x-required directive is used on a field if you want to toggle required depending on another field value or other variable.
 
 * x-required="expression" — evaluates the expression as a boolean function to toggle required on the element
 * x-required:name="'value'" — this shorthand allows you to easily test if a another named field has a particular value set. If it does have the value than it sets required to true.
@@ -115,26 +114,21 @@ When used on `<form>`, the `x-validate` every field is added to a reactive formD
 * `$validate.isComplete(el)` returns true or false validity for form, fieldsets, or fields. \*
 * `$validate.data(el)` returns an array of form, fieldset or field data \*
 
-\* either $refs or a string of the name/id works for getting data for form, fieldset, and field variables.
+\* 'el' argument variable works with either $refs or a string of the name/id for getting data from form, fieldset, and fields.
 
 ### Advanced Magic Functions
 
 These grant access to some of the backend functions — use at your own risk.
 
-* `$validate.updateData(field,data)` allows you to directly add/update the formData array for a field.
-* `$validate.toggleError(field,valid)` allows you to toggle the error message on any field
+* `$validate.updateData(field,data,triggerErrorMsg)` allows you to directly add/update the formData array for a field.
+* `$validate.toggleError(field,valid)` allows you to toggle the error message on any field.
 
 #### Example formData
 
 ```
-{name: 'name', type: 'text', node: [HTMLElement], value: 'Fred', valid: true, required: true}
+{name: 'name', node: [HTMLElement], value: 'field value', valid: true, required: true, mods: [array of directive modifiers], set: [fieldset HTMLElement], parentNode: [parent HTMLElement], array: [array of checked selections (only used groups of checkboxes or radio buttons)], group: false or (only used for groups of checkboxes or radio buttons) min number checked items}
 ```
 ***Note:** name = name attribute || id attribute*
-
-#### Example formData for checkbox groups
-```
-{name: 'animals', type: 'checkbox', node: [HTMLElement], value: 'cat,dog', array: ['cat', 'dog'], valid: true, required: true, group: true}
-```
 
 ## Example
 
@@ -165,20 +159,34 @@ More complicated examples in examples folder. run `npm run serve` to view.
                 Bunny</label>
         </div>
         <div>
-            <input type="submit"  value="submit">
+            <input type="submit" value="submit">
         </div>
     </form>
 <style type="text/css">
     /* style to display the error message */
-    [hidden] {
-        display: none;
-    }
-    .error-msg:not([hidden]) {
+    .error-msg {
         color: red;
-        display: block;
     }
 </style>
 
+```
+
+### Example of more elaborate error message styling
+
+```
+.error-msg[hidden] {
+    opacity: 0;
+    height: 0px;
+    transform: scale(0);
+}
+.error-msg {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: darkred;
+    transform-origin: left;
+    transition: all 200ms;
+    display: block;
+}
 ```
 
 ## Installation
@@ -230,7 +238,8 @@ eleventyConfig.addPassthroughCopy({
 
 ## Roadmap
 
-* Clean up the code more to get it down closer to 4KB minimized.
+* Clean up the code more.
+* Rewire validation
 
 Feel free to add any enhancement requests on github.
 

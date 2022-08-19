@@ -10,6 +10,7 @@
     <script defer src="https://unpkg.com/alpinejs@3.10.2/dist/cdn.min.js"></script>
     <!-- <link href="https://unpkg.com/@csstools/normalize.css" rel="stylesheet" /> -->
     <link href="/styles.css" rel="stylesheet" />
+    <link href="/nav.css" rel="stylesheet" />
 </head>
 
 <body>
@@ -19,7 +20,7 @@
             <a :href="'/' + a.page" x-text="a.name" :class="a.page === htmlPage && 'active'"></a>
         </template>
     </nav>
-    <form id="form" x-data="{number: ''}" x-validate @submit="$validate.submit" x-ref="form">
+    <form id="form" x-data x-validate @submit="$validate.submit" x-ref="form">
         <p class="description">This form uses <code>@submit="$validate.submit"</code> to make sure the form is complete</p>
         <div>
             <label for="name">Your Name <span x-show="$validate.data('name').required">*</span></label>
@@ -45,9 +46,8 @@
         </div>
         <div>
             <label for="whole-number">Whole Number</label>
-            <p style="margin: 0">validator: <span class="error-msg" style="display: inline" id="error-msg-whole-number"><i x-text="number"></i> is <b x-show="!$validate.wholenumber(number)" style="color:darkred">not</b> a whole number</span></p>
-            <input type="text" id="whole-number" name="whole-number" x-validate.wholenumber x-model="number" />
-            <!-- <span class="error-msg"><b x-text="number"></b> is <b x-show="!$validate.wholenumber(number)" style="color:darkred">not</b> a whole number</span> -->
+            <p style="margin: 0" class="alt-error-msg" id="error-msg-whole-number" x-show="$validate.data('whole-number').value"><i x-text="$validate.data('whole-number').value"></i> is <b x-show="!$validate.isComplete('whole-number')" style="color:darkred">not</b> a whole number</p>
+            <input type="text" id="whole-number" name="whole-number" x-validate.wholenumber />
         </div>
         <div>
             <label for="date">Favorite Website *</label>

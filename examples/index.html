@@ -9,7 +9,7 @@
     <script defer src="/alpine.validate.js"></script>
     <script defer src="https://unpkg.com/alpinejs@3.10.2/dist/cdn.min.js"></script>
     <link href="https://unpkg.com/@csstools/normalize.css" rel="stylesheet" />
-    <link href="/styles.css" rel="stylesheet" />
+    <link href="/nav.css" rel="stylesheet" />
 </head>
 
 <body>
@@ -20,6 +20,7 @@
         </template>
     </nav>
     <form id="form" x-data x-validate.bluronly @submit="$validate.submit">
+        <p>This README example has been left mostly unstyled. See other examples for more elaborate styling of form and error message display</p>
         <p><em>* required</em></p>
         <div>
             <label for="name">Your Name *</label>
@@ -58,6 +59,20 @@
             <input type="submit"  value="submit">
         </div>
     </form>
+    <style type="text/css">
+        form {
+            width: 22rem;
+            margin: 2rem auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+      
+        /* style to display the error message */
+        .error-msg {
+            color: red;
+        }
+    </style>
 </body>
 
 </html>

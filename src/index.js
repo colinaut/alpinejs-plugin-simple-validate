@@ -112,7 +112,7 @@ const Plugin = function (Alpine) {
     const formModifiers = {}
 
     /* -------------------------------------------------------------------------- */
-    /*                           formData functions                               */
+    /*                           formData function                                */
     /* -------------------------------------------------------------------------- */
 
     function updateFormData(field, data, triggerErrorMsg) {
@@ -132,7 +132,7 @@ const Plugin = function (Alpine) {
             const value = data.value
             const isEmpty = !value.trim()
 
-            // Rewrite valid based on required value and empty status; used for makeRequired and x-required
+            // Rewrite valid based on required value and empty status; used for x-required
             if (data.required) data.valid = !isEmpty && data.valid
             if (!data.required) data.valid = (isEmpty) ? true : data.valid
 
@@ -211,7 +211,6 @@ const Plugin = function (Alpine) {
     }
 
     // isComplete works for the form as a whole and fieldsets using either the node itself or the id
-    // TODO: figure out why this fails for checkboxes when there is x-model on it
     validateMagic.isComplete = (el) => {
         const data = getData(el)
         // if this is array then data is form or fieldset
@@ -301,8 +300,6 @@ const Plugin = function (Alpine) {
                     addEvents(field)
                 }
             })
-
-            /* -------------------- Add event triggers and formData -------------------- */
         }
 
         /* -------------------------------------------------------------------------- */
@@ -321,6 +318,9 @@ const Plugin = function (Alpine) {
         /*                           Check Validity Function                          */
         /* -------------------------------------------------------------------------- */
 
+        // TODO: test if I can use Alpine.effect here and add the expression to formData directly? That way I could move most or all of this from here?
+        // The main reason I need to have this in here is for the evaluate(expression) which needs to run on the directive for the field.
+
         function checkIfValid(e) {
             const field = this
             const value = field.value.trim()
@@ -329,7 +329,6 @@ const Plugin = function (Alpine) {
 
             // validation default based on type and add mods from data
             let validators = [field.type, ...fieldData.mods]
-            // add required if in attribute since our required is better as trims whitespace and doesn't get tricked by a bunch of spaces.
             // console.log("🚀 ~ file: index.js ~ line 341 ~ checkIfValid ~ validators", validators)
 
             // default valid is true
@@ -341,8 +340,10 @@ const Plugin = function (Alpine) {
             // shortcut for checked
             const isChecked = field.checked
 
+            // TODO: test moving all or some of this to updateFormData. It would be nice if updateFormData also validated.
             if (isCheckRadio(field) && includes(validators,GROUP)) {
                 // update group min in case the expression has changed
+                // tests group min validity happens in updateFormData since we need to update how many are checked.
                 data.group = parseInt(evalExp) || 1
             } else {
                 /* --------------------- Check validity the browser way --------------------- */
@@ -373,7 +374,7 @@ const Plugin = function (Alpine) {
                 data.valid = valid;
             }
 
-            /* ----------------------------- Update formData ---------------------------- */
+            /* --------------- Update formData and trigger error message  ----------------- */
             updateFormData(field, data, true)
 
             // add input event to blur events once it fails the first time

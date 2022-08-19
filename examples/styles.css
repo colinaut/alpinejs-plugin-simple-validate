@@ -1,50 +1,3 @@
-:root {
-    font-family: Helvetica, Arial, sans-serif;
-    /* Fluid font size from Utopia */
-    font-size: clamp(1rem, 0.9rem + 0.49vw, 1.25rem);
-    /* Safari Resize fix */
-    min-height: 1vw;
-}
-
-h1 {
-    width: 24rem;
-    margin: 2rem auto;
-    text-align: center;
-}
-h2,h3,ul,p {
-    margin: 0 0 1rem;
-}
-h4 {
-    margin: 0 0 0.2rem;
-}
-nav {
-    width: 30rem;
-    margin: 2rem auto;
-    text-align: center;
-    display: flex;
-    justify-content: space-evenly;
-    gap: 1rem;
-}
-
-nav a {
-    color: white;
-    background-color: saddlebrown;
-    text-decoration: none;
-    display: block;
-    padding: 0.3rem 0.6rem;
-    border-radius: 0.5rem;
-}
-
-nav a:hover {
-    background-color: darkorange;
-}
-
-.active {
-    text-decoration: none;
-    color: white;
-    background-color: darkorange;
-}
-
 form {
     width: 22rem;
     margin: 2rem auto;
@@ -116,11 +69,16 @@ input[type="checkbox"], input[type="radio"] {
     border-right: .4rem solid darkred;
     padding-right: .8rem;
 }
-[hidden] {
-    visbility: hidden;
+
+.alt-error-msg[hidden] {
+    height: 0px;
+}
+.alt-error-msg {
+    display: block;
 }
 .error-msg[hidden] {
     opacity: 0;
+    height: 0px;
     transform: scale(0);
 }
 .error-msg {
@@ -130,9 +88,6 @@ input[type="checkbox"], input[type="radio"] {
     transform-origin: left;
     transition: all 200ms;
     display: block;
-}
-.error-msg:not([hidden]) {
-    visibility: visible;
 }
 
 input[aria-invalid="true"],
