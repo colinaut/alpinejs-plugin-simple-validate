@@ -27,7 +27,6 @@ var Plugin = function(Alpine) {
   const FIELD_SELECTOR = `input:not([type="button"]):not([type="search"]):not([type="reset"]):not([type="submit"]),select,textarea`;
   const HIDDEN = "hidden";
   const isHtmlElement = (el, type) => type ? el instanceof HTMLElement && el.matches(type) : el instanceof HTMLElement;
-  const isVarType = (x, type) => typeof x === type;
   const includes = (array, string) => array.includes(string);
   const querySelectorAll = (el, selector) => el.querySelectorAll(selector);
   const addEvent = (el, event, callback) => el.addEventListener(event, callback);
@@ -68,7 +67,7 @@ var Plugin = function(Alpine) {
     const isoFormattedStr = `${yyyy}-${mm}-${dd}`;
     const date = new Date(isoFormattedStr);
     const timestamp = date.getTime();
-    if (!isVarType(timestamp, "number") || Number.isNaN(timestamp))
+    if (!typeof timestamp === "number" || Number.isNaN(timestamp))
       return false;
     return date.toISOString().startsWith(isoFormattedStr);
   }
@@ -107,7 +106,7 @@ var Plugin = function(Alpine) {
       } else {
         if (valid && value) {
           for (let type of data.mods) {
-            if (isVarType(validate[type], "function")) {
+            if (typeof validate[type] === "function") {
               if (type === "date") {
                 const matchingFormat = data.mods.filter((val) => dateFormats.indexOf(val) !== -1)[0] || dateFormats[0];
                 valid = validate.date[matchingFormat](value);
@@ -164,11 +163,10 @@ var Plugin = function(Alpine) {
     value,
     expression
   }, {
-    evaluate,
-    Alpine: Alpine2
+    evaluate
   }) => {
     if (expression) {
-      Alpine2.effect(() => {
+      Alpine.effect(() => {
         var _a;
         const evalExp = evaluate(expression);
         const required = value ? ((_a = getData(value)) == null ? void 0 : _a.value) === evalExp : evalExp;

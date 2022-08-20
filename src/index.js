@@ -1,6 +1,5 @@
 const Plugin = function (Alpine) {
     // TODO: build some tests for this
-    // TODO: back button holds values in form elements but fails isComplete validation
 
     /* -------------------------------------------------------------------------- */
     /*                              STRING CONSTANTS                              */
@@ -28,8 +27,6 @@ const Plugin = function (Alpine) {
     /* -------------------------------------------------------------------------- */
 
     const isHtmlElement = (el,type) => (type) ? el instanceof HTMLElement && el.matches(type) : el instanceof HTMLElement
-
-    const isVarType = (x,type) => typeof x === type
 
     const includes = (array, string) => array.includes(string)
 
@@ -89,7 +86,7 @@ const Plugin = function (Alpine) {
 
         const timestamp = date.getTime()
 
-        if (!isVarType(timestamp,'number') || Number.isNaN(timestamp)) return false
+        if (!typeof timestamp === 'number' || Number.isNaN(timestamp)) return false
 
         return date.toISOString().startsWith(isoFormattedStr)
     }
@@ -160,7 +157,7 @@ const Plugin = function (Alpine) {
                 // only run validation check if valid and has value
                 if (valid && value) {
                     for (let type of data.mods) {
-                        if (isVarType(validate[type],'function')) {
+                        if (typeof validate[type] === 'function') {
                             if(type === 'date') {
                                 // search for data format modifier; if none assume mmddyyyy
                                 const matchingFormat = data.mods.filter(val => dateFormats.indexOf(val) !== -1)[0] || dateFormats[0]
@@ -217,12 +214,10 @@ const Plugin = function (Alpine) {
     // toggle error message
     validateMagic.toggleError = (field,valid) => toggleError(getEl(field),valid)
 
-    // Check if form is completed
-
+    // Check if form is completed and prevent default if not
     validateMagic.submit = e => {
         getData(e.target).forEach(val => {
             if (val.valid === false) {
-                // click groups should set their error two parents up.
                 toggleError(val.node,false)
                 e.preventDefault();
                 // eslint-disable-next-line no-console -- this error helps with submit and is the only one that should stay in production.
@@ -252,8 +247,7 @@ const Plugin = function (Alpine) {
         value,
         expression
     }, {
-        evaluate,
-        Alpine
+        evaluate
     }) => {
 
         // only run if has expression
