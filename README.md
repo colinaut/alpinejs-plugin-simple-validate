@@ -14,7 +14,7 @@ Version 1.7 adds x-required directive for toggling if the field is required.
 * The magic functions isRequired and makeRequired have been removed. You can check if the field is required by using `$validate.data('name').required`
 * Added some customization options for targeting parent element and placement of error message.
 * 1.7.2: checks for validity on init, incase values are already set due to browser back button, value, or x-model.
-* 1.7.3: fix for x-validate mods on multiple forms on the same page; code clean up.
+* 1.7.3: fix for x-validate mods on multiple forms on the same page; date defaults to yyyy-mm-dd format; and code clean up.
 
 ## Simple Usage
 
@@ -31,7 +31,7 @@ Add a `x-data`, and `x-validate` to your `<form>` element (you don't need any va
   * Also adds a superfluous `data-error="{error message}"` on the field's parent element for any additional styling you may want (searches for closest `field-parent` class parent element or failing that uses `.parentNode`).
   * After blur triggers invalid, it adds 'input' event listener for validation as well as 'blur'
 * If valid is triggered, it reverses all the above
-* Use `:disabled="$validate.isFormComplete('formId')"` to disable submit button and/or use `@submit="$validate.submit"` to automatically check validity of all fields prior to submitting.
+* Use `:disabled="$validate.isComplete('formId')"` to disable submit button and/or use `@submit="$validate.submit"` to automatically check validity of all fields prior to submitting.
 
 ## Custom Usage
 
