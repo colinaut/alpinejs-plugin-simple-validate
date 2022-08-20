@@ -120,7 +120,7 @@ const Plugin = function (Alpine) {
                 formData.set(form, Alpine.reactive({}));
             }
             let tempData = formData.get(form);
-            
+
             // Add any data from formData, then name, node, and value if it's not being passed along
             data = {...tempData[name], name: name, node: field, value: field.value, ...data}
 
@@ -291,9 +291,9 @@ const Plugin = function (Alpine) {
 
         const defaultData = (field) => {
             const isGroup = includes(modifiers,GROUP)
-            const isRequired = (field) => includes(modifiers,REQUIRED) || isGroup || field.hasAttribute(REQUIRED) || false
+            const isRequired = includes(modifiers,REQUIRED) || isGroup || field.hasAttribute(REQUIRED)
             const parentNode = field.closest('.field-parent') || isGroup ? field.parentNode.parentNode : field.parentNode
-            return {required: isRequired(field), mods: [...modifiers, field.type], set: field.closest(FIELDSET), parentNode: parentNode, exp: expression && evaluate(expression)}
+            return {required: isRequired, mods: [...modifiers, field.type], set: field.closest(FIELDSET), parentNode: parentNode, exp: expression && evaluate(expression)}
         }
 
         function addEvents(field) {
@@ -346,7 +346,7 @@ const Plugin = function (Alpine) {
             const mods = getData(field).mods
 
             /* --- Update formData with value and expression and trigger error message --- */
-            const updatedData = updateFormData(field, {value:field.value, exp: expression && evaluate(expression)}, true)
+            const updatedData = updateFormData(field, {exp: expression && evaluate(expression)}, true)
 
             // add input event to blur events once it fails the first time
             if (!updatedData.valid && !includes(mods,'bluronly') && e.type === 'blur') {

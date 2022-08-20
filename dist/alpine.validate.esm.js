@@ -174,9 +174,9 @@ var Plugin = function(Alpine) {
     const form = getForm(el);
     const defaultData = (field) => {
       const isGroup = includes(modifiers, GROUP);
-      const isRequired = (field2) => includes(modifiers, REQUIRED) || isGroup || field2.hasAttribute(REQUIRED) || false;
+      const isRequired = includes(modifiers, REQUIRED) || isGroup || field.hasAttribute(REQUIRED);
       const parentNode = field.closest(".field-parent") || isGroup ? field.parentNode.parentNode : field.parentNode;
-      return { required: isRequired(field), mods: [...modifiers, field.type], set: field.closest(FIELDSET), parentNode, exp: expression && evaluate(expression) };
+      return { required: isRequired, mods: [...modifiers, field.type], set: field.closest(FIELDSET), parentNode, exp: expression && evaluate(expression) };
     };
     function addEvents(field) {
       addErrorMsg(field);
@@ -204,7 +204,7 @@ var Plugin = function(Alpine) {
     function checkIfValid(e) {
       const field = this;
       const mods = getData(field).mods;
-      const updatedData = updateFormData(field, { value: field.value, exp: expression && evaluate(expression) }, true);
+      const updatedData = updateFormData(field, { exp: expression && evaluate(expression) }, true);
       if (!updatedData.valid && !includes(mods, "bluronly") && e.type === "blur") {
         addEvent(field, INPUT, checkIfValid);
       }

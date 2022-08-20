@@ -66,10 +66,10 @@
             <label for="favorite-food-dup">Write Same Favorite Food Again<span>*</span></label>
             <input type="text" id="favorite-food-dup" required x-validate="$el.value === $validate.data('favorite-food').value" data-error-msg="must write the same as Favorite Food above"/>
         </div>
-        <div x-data="{other:false}">
+        <div>
             <div>
                 <label for="select">Pick your favorite cheese! *</label>
-                <select name="cheese" id="cheese" required title="select favorite cheese" @change="other = ($el.value === 'other')">
+                <select name="cheese" id="cheese" required title="select favorite cheese" >
                     <option disabled selected value="" >-- choose one --</option>
                     <option value="brie">brie</option>
                     <option value="cheddar">cheddar</option>
@@ -78,9 +78,9 @@
                     <option value="other">other</option>
                 </select>
             </div>
-            <div x-show="other">
+            <div x-show="$validate.data('cheese').value === 'other'">
                 <label for="othercheese">Other Cheese *</label>
-                <input type="text" id="othercheese" name="othercheese" x-validate="!/american/i.test($el.value)" x-required="other" x-ref="othercheese" data-error-msg="any cheese other than American"/>
+                <input type="text" id="othercheese" name="othercheese" x-validate="!/american/i.test($el.value)" x-required:cheese="'other'" x-ref="othercheese" data-error-msg="any cheese other than American"/>
             </div>
         </div>
         <div id="animals" class="checkbox-wrapper" data-error-msg="you must pick at least two animals">
