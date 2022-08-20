@@ -29,19 +29,11 @@ const Plugin = function (Alpine) {
 
     const isHtmlElement = (el,type) => (type) ? el instanceof HTMLElement && el.matches(type) : el instanceof HTMLElement
 
-    const isField = (el) => isHtmlElement(el,FIELD_SELECTOR)
-
     const isVarType = (x,type) => typeof x === type
 
     const includes = (array, string) => array.includes(string)
 
     const querySelectorAll = (el,selector) => el.querySelectorAll(selector)
-
-    const isClickField = (el) => includes([CHECKBOX, RADIO, 'range'],el.type)
-
-    const isCheckRadio = (el) => includes([CHECKBOX, RADIO],el.type)
-
-    const isCheckbox = (el) => el.type === CHECKBOX
 
     const addEvent = (el,event,callback) => el.addEventListener(event, callback)
 
@@ -64,7 +56,7 @@ const Plugin = function (Alpine) {
         if (!data) return false
         if (isHtmlElement(el, FORM)) return Object.values(data)
         if (isHtmlElement(el,FIELDSET)) return Object.values(data).filter(val => val.set === el)
-        if (isField(el)) return data[getName(el)]
+        if (isHtmlElement(el,FIELD_SELECTOR)) return data[getName(el)]
     }
 
     const getErrorMsgId = (name) => `${ERROR_MSG_CLASS}-${name}`
@@ -139,15 +131,15 @@ const Plugin = function (Alpine) {
 
             // if required than check if it has a value or if it's a checkbox or radio button and is checked
             if (data.required) {
-                valid = isCheckRadio(field) ? field.checked : !!value.trim()
+                valid = includes([CHECKBOX, RADIO],field.type) ? field.checked : !!value.trim()
             }
 
             // If checkbox/radio then assume it's a group so update array and string value based on checked
-            if (isCheckRadio(field)) {
+            if (includes([CHECKBOX, RADIO],field.type)) {
                 // data.array acts as a store of current selected values
                 let tempArray = data.array || []
 
-                if (isCheckbox(field)) {
+                if (field.type === CHECKBOX) {
                     if (field.checked && !tempArray.includes(value)) tempArray.push(value)
                     if (!field.checked) tempArray = tempArray.filter(val => val !== value)
                 }
@@ -306,10 +298,11 @@ const Plugin = function (Alpine) {
 
         function addEvents(field) {
             addErrorMsg(field)
-            const eventType = (isClickField(field)) ? 'click' : ((isHtmlElement(field,'select'))) ? 'change' :'blur'
+            const isClickField = includes([CHECKBOX, RADIO, 'range'],field.type)
+            const eventType = (isClickField) ? 'click' : ((isHtmlElement(field,'select'))) ? 'change' :'blur'
             // console.log("🚀 ~ file: index.js ~ line 308 ~ addEvents ~ eventType", field, eventType)
             addEvent(field,eventType,checkIfValid)
-            if (includes(modifiers,INPUT) && !isClickField(field)) addEvent(field,INPUT, checkIfValid)
+            if (includes(modifiers,INPUT) && !isClickField) addEvent(field,INPUT, checkIfValid)
         }
 
         /* -------------------------------------------------------------------------- */
@@ -336,7 +329,7 @@ const Plugin = function (Alpine) {
         /*      If x-validate on input, select, or textarea validate this field       */
         /* -------------------------------------------------------------------------- */
 
-        if (isField(el)) {
+        if (isHtmlElement(el,FIELD_SELECTOR)) {
             // include form level modifiers so they are also referenced
             modifiers = [...modifiers, ...(formModifiers[form] || [])]
             // el is field element

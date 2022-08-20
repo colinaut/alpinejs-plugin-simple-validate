@@ -14,13 +14,9 @@ var Plugin = function(Alpine) {
   const FIELD_SELECTOR = `input:not([type="button"]):not([type="search"]):not([type="reset"]):not([type="submit"]),select,textarea`;
   const HIDDEN = "hidden";
   const isHtmlElement = (el, type) => type ? el instanceof HTMLElement && el.matches(type) : el instanceof HTMLElement;
-  const isField = (el) => isHtmlElement(el, FIELD_SELECTOR);
   const isVarType = (x, type) => typeof x === type;
   const includes = (array, string) => array.includes(string);
   const querySelectorAll = (el, selector) => el.querySelectorAll(selector);
-  const isClickField = (el) => includes([CHECKBOX, RADIO, "range"], el.type);
-  const isCheckRadio = (el) => includes([CHECKBOX, RADIO], el.type);
-  const isCheckbox = (el) => el.type === CHECKBOX;
   const addEvent = (el, event, callback) => el.addEventListener(event, callback);
   const getAttr = (el, attr) => el.getAttribute(attr);
   const setAttr = (el, attr, value = "") => el.setAttribute(attr, value);
@@ -37,7 +33,7 @@ var Plugin = function(Alpine) {
       return Object.values(data);
     if (isHtmlElement(el, FIELDSET))
       return Object.values(data).filter((val) => val.set === el);
-    if (isField(el))
+    if (isHtmlElement(el, FIELD_SELECTOR))
       return data[getName(el)];
   };
   const getErrorMsgId = (name) => `${ERROR_MSG_CLASS}-${name}`;
@@ -77,11 +73,11 @@ var Plugin = function(Alpine) {
       const value = data.value;
       let valid = field.checkValidity();
       if (data.required) {
-        valid = isCheckRadio(field) ? field.checked : !!value.trim();
+        valid = includes([CHECKBOX, RADIO], field.type) ? field.checked : !!value.trim();
       }
-      if (isCheckRadio(field)) {
+      if (includes([CHECKBOX, RADIO], field.type)) {
         let tempArray = data.array || [];
-        if (isCheckbox(field)) {
+        if (field.type === CHECKBOX) {
           if (field.checked && !tempArray.includes(value))
             tempArray.push(value);
           if (!field.checked)
@@ -184,9 +180,10 @@ var Plugin = function(Alpine) {
     };
     function addEvents(field) {
       addErrorMsg(field);
-      const eventType = isClickField(field) ? "click" : isHtmlElement(field, "select") ? "change" : "blur";
+      const isClickField = includes([CHECKBOX, RADIO, "range"], field.type);
+      const eventType = isClickField ? "click" : isHtmlElement(field, "select") ? "change" : "blur";
       addEvent(field, eventType, checkIfValid);
-      if (includes(modifiers, INPUT) && !isClickField(field))
+      if (includes(modifiers, INPUT) && !isClickField)
         addEvent(field, INPUT, checkIfValid);
     }
     if (isHtmlElement(el, FORM)) {
@@ -199,7 +196,7 @@ var Plugin = function(Alpine) {
         }
       });
     }
-    if (isField(el)) {
+    if (isHtmlElement(el, FIELD_SELECTOR)) {
       modifiers = [...modifiers, ...formModifiers[form] || []];
       updateFormData(el, defaultData(el));
       addEvents(el);
