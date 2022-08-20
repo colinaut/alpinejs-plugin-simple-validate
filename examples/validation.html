@@ -20,29 +20,29 @@
             <a :href="'/' + a.page" x-text="a.name" :class="a.page === htmlPage && 'active'"></a>
         </template>
     </nav>
-    <form id="form" x-data x-validate @submit="$validate.submit" x-ref="form">
-        <p class="description">This form uses <code>@submit="$validate.submit"</code> to make sure the form is complete</p>
+    <form id="form" x-data="{date: '2001/12/12'}" x-validate @submit="$validate.submit" x-ref="form">
+        <p class="description">This form contains a lot of odd variations to test the plugins limits. It uses <code>@submit="$validate.submit"</code> to make sure the form is complete</p>
         <div>
             <label for="name">Your Name <span x-show="$validate.data('name').required">*</span></label>
             <input type="text" id="name" name="name" required />
         </div>
         <div>
+            <label>Preferred Contact Method *</label>
             <div>
-                <label>Preferred Contact Method *</label>
                 <label><input type="radio" x-validate.group name="preferred" value="email" checked /> 
                     Email</label>
                 <label><input type="radio" x-validate.group name="preferred" value="phone" /> 
                     Phone</label>
             </div>
-            <div x-show="$validate.data('email').required">
-                <label for="email">Your Email <span x-show="$validate.data('email').required">*</span></label>
-                <input type="email" id="email" name="email" x-required:preferred="'email'" x-ref="email" />
-            </div>
-            <div x-show="$validate.data('phone').required">
-                <label for="phone">Your Phone <span x-show="$validate.data('phone').required">*</span></label>
-                <input type="tel" id="phone" name="phone" x-required="$validate.data('preferred').value === 'phone'" />
-                <span class="error-msg">Please enter a valid phone number</span>
-            </div>
+        </div>
+        <div x-show="$validate.data('email').required">
+            <label for="email">Your Email <span x-show="$validate.data('email').required">*</span></label>
+            <input type="email" id="email" name="email" x-required:preferred="'email'" x-ref="email" />
+        </div>
+        <div x-show="$validate.data('phone').required">
+            <label for="phone">Your Phone <span x-show="$validate.data('phone').required">*</span></label>
+            <input type="tel" id="phone" name="phone" x-required="$validate.data('preferred').value === 'phone'" />
+            <span class="error-msg">Please enter a valid phone number</span>
         </div>
         <div>
             <label for="whole-number">Whole Number</label>
@@ -56,11 +56,15 @@
         </div>
         <div>
             <label for="url">Best date in 2000 (yyyy/mm/dd) *</label>
-            <input id="date" name="date" type="text" required x-validate.date.yyyymmdd="$el.value.includes('2000')" data-error-msg="year 2000 date in yyyy/mm/dd format required"/>
+            <input id="date" name="date" type="text" required x-validate.date.yyyymmdd="$el.value.includes('2000')" data-error-msg="year 2000 date in yyyy/mm/dd format required" x-model="date"/>
         </div>
-        <div x-data="{required:true}">
+        <div>
             <label for="favorite-food">Favorite Food <span>*</span></label>
-            <input type="text" id="favorite-food" favorite-food="favorite-food" required />
+            <input type="text" id="favorite-food" required />
+        </div>
+        <div>
+            <label for="favorite-food-dup">Write Same Favorite Food Again<span>*</span></label>
+            <input type="text" id="favorite-food-dup" required x-validate="$el.value === $validate.data('favorite-food').value" data-error-msg="must write the same as Favorite Food above"/>
         </div>
         <div x-data="{other:false}">
             <div>
@@ -79,13 +83,13 @@
                 <input type="text" id="othercheese" name="othercheese" x-validate="!/american/i.test($el.value)" x-required="other" x-ref="othercheese" data-error-msg="any cheese other than American"/>
             </div>
         </div>
-        <div id="animals" class="checkbox-wrapper" data-error-msg="you must pick at least one animal">
+        <div id="animals" class="checkbox-wrapper" data-error-msg="you must pick at least two animals">
             <h4>Favorite Animals *</h4>
-            <label><input type="checkbox" x-validate.group name="animal" id="cat" value="cat" /> 
+            <label><input type="checkbox" x-validate.group="2" name="animal" id="cat" value="cat" /> 
                 Cat</label>
-            <label><input type="checkbox" x-validate.group name="animal" id="dog" value="dog" /> 
+            <label><input type="checkbox" x-validate.group="2" name="animal" id="dog" value="dog" /> 
                 Dog</label>
-            <label><input type="checkbox" x-validate.group name="animal" id="bunny" value="bunny" /> 
+            <label><input type="checkbox" x-validate.group="2" name="animal" id="bunny" value="bunny" /> 
                 Bunny</label>
         </div>
         <div x-text="$validate.data('animal').value && `You choose a ${$validate.data('animal').value}!!!`"></div>
@@ -98,7 +102,8 @@
         </div>
         <div class="checkbox-wrapper">
             <h4>You must click this! *</h4>
-            <label><input type="checkbox" name="yolo" id="yolo" value="Sell all my secret data!" required /> Sell all my secret data!
+            <!-- not setting value as it shouldn't be required for a single checkbox -->
+            <label><input type="checkbox" name="yolo" id="yolo" required /> Sell all my secret data!
                 YOLO! <span class="error-msg"></span></label>
         </div>
         <div x-text="($validate.isComplete('yolo')) ? 'Yes Yolo!' : 'Come on Yolo!'" ></div>

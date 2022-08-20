@@ -133,11 +133,14 @@ const Plugin = function (Alpine) {
             data = {...tempData[name], name: name, node: field, value: field.value, ...data}
 
             const value = data.value
-            const isEmpty = !value.trim()
 
-            // Rewrite valid based on required value and empty status; used for x-required
-            if (data.required) data.valid = !isEmpty && data.valid
-            if (!data.required) data.valid = (isEmpty) ? true : data.valid
+            // run basic browser validity
+            let valid = field.checkValidity();
+
+            // if required than check if it has a value or if it's a checkbox or radio button and is checked
+            if (data.required) {
+                valid = isCheckRadio(field) ? field.checked : !!value.trim()
+            }
 
             // If checkbox/radio then assume it's a group so update array and string value based on checked
             if (isCheckRadio(field)) {
@@ -156,16 +159,39 @@ const Plugin = function (Alpine) {
                 data.array = tempArray
                 // update value with string of array items
                 data.value = tempArray.toString()
-                // set valid based on group min number
-                if (data.group) data.valid = tempArray.length >= data.group
+                // if group than run valid based on group min number
+                if (includes(data.mods, GROUP)) {
+                    const min = data.exp || 1
+                    valid = tempArray.length >= min
+                }
+            } else {
+                // only run validation check if valid and has value
+                if (valid && value) {
+                    for (let type of data.mods) {
+                        if (isVarType(validate[type],'function')) {
+                            if(type === 'date') {
+                                // search for data format modifier; if none assume mmddyyyy
+                                const matchingFormat = data.mods.filter(val => dateFormats.indexOf(val) !== -1)[0] || dateFormats[0]
+                                valid = validate.date[matchingFormat](value);
+                            } else {
+                                valid = validate[type](value);
+                            }
+                            break;
+                        }
+                    }
+                    if (data.exp === false) valid = false;
+                }
             }
+            data.valid = valid
 
             // update with new data
             tempData[name] = data
+            // console.log("🚀 ~ file: index.js ~ line 165 ~ updateFormData ~ data", name, data.exp, data.valid, data.mods)
             formData.set(form, tempData)
         }
 
         if (triggerErrorMsg) toggleError(field, data.valid)
+        return data
     }
 
     /* -------------------------------------------------------------------------- */
@@ -272,10 +298,10 @@ const Plugin = function (Alpine) {
         const form = getForm(el)
 
         const defaultData = (field) => {
-            const groupMin = includes(modifiers,GROUP) ? (expression && evaluate(expression)) || 1 : false
-            const isRequired = (field) => includes(modifiers,REQUIRED) || includes(modifiers,GROUP) || field.hasAttribute(REQUIRED) || false
-            const parentNode = field.closest('.field-parent') || includes(modifiers,GROUP) ? field.parentNode.parentNode : field.parentNode
-            return {valid:!isRequired(field), required: isRequired(field), mods: modifiers, set: field.closest(FIELDSET), group: groupMin, parentNode: parentNode}
+            const isGroup = includes(modifiers,GROUP)
+            const isRequired = (field) => includes(modifiers,REQUIRED) || isGroup || field.hasAttribute(REQUIRED) || false
+            const parentNode = field.closest('.field-parent') || isGroup ? field.parentNode.parentNode : field.parentNode
+            return {required: isRequired(field), mods: [...modifiers, field.type], set: field.closest(FIELDSET), parentNode: parentNode, exp: expression && evaluate(expression)}
         }
 
         function addEvents(field) {
@@ -322,73 +348,21 @@ const Plugin = function (Alpine) {
         /*                           Check Validity Function                          */
         /* -------------------------------------------------------------------------- */
 
-        // TODO: test if I can use Alpine.effect here and add the expression to formData directly? That way I could move most or all of this from here?
-        // The main reason I need to have this in here is for the evaluate(expression) which needs to run on the directive for the field.
-
         function checkIfValid(e) {
             const field = this
-            const value = field.value.trim()
-            const fieldData = getData(field)
-            // console.log("🚀 ~ file: index.js ~ line 330 ~ checkIfValid ~ fieldData", fieldData)
+            const mods = getData(field).mods
 
-            // validation default based on type and add mods from data
-            let validators = [field.type, ...fieldData.mods]
-            // console.log("🚀 ~ file: index.js ~ line 341 ~ checkIfValid ~ validators", validators)
-
-            // default valid is true
-            let valid = true
-            let data = {value:field.value}
-
-            // evaluate expression if it exists
-            const evalExp = expression && evaluate(expression)
-            // shortcut for checked
-            const isChecked = field.checked
-
-            // TODO: test moving all or some of this to updateFormData. It would be nice if updateFormData also validated.
-            if (isCheckRadio(field) && includes(validators,GROUP)) {
-                // update group min in case the expression has changed
-                // tests group min validity happens in updateFormData since we need to update how many are checked.
-                data.group = parseInt(evalExp) || 1
-            } else {
-                /* --------------------- Check validity the browser way --------------------- */
-                valid = field.checkValidity();
-                /* -------------------------- Check validity my way ------------------------- */
-                // if required and empty or not checked then invalid
-                if (fieldData.required && (!value || (isCheckRadio(field) && !isChecked))) valid = false
-                // if valid and has value run validators and ad hoc tests
-                if (valid && value) {
-                    /* ----------------------------- run validators ----------------------------- */
-                    for (let type of validators) {
-                        if (isVarType(validate[type],'function')) {
-                            if(type === 'date') {
-                                // search for data format modifier; if none assume mmddyyyy
-                                const matchingFormat = validators.filter(val => dateFormats.indexOf(val) !== -1)[0] || dateFormats[0]
-                                valid = validate.date[matchingFormat](value);
-                            } else {
-                                valid = validate[type](value);
-                            }
-                            break;
-                        }
-                    }
-
-                    /* -------------------- Run any ad hoc tests ------------------- */
-                    // get test from expression
-                    if (evalExp === false) valid = false
-                }
-                data.valid = valid;
-            }
-
-            /* --------------- Update formData and trigger error message  ----------------- */
-            updateFormData(field, data, true)
+            /* --- Update formData with value and expression and trigger error message --- */
+            const updatedData = updateFormData(field, {value:field.value, exp: expression && evaluate(expression)}, true)
 
             // add input event to blur events once it fails the first time
-            if (!valid && !includes(validators,'bluronly') && e.type === 'blur') {
+            if (!updatedData.valid && !includes(mods,'bluronly') && e.type === 'blur') {
                 addEvent(field,INPUT, checkIfValid)
             }
             // refocus if modifier is enabled
-            if (!valid && includes(validators,'refocus')) field.focus()
+            if (!updatedData.valid && includes(mods,'refocus')) field.focus()
 
-            return valid
+            return updatedData.valid
         }
 
     });
@@ -448,7 +422,7 @@ const Plugin = function (Alpine) {
         const fieldData = getData(field)
 
         // set targetNode. The span.error-msg typically appears after the field but groups assign it to set after the wrapper
-        const targetNode = (fieldData.group) ? fieldData.parentNode : field
+        const targetNode = (includes(fieldData.mods, GROUP)) ? fieldData.parentNode : field
 
         /* --------------------- Find or Make Error Message Node -------------------- */
 

@@ -13,6 +13,7 @@ Version 1.7 adds x-required directive for toggling if the field is required.
 
 * The magic functions isRequired and makeRequired have been removed. You can check if the field is required by using `$validate.data('name').required`
 * Added some customization options for targeting parent element and placement of error message.
+* 1.7.2: checks for validity on init, incase values are already set via value or x-model
 
 ## Simple Usage
 
@@ -237,7 +238,6 @@ eleventyConfig.addPassthroughCopy({
 
 ## Roadmap
 
-* Test changing from using name/id to using root for formData
 * Clean up the code more.
 
 Feel free to add any enhancement requests on github.

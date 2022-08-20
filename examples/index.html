@@ -19,7 +19,7 @@
             <a :href="'/' + a.page" x-text="a.name" :class="a.page === htmlPage && 'active'"></a>
         </template>
     </nav>
-    <form id="form" x-data x-validate.bluronly @submit="$validate.submit">
+    <form id="form" x-data x-validate @submit="$validate.submit">
         <p>This README example has been left mostly unstyled. See other examples for more elaborate styling of form and error message display</p>
         <p><em>* required</em></p>
         <div>

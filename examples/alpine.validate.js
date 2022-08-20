@@ -76,11 +76,10 @@
         let tempData = formData.get(form);
         data = { ...tempData[name], name, node: field, value: field.value, ...data };
         const value = data.value;
-        const isEmpty = !value.trim();
-        if (data.required)
-          data.valid = !isEmpty && data.valid;
-        if (!data.required)
-          data.valid = isEmpty ? true : data.valid;
+        let valid = field.checkValidity();
+        if (data.required) {
+          valid = isCheckRadio(field) ? field.checked : !!value.trim();
+        }
         if (isCheckRadio(field)) {
           let tempArray = data.array || [];
           if (isCheckbox(field)) {
@@ -93,14 +92,34 @@
             tempArray = [value];
           data.array = tempArray;
           data.value = tempArray.toString();
-          if (data.group)
-            data.valid = tempArray.length >= data.group;
+          if (includes(data.mods, GROUP)) {
+            const min = data.exp || 1;
+            valid = tempArray.length >= min;
+          }
+        } else {
+          if (valid && value) {
+            for (let type of data.mods) {
+              if (isVarType(validate[type], "function")) {
+                if (type === "date") {
+                  const matchingFormat = data.mods.filter((val) => dateFormats.indexOf(val) !== -1)[0] || dateFormats[0];
+                  valid = validate.date[matchingFormat](value);
+                } else {
+                  valid = validate[type](value);
+                }
+                break;
+              }
+            }
+            if (data.exp === false)
+              valid = false;
+          }
         }
+        data.valid = valid;
         tempData[name] = data;
         formData.set(form, tempData);
       }
       if (triggerErrorMsg)
         toggleError(field, data.valid);
+      return data;
     }
     const validate = {};
     validate.email = (str) => /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(cleanText(str));
@@ -159,10 +178,10 @@
     }) => {
       const form = getForm(el);
       const defaultData = (field) => {
-        const groupMin = includes(modifiers, GROUP) ? expression && evaluate(expression) || 1 : false;
-        const isRequired = (field2) => includes(modifiers, REQUIRED) || includes(modifiers, GROUP) || field2.hasAttribute(REQUIRED) || false;
-        const parentNode = field.closest(".field-parent") || includes(modifiers, GROUP) ? field.parentNode.parentNode : field.parentNode;
-        return { valid: !isRequired(field), required: isRequired(field), mods: modifiers, set: field.closest(FIELDSET), group: groupMin, parentNode };
+        const isGroup = includes(modifiers, GROUP);
+        const isRequired = (field2) => includes(modifiers, REQUIRED) || isGroup || field2.hasAttribute(REQUIRED) || false;
+        const parentNode = field.closest(".field-parent") || isGroup ? field.parentNode.parentNode : field.parentNode;
+        return { required: isRequired(field), mods: [...modifiers, field.type], set: field.closest(FIELDSET), parentNode, exp: expression && evaluate(expression) };
       };
       function addEvents(field) {
         addErrorMsg(field);
@@ -188,43 +207,14 @@
       }
       function checkIfValid(e) {
         const field = this;
-        const value = field.value.trim();
-        const fieldData = getData(field);
-        let validators = [field.type, ...fieldData.mods];
-        let valid = true;
-        let data = { value: field.value };
-        const evalExp = expression && evaluate(expression);
-        const isChecked = field.checked;
-        if (isCheckRadio(field) && includes(validators, GROUP)) {
-          data.group = parseInt(evalExp) || 1;
-        } else {
-          valid = field.checkValidity();
-          if (fieldData.required && (!value || isCheckRadio(field) && !isChecked))
-            valid = false;
-          if (valid && value) {
-            for (let type of validators) {
-              if (isVarType(validate[type], "function")) {
-                if (type === "date") {
-                  const matchingFormat = validators.filter((val) => dateFormats.indexOf(val) !== -1)[0] || dateFormats[0];
-                  valid = validate.date[matchingFormat](value);
-                } else {
-                  valid = validate[type](value);
-                }
-                break;
-              }
-            }
-            if (evalExp === false)
-              valid = false;
-          }
-          data.valid = valid;
-        }
-        updateFormData(field, data, true);
-        if (!valid && !includes(validators, "bluronly") && e.type === "blur") {
+        const mods = getData(field).mods;
+        const updatedData = updateFormData(field, { value: field.value, exp: expression && evaluate(expression) }, true);
+        if (!updatedData.valid && !includes(mods, "bluronly") && e.type === "blur") {
           addEvent(field, INPUT, checkIfValid);
         }
-        if (!valid && includes(validators, "refocus"))
+        if (!updatedData.valid && includes(mods, "refocus"))
           field.focus();
-        return valid;
+        return updatedData.valid;
       }
     });
     function toggleError(field, valid) {
@@ -254,7 +244,7 @@
       const name = getName(field);
       const errorMsgId = getErrorMsgId(name);
       const fieldData = getData(field);
-      const targetNode = fieldData.group ? fieldData.parentNode : field;
+      const targetNode = includes(fieldData.mods, GROUP) ? fieldData.parentNode : field;
       const span = document.createElement("span");
       span.className = ERROR_MSG_CLASS;
       const errorMsgNode = getEl(errorMsgId) || findErrorMsgNode(targetNode) || span;
