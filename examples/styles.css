@@ -70,9 +70,6 @@ input[type="checkbox"], input[type="radio"] {
     padding-right: .8rem;
 }
 
-.alt-error-msg[hidden] {
-    height: 0px;
-}
 .alt-error-msg {
     display: block;
 }

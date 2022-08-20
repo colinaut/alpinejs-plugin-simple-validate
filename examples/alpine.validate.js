@@ -27,18 +27,19 @@
     const setAttr = (el, attr, value = "") => el.setAttribute(attr, value);
     const getEl = (el) => isHtmlElement(el) ? el : document.getElementById(el) || querySelectorAll(document, `[name ="${el}"]`)[0];
     const getForm = (el) => isHtmlElement(getEl(el), FORM) ? el : isHtmlElement(getEl(el)) ? el.closest(FORM) : false;
-    const getName = (el) => getAttr(el, "name") || getAttr(el, "id");
+    const getName = (el) => getAttr(el, "name") || getAttr(el, "id") || "test";
     const cleanText = (str) => String(str).trim();
     const getData = (strOrEl) => {
       const el = getEl(strOrEl);
-      const data = formData[getName(getForm(el))] || {};
+      const data = formData.get(getForm(el));
+      if (!data)
+        return false;
       if (isHtmlElement(el, FORM))
         return Object.values(data);
       if (isHtmlElement(el, FIELDSET))
         return Object.values(data).filter((val) => val.set === el);
       if (isField(el))
         return data[getName(el)];
-      return data;
     };
     const getErrorMsgId = (name) => `${ERROR_MSG_CLASS}-${name}`;
     const dateFormats = ["mmddyyyy", "ddmmyyyy", "yyyymmdd"];
@@ -63,14 +64,17 @@
         return false;
       return date.toISOString().startsWith(isoFormattedStr);
     }
-    const formData = Alpine.reactive({});
+    const formData = new WeakMap();
     const formModifiers = {};
     function updateFormData(field, data, triggerErrorMsg) {
-      const form = getName(getForm(field));
+      const form = getForm(field);
       const name = getName(field);
       if (form && name) {
-        formData[form] = formData[form] || {};
-        data = { ...formData[form][name], name, node: field, value: field.value, ...data };
+        if (!formData.has(form)) {
+          formData.set(form, Alpine.reactive({}));
+        }
+        let tempData = formData.get(form);
+        data = { ...tempData[name], name, node: field, value: field.value, ...data };
         const value = data.value;
         const isEmpty = !value.trim();
         if (data.required)
@@ -92,7 +96,8 @@
           if (data.group)
             data.valid = tempArray.length >= data.group;
         }
-        formData[form][name] = data;
+        tempData[name] = data;
+        formData.set(form, tempData);
       }
       if (triggerErrorMsg)
         toggleError(field, data.valid);
@@ -111,7 +116,6 @@
     });
     let validateMagic = {};
     validateMagic.data = (el) => getData(el);
-    validateMagic.fieldData = (el) => formData[getForm(el)].find((val) => val.name === getName(el));
     validateMagic.updateData = (field, data, triggerErrorMsg) => updateFormData(getEl(field), data, triggerErrorMsg);
     validateMagic.toggleError = (field, valid) => toggleError(getEl(field), valid);
     validateMagic.submit = (e) => {

@@ -54,17 +54,17 @@ const Plugin = function (Alpine) {
     // is it is a form it returns the form; otherwise it returns the closest form parent
     const getForm = (el) => (isHtmlElement(getEl(el),FORM)) ? el : (isHtmlElement(getEl(el))) ? el.closest(FORM) : false
 
-    const getName = (el) => getAttr(el,'name') || getAttr(el,'id');
+    const getName = (el) => getAttr(el,'name') || getAttr(el,'id') || 'test';
 
     const cleanText = (str) => String(str).trim()
 
     const getData = (strOrEl) => {
         const el = getEl(strOrEl)
-        const data = formData[getName(getForm(el))] || {}
+        const data = formData.get(getForm(el))
+        if (!data) return false
         if (isHtmlElement(el, FORM)) return Object.values(data)
         if (isHtmlElement(el,FIELDSET)) return Object.values(data).filter(val => val.set === el)
         if (isField(el)) return data[getName(el)]
-        return data
     }
 
     const getErrorMsgId = (name) => `${ERROR_MSG_CLASS}-${name}`
@@ -106,7 +106,7 @@ const Plugin = function (Alpine) {
     /*                       Validation Reactive Data Store                       */
     /* -------------------------------------------------------------------------- */
 
-    const formData = Alpine.reactive({});
+    const formData = new WeakMap();
 
     // non-reactive variable for modifiers on a per form basis
     const formModifiers = {}
@@ -118,16 +118,19 @@ const Plugin = function (Alpine) {
     function updateFormData(field, data, triggerErrorMsg) {
         // console.log("🚀 ~ file: index.js ~ line 86 ~ updateFormData ~ data", field, data, required)
         // data = {name: 'field id or name if no id', node: field, value:'field value', array:[optional used for groups], valid: true, set: form node or fieldset node}
-        const form = getName(getForm(field))
+        const form = getForm(field)
         const name = getName(field)
 
         // only add data if has form and field name
         if (form && name) {
             // make sure form object exists
-            formData[form] = formData[form] || {}
+            if (!formData.has(form)) {
+                formData.set(form, Alpine.reactive({}));
+            }
+            let tempData = formData.get(form);
             
             // Add any data from formData, then name, node, and value if it's not being passed along
-            data = {...formData[form][name], name: name, node: field, value: field.value, ...data}
+            data = {...tempData[name], name: name, node: field, value: field.value, ...data}
 
             const value = data.value
             const isEmpty = !value.trim()
@@ -158,7 +161,8 @@ const Plugin = function (Alpine) {
             }
 
             // update with new data
-            formData[form][name] = data
+            tempData[name] = data
+            formData.set(form, tempData)
         }
 
         if (triggerErrorMsg) toggleError(field, data.valid)
@@ -189,7 +193,6 @@ const Plugin = function (Alpine) {
     let validateMagic = {}
     // Display reactive formData
     validateMagic.data = el => getData(el)
-    validateMagic.fieldData = el => formData[getForm(el)].find(val => val.name === getName(el))
 
     // add or update formData
     validateMagic.updateData = (field,data,triggerErrorMsg) => updateFormData(getEl(field),data, triggerErrorMsg)
@@ -265,6 +268,7 @@ const Plugin = function (Alpine) {
         /*                  Directive Specific Helper Functions                       */
         /* -------------------------------------------------------------------------- */
 
+        // console.log(Alpine.closestRoot(el));
         const form = getForm(el)
 
         const defaultData = (field) => {
