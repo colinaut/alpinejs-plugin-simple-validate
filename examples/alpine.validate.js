@@ -36,7 +36,6 @@
       if (isHtmlElement(el, FIELD_SELECTOR))
         return data[getName(el)];
     };
-    const getErrorMsgId = (name) => `${ERROR_MSG_CLASS}-${name}`;
     const dateFormats = ["mmddyyyy", "ddmmyyyy", "yyyymmdd"];
     const yearLastDateRegex = /^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/;
     const yearFirstDateRegex = /^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/;
@@ -70,12 +69,12 @@
         }
         let tempData = formData.get(form);
         data = { ...tempData[name], name, node: field, value: field.value, ...data };
+        data.required = data.required || includes(data.mods, REQUIRED) || includes(data.mods, GROUP) || field.hasAttribute(REQUIRED);
         const value = data.value;
         let valid = field.checkValidity();
-        if (data.required) {
-          valid = includes([CHECKBOX, RADIO], field.type) ? field.checked : !!value.trim();
-        }
         if (includes([CHECKBOX, RADIO], field.type)) {
+          if (data.required)
+            valid = field.checked;
           let tempArray = data.array || [];
           if (field.type === CHECKBOX) {
             if (field.checked && !tempArray.includes(value))
@@ -92,6 +91,8 @@
             valid = tempArray.length >= min;
           }
         } else {
+          if (data.required)
+            valid = !!value.trim();
           if (valid && value) {
             for (let type of data.mods) {
               if (typeof validate[type] === "function") {
@@ -133,8 +134,12 @@
     validateMagic.updateData = (field, data, triggerErrorMsg) => updateFormData(getEl(field), data, triggerErrorMsg);
     validateMagic.toggleError = (field, valid) => toggleError(getEl(field), valid);
     validateMagic.submit = (e) => {
+      let invalid = 0;
       getData(e.target).forEach((val) => {
         if (val.valid === false) {
+          invalid++;
+          if (invalid === 1)
+            val.node.focus();
           toggleError(val.node, false);
           e.preventDefault();
           console.error(`${val.name} not valid`);
@@ -172,10 +177,8 @@
     }) => {
       const form = getForm(el);
       const defaultData = (field) => {
-        const isGroup = includes(modifiers, GROUP);
-        const isRequired = includes(modifiers, REQUIRED) || isGroup || field.hasAttribute(REQUIRED);
-        const parentNode = field.closest(".field-parent") || isGroup ? field.parentNode.parentNode : field.parentNode;
-        return { required: isRequired, mods: [...modifiers, field.type], set: field.closest(FIELDSET), parentNode, exp: expression && evaluate(expression) };
+        const parentNode = field.closest(".field-parent") || includes(modifiers, GROUP) ? field.parentNode.parentNode : field.parentNode;
+        return { mods: [...modifiers, field.type], set: field.closest(FIELDSET), parentNode, exp: expression && evaluate(expression) };
       };
       function addEvents(field) {
         addErrorMsg(field);
@@ -215,7 +218,7 @@
     function toggleError(field, valid) {
       const name = getName(field);
       const parentNode = getData(field).parentNode;
-      const errorMsgNode = getEl(getErrorMsgId(name));
+      const errorMsgNode = getEl(`${ERROR_MSG_CLASS}-${name}`);
       setAttr(field, "aria-invalid", !valid);
       if (valid) {
         setAttr(errorMsgNode, HIDDEN);
@@ -237,7 +240,7 @@
     }
     function addErrorMsg(field) {
       const name = getName(field);
-      const errorMsgId = getErrorMsgId(name);
+      const errorMsgId = `${ERROR_MSG_CLASS}-${name}`;
       const fieldData = getData(field);
       const targetNode = includes(fieldData.mods, GROUP) ? fieldData.parentNode : field;
       const span = document.createElement("span");

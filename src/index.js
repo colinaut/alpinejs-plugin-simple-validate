@@ -30,6 +30,8 @@ const Plugin = function (Alpine) {
 
     const includes = (array, string) => array.includes(string)
 
+    // const compare = (array1,array2) => array1.filter(x => array2.includes(x)).length > 0
+
     const querySelectorAll = (el,selector) => el.querySelectorAll(selector)
 
     const addEvent = (el,event,callback) => el.addEventListener(event, callback)
@@ -55,8 +57,6 @@ const Plugin = function (Alpine) {
         if (isHtmlElement(el,FIELDSET)) return Object.values(data).filter(val => val.set === el)
         if (isHtmlElement(el,FIELD_SELECTOR)) return data[getName(el)]
     }
-
-    const getErrorMsgId = (name) => `${ERROR_MSG_CLASS}-${name}`
 
     /* -------------------------------------------------------------------------- */
     /*                                 Validators                                 */
@@ -121,18 +121,17 @@ const Plugin = function (Alpine) {
             // Add any data from formData, then name, node, and value if it's not being passed along
             data = {...tempData[name], name: name, node: field, value: field.value, ...data}
 
+            // update required if not included
+            data.required = data.required || includes(data.mods,REQUIRED) || includes(data.mods,GROUP) || field.hasAttribute(REQUIRED)
+
             const value = data.value
 
             // run basic browser validity
             let valid = field.checkValidity();
 
-            // if required than check if it has a value or if it's a checkbox or radio button and is checked
-            if (data.required) {
-                valid = includes([CHECKBOX, RADIO],field.type) ? field.checked : !!value.trim()
-            }
-
             // If checkbox/radio then assume it's a group so update array and string value based on checked
             if (includes([CHECKBOX, RADIO],field.type)) {
+                if (data.required) valid = field.checked
                 // data.array acts as a store of current selected values
                 let tempArray = data.array || []
 
@@ -154,6 +153,7 @@ const Plugin = function (Alpine) {
                     valid = tempArray.length >= min
                 }
             } else {
+                if (data.required) valid = !!value.trim()
                 // only run validation check if valid and has value
                 if (valid && value) {
                     for (let type of data.mods) {
@@ -215,9 +215,14 @@ const Plugin = function (Alpine) {
     validateMagic.toggleError = (field,valid) => toggleError(getEl(field),valid)
 
     // Check if form is completed and prevent default if not
+    // TODO: focus on invalid
     validateMagic.submit = e => {
+        let invalid = 0
         getData(e.target).forEach(val => {
             if (val.valid === false) {
+                invalid++
+                // focus on first invalid field
+                if (invalid === 1) val.node.focus()
                 toggleError(val.node,false)
                 e.preventDefault();
                 // eslint-disable-next-line no-console -- this error helps with submit and is the only one that should stay in production.
@@ -280,14 +285,11 @@ const Plugin = function (Alpine) {
         /*                  Directive Specific Helper Functions                       */
         /* -------------------------------------------------------------------------- */
 
-        // console.log(Alpine.closestRoot(el));
         const form = getForm(el)
 
         const defaultData = (field) => {
-            const isGroup = includes(modifiers,GROUP)
-            const isRequired = includes(modifiers,REQUIRED) || isGroup || field.hasAttribute(REQUIRED)
-            const parentNode = field.closest('.field-parent') || isGroup ? field.parentNode.parentNode : field.parentNode
-            return {required: isRequired, mods: [...modifiers, field.type], set: field.closest(FIELDSET), parentNode: parentNode, exp: expression && evaluate(expression)}
+            const parentNode = field.closest('.field-parent') || includes(modifiers,GROUP)? field.parentNode.parentNode : field.parentNode
+            return {mods: [...modifiers, field.type], set: field.closest(FIELDSET), parentNode: parentNode, exp: expression && evaluate(expression)}
         }
 
         function addEvents(field) {
@@ -343,8 +345,9 @@ const Plugin = function (Alpine) {
             const updatedData = updateFormData(field, {exp: expression && evaluate(expression)}, true)
 
             // add input event to blur events once it fails the first time
+ 
             if (!updatedData.valid && !includes(mods,'bluronly') && e.type === 'blur') {
-                addEvent(field,INPUT, checkIfValid)
+                addEvent(field,INPUT,checkIfValid)
             }
             // refocus if modifier is enabled
             if (!updatedData.valid && includes(mods,'refocus')) field.focus()
@@ -364,7 +367,7 @@ const Plugin = function (Alpine) {
 
         const parentNode = getData(field).parentNode
 
-        const errorMsgNode = getEl(getErrorMsgId(name))
+        const errorMsgNode = getEl(`${ERROR_MSG_CLASS}-${name}`)
 
         /* ---------------------------- Set aria-invalid ---------------------------- */
         setAttr(field,'aria-invalid',!valid)
@@ -405,7 +408,7 @@ const Plugin = function (Alpine) {
 
     function addErrorMsg(field) {
         const name = getName(field)
-        const errorMsgId = getErrorMsgId(name)
+        const errorMsgId = `${ERROR_MSG_CLASS}-${name}`
         const fieldData = getData(field)
 
         // set targetNode. The span.error-msg typically appears after the field but groups assign it to set after the wrapper

@@ -89,7 +89,7 @@ You can validate that at least one is selected by adding `x-validate.group` to e
 
 ## Directive x-required
 
-The x-required directive is used on a field if you want to toggle required depending on another field value or other variable.
+The x-required directive is used on a field if you want to toggle required depending on another field value or other variable. Note: basic Alpine allows toggling required with `:required="expression"`, which will work but x-required has an advantage is it immediately updates `valid` in formData when the express changes. Whereas changing the required attribute only updates formData on the blur/change event.
 
 * x-required="expression" — evaluates the expression as a boolean function to toggle required on the element
 * x-required:name="'value'" — this shorthand allows you to easily test if a another named field has a particular value set. If it does have the value than it sets required to true.
