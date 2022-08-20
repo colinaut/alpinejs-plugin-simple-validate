@@ -12,7 +12,8 @@
     const GROUP = "group";
     const FORM = "form";
     const FIELDSET = "fieldset";
-    const FIELD_SELECTOR = `input:not([type="button"]):not([type="search"]):not([type="reset"]):not([type="submit"]),select,textarea`;
+    const notType = (type) => `:not([type="${type}"])`;
+    const FIELD_SELECTOR = `${INPUT}${notType("search")}${notType("reset")}${notType("submit")},select,textarea`;
     const HIDDEN = "hidden";
     const isHtmlElement = (el, type) => {
       const isInstanceOfHTML = el instanceof HTMLElement;
@@ -41,7 +42,7 @@
     const dateFormats = ["mmddyyyy", "ddmmyyyy", "yyyymmdd"];
     const yearLastDateRegex = /^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/;
     const yearFirstDateRegex = /^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/;
-    function isDate(str, format) {
+    function isDate(str, format = dateFormats[2]) {
       const dateArray = str.split(/[-/.]/);
       const formatIndexInArray = dateFormats.indexOf(format);
       let mm, dd, yyyy;
@@ -96,14 +97,10 @@
           if (data.required)
             valid = !!value.trim();
           if (valid && value) {
+            const format = data.mods.filter((val) => dateFormats.indexOf(val) !== -1)[0];
             for (let type of data.mods) {
               if (typeof validate[type] === "function") {
-                if (type === "date") {
-                  const matchingFormat = data.mods.filter((val) => dateFormats.indexOf(val) !== -1)[0] || dateFormats[0];
-                  valid = validate.date[matchingFormat](value);
-                } else {
-                  valid = validate[type](value);
-                }
+                valid = type === "date" ? isDate(value, format) : validate[type](value);
                 break;
               }
             }
@@ -127,7 +124,7 @@
     validate.number = (str) => !isNaN(parseFloat(str)) && isFinite(str);
     validate.integer = (str) => validate.number(str) && Number.isInteger(Number(str));
     validate.wholenumber = (str) => validate.integer(str) && Number(str) > 0;
-    validate.date = (str) => isDate(str, dateFormats[0]);
+    validate.date = (str) => isDate(str);
     dateFormats.forEach((format) => {
       validate.date[format] = (str) => isDate(str, format);
     });

@@ -56,7 +56,7 @@
         </div>
         <div>
             <label for="url">Best date in 2000 (yyyy/mm/dd) *</label>
-            <input id="date" name="date" type="text" required x-validate.date.yyyymmdd="$el.value.includes('2000')" data-error-msg="year 2000 date in yyyy/mm/dd format required" x-model="date"/>
+            <input id="date" name="date" type="text" required x-validate.date="$el.value.includes('2000')" data-error-msg="year 2000 date in yyyy/mm/dd format required" x-model="date"/>
         </div>
         <div>
             <label for="favorite-food">Favorite Food <span>*</span></label>

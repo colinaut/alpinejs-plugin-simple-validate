@@ -13,7 +13,8 @@ Version 1.7 adds x-required directive for toggling if the field is required.
 
 * The magic functions isRequired and makeRequired have been removed. You can check if the field is required by using `$validate.data('name').required`
 * Added some customization options for targeting parent element and placement of error message.
-* 1.7.2: checks for validity on init, incase values are already set via value or x-model
+* 1.7.2: checks for validity on init, incase values are already set due to browser back button, value, or x-model.
+* 1.7.3: fix for x-validate mods on multiple forms on the same page; code clean up.
 
 ## Simple Usage
 
@@ -71,7 +72,7 @@ Used on `<input>`, `<select>`, `<textarea>`
 * `x-validate.integer` — valid if integer number (positive or negative)
 * `x-validate.wholenumber` — valid if whole number (positive integer)
 * Date validation: allows for / or - or . between units
-  * `x-validate.date` defaults to 'mm-dd-yyyy' format
+  * `x-validate.date` defaults to 'yyyy-mm-dd' format, as that is what `type='date'` input field saves the date as
   * `x-validate.date.mmddyyyy` — 'mm-dd-yyyy' format
   * `x-validate.date.ddmmyyyy` — 'dd-mm-yyyy' format
   * `x-validate.date.yyyymmdd` — 'yyyy-mm-dd' format
@@ -89,10 +90,12 @@ You can validate that at least one is selected by adding `x-validate.group` to e
 
 ## Directive x-required
 
-The x-required directive is used on a field if you want to toggle required depending on another field value or other variable. Note: basic Alpine allows toggling required with `:required="expression"`, which will work but x-required has an advantage is it immediately updates `valid` in formData when the express changes. Whereas changing the required attribute only updates formData on the blur/change event.
+The x-required directive is used on a field if you want to toggle required depending on another field value or other variable. 
 
 * x-required="expression" — evaluates the expression as a boolean function to toggle required on the element
 * x-required:name="'value'" — this shorthand allows you to easily test if a another named field has a particular value set. If it does have the value than it sets required to true.
+
+*Note: basic Alpine allows toggling with `:required="expression"` and this will work. However, x-required has an advantage is it immediately updates `valid` in formData when the expression changes. Whereas changing the required attribute only updates formData on the blur/change event.*
 
 ## Magic function $validate
 
@@ -105,6 +108,7 @@ You can add any specific validation like *email* or *tel*. Main difference betwe
 * both `$validate.email('')` and `$validate.email('hi')` returns false
 * `$validate.email('hi@hello.com')` returns true
 * `val === '' || $validate.email(val)` returns true if val is empty string or is a valid email address
+* validating the date allows formats as such `$validate.date.mmddyyyy(str)`
 
 ### Magic formData Functions
 
