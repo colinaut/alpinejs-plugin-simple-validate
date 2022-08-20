@@ -26,13 +26,12 @@ const Plugin = function (Alpine) {
     /*                              Helper Functions                              */
     /* -------------------------------------------------------------------------- */
 
-    const isHtmlElement = (el,type) => (type) ? el instanceof HTMLElement && el.matches(type) : el instanceof HTMLElement
+    const isHtmlElement = (el,type) => {
+        const isInstanceOfHTML = el instanceof HTMLElement
+        return (type) ? isInstanceOfHTML && el.matches(type) : isInstanceOfHTML
+    }
 
     const includes = (array, string) => array.includes(string)
-
-    // const compare = (array1,array2) => array1.filter(x => array2.includes(x)).length > 0
-
-    const querySelectorAll = (el,selector) => el.querySelectorAll(selector)
 
     const addEvent = (el,event,callback) => el.addEventListener(event, callback)
 
@@ -40,20 +39,19 @@ const Plugin = function (Alpine) {
 
     const setAttr = (el,attr,value = '') => el.setAttribute(attr,value)
 
-    const getEl = (el) => (isHtmlElement(el)) ? el : document.getElementById(el) || querySelectorAll(document, `[name ="${el}"]`)[0]
+    const getEl = (el) => (isHtmlElement(el)) ? el : document.getElementById(el) || document.querySelector(`[name ="${el}"]`)
     
-    // is it is a form it returns the form; otherwise it returns the closest form parent
-    const getForm = (el) => (isHtmlElement(getEl(el),FORM)) ? el : (isHtmlElement(getEl(el))) ? el.closest(FORM) : false
+    const getForm = (el) => el.closest(FORM)
 
-    const getName = (el) => getAttr(el,'name') || getAttr(el,'id') || 'test';
+    const getName = (el) => getAttr(el,'name') || getAttr(el,'id')
 
     const cleanText = (str) => String(str).trim()
 
     const getData = (strOrEl) => {
         const el = getEl(strOrEl)
-        const data = formData.get(getForm(el))
+        let data = formData.get(getForm(el))
         if (!data) return false
-        if (isHtmlElement(el, FORM)) return Object.values(data)
+        if (isHtmlElement(el,FORM)) return Object.values(data)
         if (isHtmlElement(el,FIELDSET)) return Object.values(data).filter(val => val.set === el)
         if (isHtmlElement(el,FIELD_SELECTOR)) return data[getName(el)]
     }
@@ -98,7 +96,7 @@ const Plugin = function (Alpine) {
     const formData = new WeakMap();
 
     // non-reactive variable for modifiers on a per form basis
-    const formModifiers = {}
+    const formModifiers = new WeakMap();
 
     /* -------------------------------------------------------------------------- */
     /*                           formData function                                */
@@ -235,7 +233,7 @@ const Plugin = function (Alpine) {
     validateMagic.isComplete = (el) => {
         const data = getData(el)
         // if this is array then data is form or fieldset
-        return (data.length >= 0) ? !data.some(val => !val.valid) : data.valid
+        return (Array.isArray(data)) ? !data.some(val => !val.valid) : data.valid
     }
 
     // Add validate functions to validateMagic object
@@ -308,9 +306,9 @@ const Plugin = function (Alpine) {
         if (isHtmlElement(el,FORM)) {
             // el is form
             // save all form modifiers
-            formModifiers[form] = modifiers
+            formModifiers.set(form, modifiers)
 
-            const fields = querySelectorAll(el,FIELD_SELECTOR)
+            const fields = el.querySelectorAll(FIELD_SELECTOR)
 
             fields.forEach((field) => {
                 updateFormData(field, defaultData(field))
@@ -326,8 +324,9 @@ const Plugin = function (Alpine) {
         /* -------------------------------------------------------------------------- */
 
         if (isHtmlElement(el,FIELD_SELECTOR)) {
+            const formMods = (formModifiers.has(form)) ? formModifiers.get(form) : []
             // include form level modifiers so they are also referenced
-            modifiers = [...modifiers, ...(formModifiers[form] || [])]
+            modifiers = [...modifiers, ...formMods]
             // el is field element
             updateFormData(el, defaultData(el))
             addEvents(el)
@@ -392,7 +391,6 @@ const Plugin = function (Alpine) {
     /* ----------------- Helper function to find error msg node ----------------- */
 
     function findErrorMsgNode(el) {
-
         while (el) {
             // jump to next sibling element
             el = el.nextElementSibling;
@@ -421,7 +419,7 @@ const Plugin = function (Alpine) {
         span.className = ERROR_MSG_CLASS
         const errorMsgNode = getEl(errorMsgId) || findErrorMsgNode(targetNode) || span
 
-        // add id tag, hidden attribute, and class name
+        // add id tag and hidden attribute
         setAttr(errorMsgNode, 'id', errorMsgId)
         setAttr(errorMsgNode, HIDDEN)
 
@@ -431,7 +429,7 @@ const Plugin = function (Alpine) {
         // Add aria-errormessage using the ID to field
         setAttr(field,'aria-errormessage',errorMsgId)
 
-        //  Only add element does not yet exist
+        //  Only add element if it does not yet exist
         if (!getEl(errorMsgId)) targetNode.after(errorMsgNode)
     }
 }

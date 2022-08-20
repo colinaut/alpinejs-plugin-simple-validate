@@ -14,19 +14,21 @@
     const FIELDSET = "fieldset";
     const FIELD_SELECTOR = `input:not([type="button"]):not([type="search"]):not([type="reset"]):not([type="submit"]),select,textarea`;
     const HIDDEN = "hidden";
-    const isHtmlElement = (el, type) => type ? el instanceof HTMLElement && el.matches(type) : el instanceof HTMLElement;
+    const isHtmlElement = (el, type) => {
+      const isInstanceOfHTML = el instanceof HTMLElement;
+      return type ? isInstanceOfHTML && el.matches(type) : isInstanceOfHTML;
+    };
     const includes = (array, string) => array.includes(string);
-    const querySelectorAll = (el, selector) => el.querySelectorAll(selector);
     const addEvent = (el, event, callback) => el.addEventListener(event, callback);
     const getAttr = (el, attr) => el.getAttribute(attr);
     const setAttr = (el, attr, value = "") => el.setAttribute(attr, value);
-    const getEl = (el) => isHtmlElement(el) ? el : document.getElementById(el) || querySelectorAll(document, `[name ="${el}"]`)[0];
-    const getForm = (el) => isHtmlElement(getEl(el), FORM) ? el : isHtmlElement(getEl(el)) ? el.closest(FORM) : false;
-    const getName = (el) => getAttr(el, "name") || getAttr(el, "id") || "test";
+    const getEl = (el) => isHtmlElement(el) ? el : document.getElementById(el) || document.querySelector(`[name ="${el}"]`);
+    const getForm = (el) => el.closest(FORM);
+    const getName = (el) => getAttr(el, "name") || getAttr(el, "id");
     const cleanText = (str) => String(str).trim();
     const getData = (strOrEl) => {
       const el = getEl(strOrEl);
-      const data = formData.get(getForm(el));
+      let data = formData.get(getForm(el));
       if (!data)
         return false;
       if (isHtmlElement(el, FORM))
@@ -59,7 +61,7 @@
       return date.toISOString().startsWith(isoFormattedStr);
     }
     const formData = new WeakMap();
-    const formModifiers = {};
+    const formModifiers = new WeakMap();
     function updateFormData(field, data, triggerErrorMsg) {
       const form = getForm(field);
       const name = getName(field);
@@ -148,7 +150,7 @@
     };
     validateMagic.isComplete = (el) => {
       const data = getData(el);
-      return data.length >= 0 ? !data.some((val) => !val.valid) : data.valid;
+      return Array.isArray(data) ? !data.some((val) => !val.valid) : data.valid;
     };
     Object.keys(validate).forEach((key) => validateMagic = { ...validateMagic, [key]: validate[key] });
     Alpine.magic(PLUGIN_NAME, () => validateMagic);
@@ -189,8 +191,8 @@
           addEvent(field, INPUT, checkIfValid);
       }
       if (isHtmlElement(el, FORM)) {
-        formModifiers[form] = modifiers;
-        const fields = querySelectorAll(el, FIELD_SELECTOR);
+        formModifiers.set(form, modifiers);
+        const fields = el.querySelectorAll(FIELD_SELECTOR);
         fields.forEach((field) => {
           updateFormData(field, defaultData(field));
           if (!field.getAttributeNames().some((attr) => includes(attr, `x-${PLUGIN_NAME}`))) {
@@ -199,7 +201,8 @@
         });
       }
       if (isHtmlElement(el, FIELD_SELECTOR)) {
-        modifiers = [...modifiers, ...formModifiers[form] || []];
+        const formMods = formModifiers.has(form) ? formModifiers.get(form) : [];
+        modifiers = [...modifiers, ...formMods];
         updateFormData(el, defaultData(el));
         addEvents(el);
       }

@@ -20,7 +20,8 @@
             <a :href="'/' + a.page" x-text="a.name" :class="a.page === htmlPage && 'active'"></a>
         </template>
     </nav>
-    <form x-data x-validate @submit="$validate.submit" x-ref="form">
+    <form x-data x-validate.bluronly @submit="$validate.submit" x-ref="form">
+        <p class="description">Form <code>x-validate.bluronly</code></p>
         <div>
             <label for="name">Your Name *</label>
             <input type="text" id="name" name="name" required />
@@ -49,7 +50,8 @@
             </ul>
         </div>
     </form>
-    <form x-data id="dogform" x-validate @submit="$validate.submit" x-ref="dogform">
+    <form x-data id="dogform" x-validate.input @submit="$validate.submit" x-ref="dogform">
+        <p class="description">Form <code>x-validate.input</code></p>
         <div>
             <label for="dogname">Your Dog's Name *</label>
             <input type="text" id="dogname" name="dogname" required />
