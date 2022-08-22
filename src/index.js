@@ -224,7 +224,7 @@ const Plugin = function (Alpine) {
                 toggleError(val.node,false)
                 e.preventDefault();
                 // eslint-disable-next-line no-console -- this error helps with submit and is the only one that should stay in production.
-                console.error(`${val.name} not valid`)
+                console.error(`${val.name} ${REQUIRED}`)
             }
         })
     }
@@ -311,12 +311,15 @@ const Plugin = function (Alpine) {
             const fields = el.querySelectorAll(FIELD_SELECTOR)
 
             fields.forEach((field) => {
-                updateFormData(field, defaultData(field))
-                // Don't add events or error msgs if it doesn't have a name/id or has x-validate on it so we aren't duplicating function
-                if (!field.getAttributeNames().some(attr => getName(field) && includes(attr,`x-${PLUGIN_NAME}`))) {
-                    addEvents(field)
+                if (getName(field)) {
+                    updateFormData(field, defaultData(field))
+                    // Don't add events or error msgs if it doesn't have a name/id or has x-validate on it so we aren't duplicating function
+                    if (!field.getAttributeNames().some(attr => getName(field) && includes(attr,`x-${PLUGIN_NAME}`))) {
+                        addEvents(field)
+                    }
                 }
             })
+
         }
 
         /* -------------------------------------------------------------------------- */

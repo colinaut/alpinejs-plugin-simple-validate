@@ -22,6 +22,8 @@
     </nav>
     <form id="form" x-data="{date: '2001/12/12'}" x-validate @submit.prevent="$validate.submit" x-ref="form">
         <p class="description">This form contains a lot of odd variations to test the plugins limits. It uses <code>@submit="$validate.submit"</code> to make sure the form is complete</p>
+        <!-- testing if there is now name or id field -->
+        <input type="hidden" value="hello world">
         <div>
             <label for="name">Your Name <span x-show="$validate.data('name').required">*</span></label>
             <input type="text" id="name" name="name" required />

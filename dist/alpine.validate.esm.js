@@ -140,7 +140,7 @@ var Plugin = function(Alpine) {
           val.node.focus();
         toggleError(val.node, false);
         e.preventDefault();
-        console.error(`${val.name} not valid`);
+        console.error(`${val.name} ${REQUIRED}`);
       }
     });
   };
@@ -190,9 +190,11 @@ var Plugin = function(Alpine) {
       formModifiers.set(form, modifiers);
       const fields = el.querySelectorAll(FIELD_SELECTOR);
       fields.forEach((field) => {
-        updateFormData(field, defaultData(field));
-        if (!field.getAttributeNames().some((attr) => getName(field) && includes(attr, `x-${PLUGIN_NAME}`))) {
-          addEvents(field);
+        if (getName(field)) {
+          updateFormData(field, defaultData(field));
+          if (!field.getAttributeNames().some((attr) => getName(field) && includes(attr, `x-${PLUGIN_NAME}`))) {
+            addEvents(field);
+          }
         }
       });
     }
