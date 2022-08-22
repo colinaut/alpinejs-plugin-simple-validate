@@ -204,12 +204,12 @@ var Plugin = function(Alpine) {
       const fields = el.querySelectorAll(FIELD_SELECTOR);
       fields.forEach((field) => {
         updateFormData(field, defaultData(field));
-        if (!field.getAttributeNames().some((attr) => includes(attr, `x-${PLUGIN_NAME}`))) {
+        if (!field.getAttributeNames().some((attr) => getName(field) && includes(attr, `x-${PLUGIN_NAME}`))) {
           addEvents(field);
         }
       });
     }
-    if (isHtmlElement(el, FIELD_SELECTOR)) {
+    if (getName(el) && isHtmlElement(el, FIELD_SELECTOR)) {
       const formMods = formModifiers.has(form) ? formModifiers.get(form) : [];
       modifiers = [...modifiers, ...formMods];
       updateFormData(el, defaultData(el));

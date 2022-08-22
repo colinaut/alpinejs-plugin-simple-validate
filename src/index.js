@@ -312,8 +312,8 @@ const Plugin = function (Alpine) {
 
             fields.forEach((field) => {
                 updateFormData(field, defaultData(field))
-                // Don't add events or error msgs if it has x-validate on it so we aren't duplicating function
-                if (!field.getAttributeNames().some(attr => includes(attr,`x-${PLUGIN_NAME}`))) {
+                // Don't add events or error msgs if it doesn't have a name/id or has x-validate on it so we aren't duplicating function
+                if (!field.getAttributeNames().some(attr => getName(field) && includes(attr,`x-${PLUGIN_NAME}`))) {
                     addEvents(field)
                 }
             })
@@ -323,7 +323,8 @@ const Plugin = function (Alpine) {
         /*      If x-validate on input, select, or textarea validate this field       */
         /* -------------------------------------------------------------------------- */
 
-        if (isHtmlElement(el,FIELD_SELECTOR)) {
+        // Only add if has name/id and and is field
+        if (getName(el) && isHtmlElement(el,FIELD_SELECTOR)) {
             const formMods = (formModifiers.has(form)) ? formModifiers.get(form) : []
             // include form level modifiers so they are also referenced
             modifiers = [...modifiers, ...formMods]
