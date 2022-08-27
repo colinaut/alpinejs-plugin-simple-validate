@@ -63,7 +63,8 @@ The UI modifiers are mainly for setting global defaults on `<form>` but you can 
 
 Used on `<input>`, `<select>`, `<textarea>`
 
-* `x-validate` — only useful on its own if not set on `<form>`
+* `x-validate` — only captures data; useful if not set on `<form>` or if value is added on element via Alpine `:value`
+  * For example its useful on hidden fields: `<input type="hidden" :value="foo" x-validate />` will grab the value but if you only had x-validate on the form it would not due to form x-validate actions triggering before `:value ` does.
 * `x-validate.required` — replacement for `required` attribute *
 * `x-validate.tel` - works the same as type='tel' using improved regex *
 * `x-validate.email` - works the same as type='email' using improved regex *
