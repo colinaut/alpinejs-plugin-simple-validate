@@ -24,7 +24,7 @@
     const getAttr = (el, attr) => el.getAttribute(attr);
     const setAttr = (el, attr, value = "") => el.setAttribute(attr, value);
     const getEl = (el) => isHtmlElement(el) ? el : document.getElementById(el) || document.querySelector(`[name ="${el}"]`);
-    const getForm = (el) => el.closest(FORM);
+    const getForm = (el) => el && el.closest(FORM);
     const getName = (el) => getAttr(el, "name") || getAttr(el, "id");
     const cleanText = (str) => String(str).trim();
     const getData = (strOrEl) => {
@@ -146,8 +146,9 @@
       });
     };
     validateMagic.isComplete = (el) => {
+      console.log(this);
       const data = getData(el);
-      return Array.isArray(data) ? !data.some((val) => !val.valid) : data.valid;
+      return Array.isArray(data) ? !data.some((val) => !val.valid) : data && data.valid;
     };
     Object.keys(validate).forEach((key) => validateMagic = { ...validateMagic, [key]: validate[key] });
     Alpine.magic(PLUGIN_NAME, () => validateMagic);

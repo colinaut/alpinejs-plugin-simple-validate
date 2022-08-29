@@ -42,7 +42,7 @@ const Plugin = function (Alpine) {
 
     const getEl = (el) => (isHtmlElement(el)) ? el : document.getElementById(el) || document.querySelector(`[name ="${el}"]`)
     
-    const getForm = (el) => el.closest(FORM)
+    const getForm = (el) => el && el.closest(FORM)
 
     const getName = (el) => getAttr(el,'name') || getAttr(el,'id')
 
@@ -231,9 +231,10 @@ const Plugin = function (Alpine) {
 
     // isComplete works for the form as a whole and fieldsets using either the node itself or the id
     validateMagic.isComplete = (el) => {
+        console.log(this)
         const data = getData(el)
         // if this is array then data is form or fieldset
-        return (Array.isArray(data)) ? !data.some(val => !val.valid) : data.valid
+        return (Array.isArray(data)) ? !data.some(val => !val.valid) : data && data.valid
     }
 
     // Add validate functions to validateMagic object
