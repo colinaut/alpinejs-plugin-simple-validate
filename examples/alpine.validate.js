@@ -130,6 +130,7 @@
     });
     let validateMagic = {};
     validateMagic.data = (el) => getData(el);
+    validateMagic.formData = (el) => formData.get(getForm(getEl(el)));
     validateMagic.updateData = (field, data, triggerErrorMsg) => updateFormData(getEl(field), data, triggerErrorMsg);
     validateMagic.toggleError = (field, valid) => toggleError(getEl(field), valid);
     validateMagic.submit = (e) => {
@@ -146,7 +147,6 @@
       });
     };
     validateMagic.isComplete = (el) => {
-      console.log(this);
       const data = getData(el);
       return Array.isArray(data) ? !data.some((val) => !val.valid) : data && data.valid;
     };

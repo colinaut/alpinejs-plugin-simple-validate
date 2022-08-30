@@ -125,6 +125,7 @@
                 </tbody>
             </table>
             <p>$validate.isComplete: <b x-text="$validate.isComplete($refs.form)"></b></p>
+            <a href="" @click.prevent="console.log($validate.formData($refs.form))">console.log($validate.formData($refs.form))</a>
         </div>
     </form>
 </body>
