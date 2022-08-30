@@ -206,6 +206,7 @@ const Plugin = function (Alpine) {
     let validateMagic = {}
     // Display reactive formData
     validateMagic.data = el => getData(el)
+    validateMagic.formData = el => formData.get(getForm(getEl(el)))
 
     // add or update formData
     validateMagic.updateData = (field,data,triggerErrorMsg) => updateFormData(getEl(field),data, triggerErrorMsg)
@@ -231,7 +232,6 @@ const Plugin = function (Alpine) {
 
     // isComplete works for the form as a whole and fieldsets using either the node itself or the id
     validateMagic.isComplete = (el) => {
-        console.log(this)
         const data = getData(el)
         // if this is array then data is form or fieldset
         return (Array.isArray(data)) ? !data.some(val => !val.valid) : data && data.valid

@@ -118,7 +118,8 @@ When used on `<form>`, the `x-validate` every field is added to a reactive formD
 
 * `@submit="$validate.submit"` used on form element. Validates current form; if validation fails errors are shown and the submit event is prevented.
 * `$validate.isComplete(el)` returns true or false validity for form, fieldsets, or fields. \*
-* `$validate.data(el)` returns an array of form, fieldset or field data \*
+* `$validate.data(el)` returns an array of form or fieldset fields, or an individual field data object \*
+* `$validate.formData(form)` returns the raw formData object with keyed field names \*
 
 \* 'el' argument variable works with either $refs or a string of the name/id for getting data from form, fieldset, and fields.
 
