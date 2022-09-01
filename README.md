@@ -120,6 +120,7 @@ When used on `<form>`, the `x-validate` every field is added to a reactive formD
 * `$validate.isComplete(el)` returns true or false validity for form, fieldsets, or fields. \*
 * `$validate.data(el)` returns an array of form or fieldset fields, or an individual field data object \*
 * `$validate.formData(form)` returns the raw formData object with keyed field names \*
+* `$validate.value(form)` returns a simple object with field names keys and their values for forms and fieldsets or just the raw value for fields \*
 
 \* 'el' argument variable works with either $refs or a string of the name/id for getting data from form, fieldset, and fields.
 

@@ -31,7 +31,7 @@ var Plugin = function(Alpine) {
     const isInstanceOfHTML = el instanceof HTMLElement;
     return type ? isInstanceOfHTML && el.matches(type) : isInstanceOfHTML;
   };
-  const includes = (array, string) => array.includes(string);
+  const includes = (array, string) => Array.isArray(array) && array.includes(string);
   const addEvent = (el, event, callback) => el.addEventListener(event, callback);
   const getAttr = (el, attr) => el.getAttribute(attr);
   const setAttr = (el, attr, value = "") => el.setAttribute(attr, value);
@@ -143,6 +143,16 @@ var Plugin = function(Alpine) {
   let validateMagic = {};
   validateMagic.data = (el) => getData(el);
   validateMagic.formData = (el) => formData.get(getForm(getEl(el)));
+  validateMagic.value = (el) => {
+    const data = getData(el);
+    if (Array.isArray(data)) {
+      return data.reduce((result, item) => {
+        result[item.name] = item.value;
+        return result;
+      }, {});
+    }
+    return data && data.value;
+  };
   validateMagic.updateData = (field, data, triggerErrorMsg) => updateFormData(getEl(field), data, triggerErrorMsg);
   validateMagic.toggleError = (field, valid) => toggleError(getEl(field), valid);
   validateMagic.submit = (e) => {
