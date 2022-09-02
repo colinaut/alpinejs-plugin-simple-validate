@@ -252,6 +252,8 @@ eleventyConfig.addPassthroughCopy({
 ## Roadmap
 
 * Clean up the code more.
+* Fix issue where fields get added error message even when they are not required.
+* Maybe add x-value to allow easier updating of values dynamically?
 
 Feel free to add any enhancement requests on github.
 
