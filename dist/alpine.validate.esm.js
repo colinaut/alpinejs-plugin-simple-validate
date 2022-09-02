@@ -161,6 +161,7 @@ var Plugin = function(Alpine) {
   };
   Object.keys(validate).forEach((key) => validateMagic = { ...validateMagic, [key]: validate[key] });
   Alpine.magic(PLUGIN_NAME, () => validateMagic);
+  Alpine.magic("formData", (el) => formData.get(getForm(getEl(el))));
   Alpine.directive(REQUIRED, (el, {
     value,
     expression
@@ -203,7 +204,7 @@ var Plugin = function(Alpine) {
       fields.forEach((field) => {
         if (getName(field)) {
           updateFormData(field, defaultData(field));
-          if (!field.getAttributeNames().some((attr) => getName(field) && includes(attr, `x-${PLUGIN_NAME}`))) {
+          if (!field.getAttributeNames().some((attr) => attr.includes(`x-${PLUGIN_NAME}`))) {
             addEvents(field);
           }
         }

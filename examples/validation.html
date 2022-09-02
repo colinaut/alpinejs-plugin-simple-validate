@@ -27,10 +27,13 @@
         <!-- testing that it grabs the :value on init -->
         <input name="hidden" type="hidden" :value="testValue" x-validate>
         <div>
-            <label for="name">Your Name <span x-show="$validate.data('name').required">*</span></label>
+            <label for="name">Your Name <span x-show="$formData.name.required">*</span></label>
             <input type="text" id="name" name="name" required />
         </div>
-        <input name="name-backwards" type="hidden" :value="[...$validate.data('name').value].reverse().join('')" x-validate>
+        <div><label>Your Name Backwards</label>
+            <div x-text="[...$validate.data('name').value].reverse().join('')"></div>
+            <input name="name-backwards" type="hidden" :value="[...$formData.name.value].reverse().join('')" x-validate>
+        </div>
         <div>
             <label>Preferred Contact Method *</label>
             <div>
@@ -100,9 +103,9 @@
         <div x-text="$validate.data('animal').value && `You choose a ${$validate.data('animal').value}!!!`"></div>
         <div id="transports" class="checkbox-wrapper" data-error-msg="you must pick at least one transport">
             <h4>Favorite Transport *</h4>
-            <label><input type="radio" x-validate.group name="transport" value="bus" /> 
+            <label><input type="radio" name="transport" value="bus" /> 
                 Bus</label>
-            <label><input type="radio" x-validate.group name="transport" value="train" /> 
+            <label><input type="radio" name="transport" value="train" /> 
                 Train</label>
         </div>
         <div class="checkbox-wrapper">

@@ -82,7 +82,6 @@ const Plugin = function (Alpine) {
 
         const isoFormattedStr = `${yyyy}-${mm}-${dd}`
         const date = new Date(isoFormattedStr)
-        // console.log("🚀 ~ file: index.js ~ line 81 ~ isDate ~ isoFormattedStr", isoFormattedStr)
 
         const timestamp = date.getTime()
 
@@ -251,7 +250,10 @@ const Plugin = function (Alpine) {
     // Add validate functions to validateMagic object
     Object.keys(validate).forEach(key => validateMagic = {...validateMagic, [key]: validate[key]})
 
+    // Main $validate magic function
     Alpine.magic(PLUGIN_NAME, () => validateMagic)
+    // $formData magic function
+    Alpine.magic('formData', (el) => formData.get(getForm(getEl(el))))
 
     /* -------------------------------------------------------------------------- */
     /*                            x-required directive                            */
@@ -298,15 +300,15 @@ const Plugin = function (Alpine) {
         const form = getForm(el)
 
         const defaultData = (field) => {
-            const parentNode = field.closest('.field-parent') || includes(modifiers,GROUP)? field.parentNode.parentNode : field.parentNode
+            const parentNode = field.closest('.field-parent') || includes(modifiers,GROUP) ? field.parentNode.parentNode : field.parentNode
             return {mods: [...modifiers, field.type], set: field.closest(FIELDSET), parentNode: parentNode, exp: expression && evaluate(expression)}
         }
 
         function addEvents(field) {
+            // TODO: only add error message on required or validated fields
             addErrorMsg(field)
             const isClickField = includes([CHECKBOX, RADIO, 'range'],field.type)
             const eventType = (isClickField) ? 'click' : ((isHtmlElement(field,'select'))) ? 'change' :'blur'
-            // console.log("🚀 ~ file: index.js ~ line 308 ~ addEvents ~ eventType", field, eventType)
             addEvent(field,eventType,checkIfValid)
             if (includes(modifiers,INPUT) && !isClickField) addEvent(field,INPUT, checkIfValid)
         }
@@ -326,7 +328,8 @@ const Plugin = function (Alpine) {
                 if (getName(field)) {
                     updateFormData(field, defaultData(field))
                     // Don't add events or error msgs if it doesn't have a name/id or has x-validate on it so we aren't duplicating function
-                    if (!field.getAttributeNames().some(attr => getName(field) && includes(attr,`x-${PLUGIN_NAME}`))) {
+                    // TODO: somehow detect if this is a group of checkboxes or radio buttons with required. Might need to run a forEach twice?
+                    if (!field.getAttributeNames().some(attr => attr.includes(`x-${PLUGIN_NAME}`))) {
                         addEvents(field)
                     }
                 }

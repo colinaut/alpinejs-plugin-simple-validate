@@ -99,9 +99,10 @@ The x-required directive is used on a field if you want to toggle required depen
 
 *Note: basic Alpine allows toggling with `:required="expression"` and this will work. However, x-required has an advantage is it immediately updates `valid` in formData when the expression changes. Whereas changing the required attribute only updates formData on the blur/change event.*
 
-## Magic function $validate
+## Magic functions
 
-`$validate` is an object with a group of functions.
+* `$formData` returns the formData object for the current form
+* `$validate` is an object with a group of functions (see functions below)
 
 ### Validation Functions
 
@@ -112,7 +113,7 @@ You can add any specific validation like *email* or *tel*. Main difference betwe
 * `val === '' || $validate.email(val)` returns true if val is empty string or is a valid email address
 * validating the date allows formats as such `$validate.date.mmddyyyy(str)`
 
-### Magic formData Functions
+### Other Functions
 
 When used on `<form>`, the `x-validate` every field is added to a reactive formData[formId] array. If only used on individual fields, `x-validate` only adds those fields to the formData[formId] array.
 
@@ -124,17 +125,21 @@ When used on `<form>`, the `x-validate` every field is added to a reactive formD
 
 \* 'el' argument variable works with either $refs or a string of the name/id for getting data from form, fieldset, and fields.
 
-### Advanced Magic Functions
+### Advanced Functions
 
 These grant access to some of the backend functions — use at your own risk.
 
-* `$validate.updateData(field,data,triggerErrorMsg)` allows you to directly add/update the formData array for a field.
+* `$validate.updateData(field,data,triggerErrorMsg)` allows you to directly add/update the formData array for a field. When called with just the field name it will grab the new value for the field. This is useful if you are updating the field dynamically via other javascript functions.
 * `$validate.toggleError(field,valid)` allows you to toggle the error message on any field.
 
-#### Example formData
+## Example formData
 
 ```
-{name: 'name', node: [HTMLElement], value: 'field value', valid: true, required: true, mods: [array of directive modifiers], set: [fieldset HTMLElement], parentNode: [parent HTMLElement], array: [array of checked selections (only used groups of checkboxes or radio buttons)], group: false or (only used for groups of checkboxes or radio buttons) min number checked items}
+{
+    'field-name': {
+        name: 'field-name', node: [field HTMLElement], value: 'field value', valid: true, required: true, mods: [array of directive modifiers], set: [parent fieldset HTMLElement], parentNode: [parent HTMLElement], array: [array of checked selections (only used groups of checkboxes or radio buttons)], exp: [expression on x-validate]
+    }
+}
 ```
 ***Note:** name = name attribute || id attribute*
 
