@@ -102,11 +102,17 @@
         </div>
         <div x-text="$validate.data('animal').value && `You choose a ${$validate.data('animal').value}!!!`"></div>
         <div id="transports" class="checkbox-wrapper" data-error-msg="you must pick at least one transport">
+            <!-- TODO: figure out if I can make this work without group -->
             <h4>Favorite Transport *</h4>
-            <label><input type="radio" name="transport" value="bus" /> 
+            <label><input type="radio" name="transport" value="bus" x-validate.group /> 
                 Bus</label>
-            <label><input type="radio" name="transport" value="train" /> 
+            <label><input type="radio" name="transport" value="train" x-validate.group /> 
                 Train</label>
+        </div>
+        <div>
+            <label for="noemoji">Some long form text (NO EMOJIS ALLOWED!)</label>
+            <textarea name="noemoji" id="noemoji" cols="30" rows="10" x-validate.required="/\p{Extended_Pictographic}/u.test($el.value) === false"></textarea>
+            <span class="error-msg">Please enter some text (NO EMOJIS ALLOWED!)</span>
         </div>
         <div class="checkbox-wrapper">
             <h4>You must click this! *</h4>

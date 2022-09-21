@@ -12,5 +12,5 @@
         "textareas",
         "wholenumber"
     ],
-    "editor.experimental.stickyScroll.enabled": true
+    "editor.stickyScroll.enabled": true
 }
