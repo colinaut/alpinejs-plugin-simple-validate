@@ -217,7 +217,7 @@ const Plugin = function (Alpine) {
         // if not array than assume it's a since field so just return the value
         return data && data.value
     }
-
+    
     // add or update formData
     validateMagic.updateData = (field,data,triggerErrorMsg) => updateFormData(getEl(field),data, triggerErrorMsg)
     // toggle error message
@@ -323,6 +323,16 @@ const Plugin = function (Alpine) {
             formModifiers.set(form, modifiers)
 
             const fields = el.querySelectorAll(FIELD_SELECTOR)
+
+            // bind reset with resetting all formData
+            addEvent(el, 'reset', () => {
+                el.reset();
+                const data = getData(el)
+                // need a short delay for reset to take effect and reread values
+                setTimeout(() => {
+                    data.forEach(field => updateFormData(field.node))
+                }, 50);
+            })
 
             fields.forEach((field) => {
                 if (getName(field)) {

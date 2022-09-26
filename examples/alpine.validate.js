@@ -202,6 +202,13 @@
       if (isHtmlElement(el, FORM)) {
         formModifiers.set(form, modifiers);
         const fields = el.querySelectorAll(FIELD_SELECTOR);
+        addEvent(el, "reset", () => {
+          el.reset();
+          const data = getData(el);
+          setTimeout(() => {
+            data.forEach((field) => updateFormData(field.node));
+          }, 50);
+        });
         fields.forEach((field) => {
           if (getName(field)) {
             updateFormData(field, defaultData(field));

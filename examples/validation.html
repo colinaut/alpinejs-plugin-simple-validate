@@ -111,7 +111,7 @@
         </div>
         <div>
             <label for="noemoji">Some long form text (NO EMOJIS ALLOWED!)</label>
-            <textarea name="noemoji" id="noemoji" cols="30" rows="10" x-validate.required="/\p{Extended_Pictographic}/u.test($el.value) === false"></textarea>
+            <textarea name="noemoji" id="noemoji" cols="30" rows="4" x-validate.required="/\p{Extended_Pictographic}/u.test($el.value) === false"></textarea>
             <span class="error-msg">Please enter some text (NO EMOJIS ALLOWED!)</span>
         </div>
         <div class="checkbox-wrapper">
@@ -122,8 +122,9 @@
         </div>
         <div x-text="($validate.isComplete('yolo')) ? 'Yes Yolo!' : 'Come on Yolo!'" ></div>
         <!-- submit button is disabled until email and phone are added -->
-        <div>
+        <div style="flex-direction: row;">
             <button type="submit" class="btn btn-primary">Submit</button>
+            <button type="reset" class="btn btn-primary">Reset</button>
         </div>
         <div class="form-validation-log">
             <h3>Validations</h3>
