@@ -20,12 +20,13 @@
             <a :href="'/' + a.page" x-text="a.name" :class="a.page === htmlPage && 'active'"></a>
         </template>
     </nav>
-    <form id="form" x-data="{date: '2001/12/12',testValue:'hello world'}" x-validate @submit.prevent="$validate.submit" x-ref="form">
+    <form id="form" x-data="{date: '2001/12/12',testValue:'hello world'}" 
+    x-validate @submit.prevent="$validate.submit" x-ref="form">
         <p class="description">This form contains a lot of odd variations to test the plugins limits. It uses <code>@submit="$validate.submit"</code> to make sure the form is complete</p>
         <!-- testing if there is now name or id field; it should ignore this -->
         <input type="hidden" value="this should be ignored as it has no name or id field">
         <!-- testing that it grabs the :value on init -->
-        <input name="hidden" type="hidden" :value="testValue" x-validate>
+        <input name="hidden" type="hidden" :value="testValue" id="test" x-validate>
         <div>
             <label for="name">Your Name <span x-show="$formData.name.required">*</span></label>
             <input type="text" id="name" name="name" required />
@@ -34,6 +35,20 @@
             <div x-text="[...$validate.data('name').value].reverse().join('')"></div>
             <input name="name-backwards" type="hidden" :value="[...$formData.name.value].reverse().join('')" x-validate>
         </div>
+        <script>
+            document.addEventListener('alpine:init', () => {
+                Alpine.data('dataThing', function () {
+                    return {
+                        doIt() {
+                            console.log(this.$validate.isComplete('the_form'))
+                        }
+                    }
+            })})
+        </script>
+        <div x-data="dataThing">
+            <button @click="if (!$validate.isComplete('the_form')) console.log('hihihi')">DO IT</button>
+        </div>
+
         <div>
             <label>Preferred Contact Method *</label>
             <div>
@@ -58,12 +73,17 @@
             <input type="text" id="whole-number" name="whole-number" x-validate.wholenumber />
         </div>
         <div>
-            <label for="date">Favorite Website *</label>
+            <label for="url">Favorite Website (full url) *</label>
             <input id="url" name="url" type="url" required />
             <span class="error-msg" hidden>full url with http required</span>
         </div>
         <div>
-            <label for="url">Best date in 2000 (yyyy/mm/dd) *</label>
+            <label for="website">Favorite Website *</label>
+            <input id="website" name="website" type="text" x-validate.website.required />
+            <span class="error-msg" hidden>http not required</span>
+        </div>
+        <div>
+            <label for="date">Best date in 2000 (yyyy/mm/dd) *</label>
             <input id="date" name="date" type="text" required x-validate.date="$el.value.includes('2000')" data-error-msg="year 2000 date in yyyy/mm/dd format required" x-model="date"/>
         </div>
         <div>
@@ -125,6 +145,9 @@
         <div style="flex-direction: row;">
             <button type="submit" class="btn btn-primary">Submit</button>
             <button type="reset" class="btn btn-primary">Reset</button>
+            <button type="button" @click.prevent="$store.test.log" class="btn btn-primary">Store Test</button>
+            <button type="button" @click.prevent="$dog" class="btn btn-primary">Magic Test</button>
+            <button type="button" @click.prevent="console.log('test');$dispatch('toast','yo!')" class="btn btn-primary">Test</button>
         </div>
         <div class="form-validation-log">
             <h3>Validations</h3>
@@ -142,6 +165,29 @@
             <a href="" @click.prevent="console.log($validate.value($refs.form))">console.log($validate.value($refs.form))</a>
         </div>
     </form>
+    <div x-data="{hi:'hi'}" x-init="console.log(hi,$validate.data('test'))"></div>
+    <div x-data @toast.window="alert($event.detail)" >helloe!</div>
+    <script>
+        document.addEventListener('alpine:init', () => {
+            console.log(
+                    Alpine.$validate
+                )
+        Alpine.store('test', {
+            on: false,
+ 
+            log(e) {
+                Alpine.$dispatch('toast','store')
+                console.log(
+                    'hi there'
+                )
+            }
+        })
+
+        Alpine.magic('dog', (el, {Alpine}) => {
+            return console.log(Alpine.data.$validate)
+        })
+    })
+    </script>
 </body>
 
 </html>
