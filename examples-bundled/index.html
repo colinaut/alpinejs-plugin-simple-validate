@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Simple Form Validation Alpine Plugin</title>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<meta
+			name="description"
+			content="example page for simple form validation alpinejs plugin"
+		/>
+		<script type="module" src="/index.js"></script>
+		<link
+			href="https://unpkg.com/@csstools/normalize.css"
+			rel="stylesheet"
+		/>
+		<link href="/nav.css" rel="stylesheet" />
+	</head>
+
+	<body>
+		<h1>Simple Form Validation Alpine Plugin</h1>
+		<form id="form" x-data x-validate @submit="$validate.submit">
+			<p>
+				This is a basic unstyled example with Alpine and the plugin
+				bundled via Vite.
+			</p>
+			<p><em>* required</em></p>
+			<div>
+				<label for="name">Your Name *</label>
+				<input type="text" id="name" name="name" required />
+			</div>
+			<div>
+				<label for="email">Your Email</label>
+				<input type="email" id="email" name="email" />
+			</div>
+			<div>
+				<label for="wholenumber">Whole Number</label>
+				<input
+					type="wholenumber"
+					id="wholenumber"
+					name="wholenumber"
+					x-validate.wholenumber
+					data-error-msg="positive whole number required"
+				/>
+			</div>
+			<div
+				id="animals"
+				class="checkbox-wrapper"
+				data-error-msg="you must pick at least one animal"
+			>
+				<h4>Favorite Animals *</h4>
+				<label
+					><input
+						type="checkbox"
+						x-validate.group
+						name="animal"
+						id="cat"
+						value="cat"
+					/>
+					Cat</label
+				>
+				<label
+					><input
+						type="checkbox"
+						x-validate.group
+						name="animal"
+						id="dog"
+						value="dog"
+					/>
+					Dog</label
+				>
+				<label
+					><input
+						type="checkbox"
+						x-validate.group
+						name="animal"
+						id="bunny"
+						value="bunny"
+					/>
+					Bunny</label
+				>
+			</div>
+			<div
+				id="transport"
+				class="checkbox-wrapper"
+				data-error-msg="you must pick at least one transport"
+			>
+				<h4>Favorite Transport *</h4>
+				<label
+					><input
+						type="radio"
+						x-validate.group
+						name="transport"
+						value="bus"
+					/>
+					Bus</label
+				>
+				<label
+					><input
+						type="radio"
+						x-validate.group
+						name="transport"
+						value="train"
+					/>
+					Train</label
+				>
+			</div>
+			<div class="checkbox-wrapper">
+				<h4>You must click this! *</h4>
+				<label
+					><input
+						type="checkbox"
+						required
+						name="yolo"
+						id="yolo"
+						value="yolo" />
+					Sell all my secret data! YOLO!
+					<span class="error-msg"></span
+				></label>
+			</div>
+			<div>
+				<input type="submit" value="submit" />
+			</div>
+		</form>
+		<style type="text/css">
+			form {
+				width: 22rem;
+				margin: 2rem auto;
+				display: flex;
+				flex-direction: column;
+				gap: 1rem;
+			}
+
+			/* style to display the error message */
+			.error-msg {
+				color: red;
+			}
+		</style>
+	</body>
+</html>
