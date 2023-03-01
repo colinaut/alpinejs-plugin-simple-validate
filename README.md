@@ -17,6 +17,7 @@ Version 1.7 adds x-required directive for toggling if the field is required.
 * 1.7.3: fix for x-validate mods on multiple forms on the same page; date defaults to yyyy-mm-dd format; and code clean up.
 * 1.7.6: fix where it breaks when fields are missing name or id attributes. Now it skips these.
 * 1.7.12: normal form reset replaces formData with new empty values
+* 1.7.14: x-validate adds `novalidate` on form tag to the browser's validation doesn't interfere with the plugin's validation
 
 ## Simple Usage
 

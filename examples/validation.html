@@ -1,193 +1,401 @@
 <!DOCTYPE html>
 <html lang="en">
+	<head>
+		<title>Simple Form Validation Alpine Plugin</title>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<meta
+			name="description"
+			content="example page for simple form validation alpinejs plugin"
+		/>
+		<script defer src="/alpine.validate.js"></script>
+		<script
+			defer
+			src="https://unpkg.com/alpinejs@3.10.2/dist/cdn.min.js"
+		></script>
+		<!-- <link href="https://unpkg.com/@csstools/normalize.css" rel="stylesheet" /> -->
+		<link href="/styles.css" rel="stylesheet" />
+		<link href="/nav.css" rel="stylesheet" />
+	</head>
 
-<head>
-    <title>Simple Form Validation Alpine Plugin</title>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <meta name="description" content="example page for simple form validation alpinejs plugin" />
-    <script defer src="/alpine.validate.js"></script>
-    <script defer src="https://unpkg.com/alpinejs@3.10.2/dist/cdn.min.js"></script>
-    <!-- <link href="https://unpkg.com/@csstools/normalize.css" rel="stylesheet" /> -->
-    <link href="/styles.css" rel="stylesheet" />
-    <link href="/nav.css" rel="stylesheet" />
-</head>
+	<body>
+		<h1>Simple Form Validation Alpine Plugin</h1>
+		<nav
+			x-data="{htmlPage: window.location.pathname.split('/').pop(), links: [{ name: 'README Example', page: 'index.html'},{name: 'Validation', page:'validation.html'},{name: 'Multiform', page: 'multiform.html'},{name: 'Complicated Form', page: 'complicated.html'},{name: 'Stepped Form', page: 'steps.html'}]}"
+		>
+			<template x-for="a in links">
+				<a
+					:href="'/' + a.page"
+					x-text="a.name"
+					:class="a.page === htmlPage && 'active'"
+				></a>
+			</template>
+		</nav>
+		<form
+			id="form"
+			x-data="{date: '2001/12/12',testValue:'hello world'}"
+			x-validate
+			@submit.prevent="$validate.submit"
+			x-ref="form"
+		>
+			<p class="description">
+				This form contains a lot of odd variations to test the plugins
+				limits. It uses <code>@submit="$validate.submit"</code> to make
+				sure the form is complete
+			</p>
+			<!-- testing if there is now name or id field; it should ignore this -->
+			<input
+				type="hidden"
+				value="this should be ignored as it has no name or id field"
+			/>
+			<!-- testing that it grabs the :value on init -->
+			<input
+				name="hidden"
+				type="hidden"
+				:value="testValue"
+				id="test"
+				x-validate
+			/>
+			<div>
+				<label for="name"
+					>Your Name
+					<span x-show="$formData.name.required">*</span></label
+				>
+				<input type="text" id="name" name="name" required />
+			</div>
+			<div>
+				<label>Your Name Backwards</label>
+				<div
+					x-text="[...$validate.data('name').value].reverse().join('')"
+				></div>
+				<input
+					name="name-backwards"
+					type="hidden"
+					:value="[...$formData.name.value].reverse().join('')"
+					x-validate
+				/>
+			</div>
+			<script>
+				document.addEventListener("alpine:init", () => {
+					Alpine.data("dataThing", function () {
+						return {
+							doIt() {
+								console.log(
+									this.$validate.isComplete("the_form")
+								);
+							},
+						};
+					});
+				});
+			</script>
+			<div x-data="dataThing">
+				<button
+					@click="if (!$validate.isComplete('the_form')) console.log('hihihi')"
+				>
+					DO IT
+				</button>
+			</div>
 
-<body>
-    <h1>Simple Form Validation Alpine Plugin</h1>
-    <nav x-data="{htmlPage: window.location.pathname.split('/').pop(), links: [{ name: 'README Example', page: 'index.html'},{name: 'Validation', page:'validation.html'},{name: 'Multiform', page: 'multiform.html'},{name: 'Complicated Form', page: 'complicated.html'},{name: 'Stepped Form', page: 'steps.html'}]}">
-        <template x-for="a in links">
-            <a :href="'/' + a.page" x-text="a.name" :class="a.page === htmlPage && 'active'"></a>
-        </template>
-    </nav>
-    <form id="form" x-data="{date: '2001/12/12',testValue:'hello world'}" 
-    x-validate @submit.prevent="$validate.submit" x-ref="form">
-        <p class="description">This form contains a lot of odd variations to test the plugins limits. It uses <code>@submit="$validate.submit"</code> to make sure the form is complete</p>
-        <!-- testing if there is now name or id field; it should ignore this -->
-        <input type="hidden" value="this should be ignored as it has no name or id field">
-        <!-- testing that it grabs the :value on init -->
-        <input name="hidden" type="hidden" :value="testValue" id="test" x-validate>
-        <div>
-            <label for="name">Your Name <span x-show="$formData.name.required">*</span></label>
-            <input type="text" id="name" name="name" required />
-        </div>
-        <div><label>Your Name Backwards</label>
-            <div x-text="[...$validate.data('name').value].reverse().join('')"></div>
-            <input name="name-backwards" type="hidden" :value="[...$formData.name.value].reverse().join('')" x-validate>
-        </div>
-        <script>
-            document.addEventListener('alpine:init', () => {
-                Alpine.data('dataThing', function () {
-                    return {
-                        doIt() {
-                            console.log(this.$validate.isComplete('the_form'))
-                        }
-                    }
-            })})
-        </script>
-        <div x-data="dataThing">
-            <button @click="if (!$validate.isComplete('the_form')) console.log('hihihi')">DO IT</button>
-        </div>
-
-        <div>
-            <label>Preferred Contact Method *</label>
-            <div>
-                <label><input type="radio" x-validate.group name="preferred" value="email" checked /> 
-                    Email</label>
-                <label><input type="radio" x-validate.group name="preferred" value="phone" /> 
-                    Phone</label>
-            </div>
-        </div>
-        <div x-show="$validate.data('email').required">
-            <label for="email">Your Email <span x-show="$validate.data('email').required">*</span></label>
-            <input type="email" id="email" name="email" x-required:preferred="'email'" x-ref="email" />
-        </div>
-        <div x-show="$validate.data('phone').required">
-            <label for="phone">Your Phone <span x-show="$validate.data('phone').required">*</span></label>
-            <input type="tel" id="phone" name="phone" x-required="$validate.data('preferred').value === 'phone'" />
-            <span class="error-msg">Please enter a valid phone number</span>
-        </div>
-        <div>
-            <label for="whole-number">Whole Number</label>
-            <p style="margin: 0" class="alt-error-msg" id="error-msg-whole-number" x-show="$validate.data('whole-number').value"><i x-text="$validate.data('whole-number').value"></i> is <b x-show="!$validate.isComplete('whole-number')" style="color:darkred">not</b> a whole number</p>
-            <input type="text" id="whole-number" name="whole-number" x-validate.wholenumber />
-        </div>
-        <div>
-            <label for="url">Favorite Website (full url) *</label>
-            <input id="url" name="url" type="url" required />
-            <span class="error-msg" hidden>full url with http required</span>
-        </div>
-        <div>
-            <label for="website">Favorite Website *</label>
-            <input id="website" name="website" type="text" x-validate.website.required />
-            <span class="error-msg" hidden>http not required</span>
-        </div>
-        <div>
-            <label for="date">Best date in 2000 (yyyy/mm/dd) *</label>
-            <input id="date" name="date" type="text" required x-validate.date="$el.value.includes('2000')" data-error-msg="year 2000 date in yyyy/mm/dd format required" x-model="date"/>
-        </div>
-        <div>
-            <label for="favorite-food">Favorite Food <span>*</span></label>
-            <input type="text" id="favorite-food" />
-        </div>
-        <div>
-            <label for="favorite-food-dup">Write Same Favorite Food Again<span>*</span></label>
-            <input type="text" id="favorite-food-dup" required x-validate="$el.value === $validate.data('favorite-food').value" data-error-msg="must write the same as Favorite Food above"/>
-        </div>
-        <div>
-            <div>
-                <label for="select">Pick your favorite cheese! *</label>
-                <select name="cheese" id="cheese" required title="select favorite cheese" >
-                    <option disabled selected value="" >-- choose one --</option>
-                    <option value="brie">brie</option>
-                    <option value="cheddar">cheddar</option>
-                    <option value="swiss">swiss</option>
-                    <option value="gouda">gouda</option>
-                    <option value="other">other</option>
-                </select>
-            </div>
-            <div x-show="$validate.data('cheese').value === 'other'">
-                <label for="othercheese">Other Cheese *</label>
-                <input type="text" id="othercheese" name="othercheese" x-validate="!/american/i.test($el.value)" x-required:cheese="'other'" x-ref="othercheese" data-error-msg="any cheese other than American"/>
-            </div>
-        </div>
-        <div id="animals" class="checkbox-wrapper" data-error-msg="you must pick at least two animals">
-            <h4>Favorite Animals *</h4>
-            <label><input type="checkbox" x-validate.group="2" name="animal" id="cat" value="cat" /> 
-                Cat</label>
-            <label><input type="checkbox" x-validate.group="2" name="animal" id="dog" value="dog" /> 
-                Dog</label>
-            <label><input type="checkbox" x-validate.group="2" name="animal" id="bunny" value="bunny" /> 
-                Bunny</label>
-        </div>
-        <div x-text="$validate.data('animal').value && `You choose a ${$validate.data('animal').value}!!!`"></div>
-        <div id="transports" class="checkbox-wrapper" data-error-msg="you must pick at least one transport">
-            <!-- TODO: figure out if I can make this work without group -->
-            <h4>Favorite Transport *</h4>
-            <label><input type="radio" name="transport" value="bus" x-validate.group /> 
-                Bus</label>
-            <label><input type="radio" name="transport" value="train" x-validate.group /> 
-                Train</label>
-        </div>
-        <div>
-            <label for="noemoji">Some long form text (NO EMOJIS ALLOWED!)</label>
-            <textarea name="noemoji" id="noemoji" cols="30" rows="4" x-validate.required="/\p{Extended_Pictographic}/u.test($el.value) === false"></textarea>
-            <span class="error-msg">Please enter some text (NO EMOJIS ALLOWED!)</span>
-        </div>
-        <div class="checkbox-wrapper">
-            <h4>You must click this! *</h4>
-            <!-- not setting value as it shouldn't be required for a single checkbox -->
-            <label><input type="checkbox" name="yolo" id="yolo" required /> Sell all my secret data!
-                YOLO! <span class="error-msg"></span></label>
-        </div>
-        <div x-text="($validate.isComplete('yolo')) ? 'Yes Yolo!' : 'Come on Yolo!'" ></div>
-        <!-- submit button is disabled until email and phone are added -->
-        <div style="flex-direction: row;">
-            <button type="submit" class="btn btn-primary">Submit</button>
-            <button type="reset" class="btn btn-primary">Reset</button>
-            <button type="button" @click.prevent="$store.test.log" class="btn btn-primary">Store Test</button>
-            <button type="button" @click.prevent="$dog" class="btn btn-primary">Magic Test</button>
-            <button type="button" @click.prevent="console.log('test');$dispatch('toast','yo!')" class="btn btn-primary">Test</button>
-        </div>
-        <div class="form-validation-log">
-            <h3>Validations</h3>
-            <p><small>List of data from <code>$validate.data($refs.form)</code></small></p>
-            <table>
-                <thead><tr><th>name</th><th>required</th><th>value</th><th>valid</th></tr></thead>
-                <tbody>
-                    <template x-for="v in $validate.data($refs.form)">
-                        <tr><td><span x-text="v.name"></span><span x-text="v.group ? ' (group)' : ''"></span></td> <td x-text="v.required ? '&#x2713;' : ''"></td> <td x-text="v.value"></td>  <td x-text="v.valid ? '&#x2713;' : ''"></td></tr>
-                    </template>
-                </tbody>
-            </table>
-            <p>$validate.isComplete: <b x-text="$validate.isComplete($refs.form)"></b></p>
-            <a href="" @click.prevent="console.log($validate.formData($refs.form))">console.log($validate.formData($refs.form))</a>
-            <a href="" @click.prevent="console.log($validate.value($refs.form))">console.log($validate.value($refs.form))</a>
-        </div>
-    </form>
-    <div x-data="{hi:'hi'}" x-init="console.log(hi,$validate.data('test'))"></div>
-    <div x-data @toast.window="alert($event.detail)" >helloe!</div>
-    <script>
-        document.addEventListener('alpine:init', () => {
-            console.log(
-                    Alpine.$validate
-                )
-        Alpine.store('test', {
-            on: false,
- 
-            log(e) {
-                Alpine.$dispatch('toast','store')
-                console.log(
-                    'hi there'
-                )
-            }
-        })
-
-        Alpine.magic('dog', (el, {Alpine}) => {
-            return console.log(Alpine.data.$validate)
-        })
-    })
-    </script>
-</body>
-
+			<div>
+				<label>Preferred Contact Method *</label>
+				<div>
+					<label
+						><input
+							type="radio"
+							x-validate.group
+							name="preferred"
+							value="email"
+							checked
+						/>
+						Email</label
+					>
+					<label
+						><input
+							type="radio"
+							x-validate.group
+							name="preferred"
+							value="phone"
+						/>
+						Phone</label
+					>
+				</div>
+			</div>
+			<div x-show="$validate.data('email').required">
+				<label for="email"
+					>Your Email
+					<span x-show="$validate.data('email').required"
+						>*</span
+					></label
+				>
+				<input
+					type="email"
+					id="email"
+					name="email"
+					x-required:preferred="'email'"
+					x-ref="email"
+				/>
+			</div>
+			<div x-show="$validate.data('phone').required">
+				<label for="phone"
+					>Your Phone
+					<span x-show="$validate.data('phone').required"
+						>*</span
+					></label
+				>
+				<input
+					type="tel"
+					id="phone"
+					name="phone"
+					x-required="$validate.data('preferred').value === 'phone'"
+				/>
+				<span class="error-msg">Please enter a valid phone number</span>
+			</div>
+			<div>
+				<label for="whole-number">Whole Number</label>
+				<p
+					style="margin: 0"
+					class="alt-error-msg"
+					id="error-msg-whole-number"
+					x-show="$validate.data('whole-number').value"
+				>
+					<i x-text="$validate.data('whole-number').value"></i> is
+					<b
+						x-show="!$validate.isComplete('whole-number')"
+						style="color: darkred"
+						>not</b
+					>
+					a whole number
+				</p>
+				<input
+					type="text"
+					id="whole-number"
+					name="whole-number"
+					x-validate.wholenumber
+				/>
+			</div>
+			<div>
+				<label for="url">Favorite Website (full url) *</label>
+				<input id="url" name="url" type="url" required />
+				<span class="error-msg" hidden
+					>full url with http required</span
+				>
+			</div>
+			<div>
+				<label for="website">Favorite Website *</label>
+				<input
+					id="website"
+					name="website"
+					type="text"
+					x-validate.website.required
+				/>
+				<span class="error-msg" hidden>http not required</span>
+			</div>
+			<div>
+				<label for="date">Best date in 2000 (yyyy/mm/dd) *</label>
+				<input
+					id="date"
+					name="date"
+					type="text"
+					required
+					x-validate.date="$el.value.includes('2000')"
+					data-error-msg="year 2000 date in yyyy/mm/dd format required"
+					x-model="date"
+				/>
+			</div>
+			<div>
+				<label for="favorite-food">Favorite Food <span>*</span></label>
+				<input type="text" id="favorite-food" />
+			</div>
+			<div>
+				<label for="favorite-food-dup"
+					>Write Same Favorite Food Again<span>*</span></label
+				>
+				<input
+					type="text"
+					id="favorite-food-dup"
+					required
+					x-validate="$el.value === $validate.data('favorite-food').value"
+					data-error-msg="must write the same as Favorite Food above"
+				/>
+			</div>
+			<div>
+				<div>
+					<label for="select">Pick your favorite cheese! *</label>
+					<select
+						name="cheese"
+						id="cheese"
+						required
+						title="select favorite cheese"
+					>
+						<option disabled selected value="">
+							-- choose one --
+						</option>
+						<option value="brie">brie</option>
+						<option value="cheddar">cheddar</option>
+						<option value="swiss">swiss</option>
+						<option value="gouda">gouda</option>
+						<option value="other">other</option>
+					</select>
+				</div>
+				<div x-show="$validate.data('cheese').value === 'other'">
+					<label for="othercheese">Other Cheese *</label>
+					<input
+						type="text"
+						id="othercheese"
+						name="othercheese"
+						x-validate="!/american/i.test($el.value)"
+						x-required:cheese="'other'"
+						x-ref="othercheese"
+						data-error-msg="any cheese other than American"
+					/>
+				</div>
+			</div>
+			<div
+				id="animals"
+				class="checkbox-wrapper"
+				data-error-msg="you must pick at least two animals"
+			>
+				<h4>Favorite Animals *</h4>
+				<label
+					><input
+						type="checkbox"
+						x-validate.group="2"
+						name="animal"
+						id="cat"
+						value="cat"
+					/>
+					Cat</label
+				>
+				<label
+					><input
+						type="checkbox"
+						x-validate.group="2"
+						name="animal"
+						id="dog"
+						value="dog"
+					/>
+					Dog</label
+				>
+				<label
+					><input
+						type="checkbox"
+						x-validate.group="2"
+						name="animal"
+						id="bunny"
+						value="bunny"
+					/>
+					Bunny</label
+				>
+			</div>
+			<div
+				x-text="$validate.data('animal').value && `You choose a ${$validate.data('animal').value}!!!`"
+			></div>
+			<div
+				id="transports"
+				class="checkbox-wrapper"
+				data-error-msg="you must pick at least one transport"
+			>
+				<!-- TODO: figure out if I can make this work without group -->
+				<h4>Favorite Transport *</h4>
+				<label
+					><input
+						type="radio"
+						name="transport"
+						value="bus"
+						x-validate.group
+					/>
+					Bus</label
+				>
+				<label
+					><input
+						type="radio"
+						name="transport"
+						value="train"
+						x-validate.group
+					/>
+					Train</label
+				>
+			</div>
+			<div>
+				<label for="noemoji"
+					>Some long form text (NO EMOJIS ALLOWED!)</label
+				>
+				<textarea
+					name="noemoji"
+					id="noemoji"
+					cols="30"
+					rows="4"
+					x-validate.required="/\p{Extended_Pictographic}/u.test($el.value) === false"
+				></textarea>
+				<span class="error-msg"
+					>Please enter some text (NO EMOJIS ALLOWED!)</span
+				>
+			</div>
+			<div class="checkbox-wrapper">
+				<h4>You must click this! *</h4>
+				<!-- not setting value as it shouldn't be required for a single checkbox -->
+				<label
+					><input type="checkbox" name="yolo" id="yolo" required />
+					Sell all my secret data! YOLO!
+					<span class="error-msg"></span
+				></label>
+			</div>
+			<div
+				x-text="($validate.isComplete('yolo')) ? 'Yes Yolo!' : 'Come on Yolo!'"
+			></div>
+			<!-- submit button is disabled until email and phone are added -->
+			<div style="flex-direction: row">
+				<button type="submit" class="btn btn-primary">Submit</button>
+				<button type="reset" class="btn btn-primary">Reset</button>
+			</div>
+			<div class="form-validation-log">
+				<h3>Validations</h3>
+				<p>
+					<small
+						>List of data from
+						<code>$validate.data($refs.form)</code></small
+					>
+				</p>
+				<table>
+					<thead>
+						<tr>
+							<th>name</th>
+							<th>required</th>
+							<th>value</th>
+							<th>valid</th>
+						</tr>
+					</thead>
+					<tbody>
+						<template x-for="v in $validate.data($refs.form)">
+							<tr>
+								<td>
+									<span x-text="v.name"></span
+									><span
+										x-text="v.group ? ' (group)' : ''"
+									></span>
+								</td>
+								<td x-text="v.required ? '&#x2713;' : ''"></td>
+								<td x-text="v.value"></td>
+								<td x-text="v.valid ? '&#x2713;' : ''"></td>
+							</tr>
+						</template>
+					</tbody>
+				</table>
+				<p>
+					$validate.isComplete:
+					<b x-text="$validate.isComplete($refs.form)"></b>
+				</p>
+				<a
+					href=""
+					@click.prevent="console.log($validate.formData($refs.form))"
+					>console.log($validate.formData($refs.form))</a
+				>
+				<a
+					href=""
+					@click.prevent="console.log($validate.value($refs.form))"
+					>console.log($validate.value($refs.form))</a
+				>
+			</div>
+		</form>
+	</body>
 </html>

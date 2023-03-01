@@ -70,7 +70,13 @@ var Plugin = function(Alpine) {
         formData.set(form, Alpine.reactive({}));
       }
       let tempData = formData.get(form);
-      data = { ...tempData[name], name, node: field, value: field.value, ...data };
+      data = {
+        ...tempData[name],
+        name,
+        node: field,
+        value: field.value,
+        ...data
+      };
       data.required = data.required || includes(data.mods, REQUIRED) || includes(data.mods, GROUP) || field.hasAttribute(REQUIRED);
       const value = data.value;
       let valid = field.checkValidity();
@@ -165,9 +171,7 @@ var Plugin = function(Alpine) {
   Alpine.directive(REQUIRED, (el, {
     value,
     expression
-  }, {
-    evaluate
-  }) => {
+  }, { evaluate }) => {
     if (expression) {
       Alpine.effect(() => {
         var _a;
@@ -179,16 +183,16 @@ var Plugin = function(Alpine) {
       });
     }
   });
-  Alpine.directive(PLUGIN_NAME, (el, {
-    modifiers,
-    expression
-  }, {
-    evaluate
-  }) => {
+  Alpine.directive(PLUGIN_NAME, (el, { modifiers, expression }, { evaluate }) => {
     const form = getForm(el);
     const defaultData = (field) => {
       const parentNode = field.closest(".field-parent") || includes(modifiers, GROUP) ? field.parentNode.parentNode : field.parentNode;
-      return { mods: [...modifiers, field.type], set: field.closest(FIELDSET), parentNode, exp: expression && evaluate(expression) };
+      return {
+        mods: [...modifiers, field.type],
+        set: field.closest(FIELDSET),
+        parentNode,
+        exp: expression && evaluate(expression)
+      };
     };
     function addEvents(field) {
       addErrorMsg(field);
@@ -199,6 +203,7 @@ var Plugin = function(Alpine) {
         addEvent(field, INPUT, checkIfValid);
     }
     if (isHtmlElement(el, FORM)) {
+      el.setAttribute("novalidate", true);
       formModifiers.set(form, modifiers);
       const fields = el.querySelectorAll(FIELD_SELECTOR);
       addEvent(el, "reset", () => {
