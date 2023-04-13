@@ -27,10 +27,12 @@
     "dev": "concurrently \"pnpm watch\" \"pnpm serve\"",
     "watch": "node scripts/build.js --watch",
     "serve": "npx browser-sync start -c 'bs-config.js'",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "release": "release-it"
   },
   "devDependencies": {
     "eslint": "^8.20.0",
-    "husky": "^8.0.1"
+    "husky": "^8.0.1",
+    "release-it": "^15.10.1"
   }
 }
