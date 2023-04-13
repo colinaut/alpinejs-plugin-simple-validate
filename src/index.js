@@ -246,21 +246,32 @@ const Plugin = function (Alpine) {
 	// Display reactive formData
 	validateMagic.data = (el) => getData(el);
 	validateMagic.formData = (el) => formData.get(getForm(getEl(el)));
-	validateMagic.value = (el) => {
+	validateMagic.value = (el, value) => {
+		el = getEl(el);
 		const data = getData(el);
+		if (!data) return false;
+
+		// If data is array this el is a form or fieldset
 		if (Array.isArray(data)) {
 			return data.reduce((result, item) => {
 				result[item.name] = item.value;
 				return result;
 			}, {});
 		}
-		// if not array than assume it's a since field so just return the value
-		return data && data.value;
+
+		// If value is passed than update the field and the formData; otherwise return value
+		if (value) {
+			data.value = value;
+			el.value = value;
+			updateFormData(el);
+		}
+		return data.value;
 	};
 
 	// add or update formData
 	validateMagic.updateData = (field, data, triggerErrorMsg) =>
 		updateFormData(getEl(field), data, triggerErrorMsg);
+
 	// toggle error message
 	validateMagic.toggleError = (field, valid) =>
 		toggleError(getEl(field), valid);

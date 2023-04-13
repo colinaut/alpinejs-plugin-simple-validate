@@ -18,6 +18,7 @@ Version 1.7 adds x-required directive for toggling if the field is required.
 * 1.7.6: fix where it breaks when fields are missing name or id attributes. Now it skips these.
 * 1.7.12: normal form reset replaces formData with new empty values
 * 1.7.14: x-validate adds `novalidate` on form tag to the browser's validation doesn't interfere with the plugin's validation
+* 1.7.15: added ability to update field value and formData using $validate.value(el,value)
 
 ## Simple Usage
 
@@ -123,7 +124,7 @@ When used on `<form>`, the `x-validate` every field is added to a reactive formD
 * `$validate.isComplete(el)` returns true or false validity for form, fieldsets, or fields. \*
 * `$validate.data(el)` returns an array of form or fieldset fields, or an individual field data object \*
 * `$validate.formData(form)` returns the raw formData object with keyed field names \*
-* `$validate.value(form)` returns a simple object with field names keys and their values for forms and fieldsets or just the raw value for fields \*
+* `$validate.value(el,value)` returns a simple object with field names keys and their values for forms and fieldsets or just the raw value for fields. Value argument is optional and only for fields; when provided it will update the field value and update the x-validate formData. \*
 
 \* 'el' argument variable works with either $refs or a string of the name/id for getting data from form, fieldset, and fields.
 

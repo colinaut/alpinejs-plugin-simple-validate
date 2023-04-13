@@ -149,15 +149,23 @@ var Plugin = function(Alpine) {
   let validateMagic = {};
   validateMagic.data = (el) => getData(el);
   validateMagic.formData = (el) => formData.get(getForm(getEl(el)));
-  validateMagic.value = (el) => {
+  validateMagic.value = (el, value) => {
+    el = getEl(el);
     const data = getData(el);
+    if (!data)
+      return false;
     if (Array.isArray(data)) {
       return data.reduce((result, item) => {
         result[item.name] = item.value;
         return result;
       }, {});
     }
-    return data && data.value;
+    if (value) {
+      data.value = value;
+      el.value = value;
+      updateFormData(el);
+    }
+    return data.value;
   };
   validateMagic.updateData = (field, data, triggerErrorMsg) => updateFormData(getEl(field), data, triggerErrorMsg);
   validateMagic.toggleError = (field, valid) => toggleError(getEl(field), valid);
