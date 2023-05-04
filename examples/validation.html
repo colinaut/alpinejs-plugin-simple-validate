@@ -33,7 +33,7 @@
 		</nav>
 		<form
 			id="form"
-			x-data="{date: '2001/12/12',testValue:'hello world'}"
+			x-data="{date: '2001/12/12',testValue:'hello world',isSubmitted: false}"
 			x-validate
 			@submit.prevent="$validate.submit"
 			x-ref="form"
@@ -75,26 +75,6 @@
 					x-validate
 				/>
 			</div>
-			<script>
-				document.addEventListener("alpine:init", () => {
-					Alpine.data("dataThing", function () {
-						return {
-							doIt() {
-								console.log(
-									this.$validate.isComplete("the_form")
-								);
-							},
-						};
-					});
-				});
-			</script>
-			<div x-data="dataThing">
-				<button
-					@click="if (!$validate.isComplete('the_form')) console.log('hihihi')"
-				>
-					DO IT
-				</button>
-			</div>
 
 			<div>
 				<label>Preferred Contact Method *</label>
@@ -133,6 +113,17 @@
 					name="email"
 					x-required:preferred="'email'"
 					x-ref="email"
+				/>
+			</div>
+			<div>
+				<label for="password">Password <span>*</span></label>
+				<input
+					type="password"
+					id="password"
+					name="password"
+					x-ref="password"
+					required
+					pattern=".{8,}"
 				/>
 			</div>
 			<div x-show="$validate.data('phone').required">
@@ -343,9 +334,20 @@
 			<div
 				x-text="($validate.isComplete('yolo')) ? 'Yes Yolo!' : 'Come on Yolo!'"
 			></div>
-			<!-- submit button is disabled until email and phone are added -->
+			<div
+				x-show="isSubmitted && !$validate.isComplete('form')"
+				class="form-error-msg"
+			>
+				There is an error in the form!!
+			</div>
 			<div style="flex-direction: row">
-				<button type="submit" class="btn btn-primary">Submit</button>
+				<button
+					type="submit"
+					class="btn btn-primary"
+					@click="isSubmitted = true"
+				>
+					Submit
+				</button>
 				<button type="reset" class="btn btn-primary">Reset</button>
 			</div>
 			<div class="form-validation-log">

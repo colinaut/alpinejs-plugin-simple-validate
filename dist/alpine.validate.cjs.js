@@ -93,37 +93,39 @@ var Plugin = function(Alpine) {
       data.required = data.required || includes(data.mods, REQUIRED) || includes(data.mods, GROUP) || field.hasAttribute(REQUIRED);
       const value = data.value;
       let valid = field.checkValidity();
-      if (includes([CHECKBOX, RADIO], field.type)) {
-        if (data.required)
-          valid = field.checked;
-        let tempArray = data.array || [];
-        if (field.type === CHECKBOX) {
-          if (field.checked && !tempArray.includes(value))
-            tempArray.push(value);
-          if (!field.checked)
-            tempArray = tempArray.filter((val) => val !== value);
-        }
-        if (field.type === RADIO && field.checked)
-          tempArray = [value];
-        data.array = tempArray;
-        data.value = tempArray.toString();
-        if (includes(data.mods, GROUP)) {
-          const min = data.exp || 1;
-          valid = tempArray.length >= min;
-        }
-      } else {
-        if (data.required)
-          valid = !!value.trim();
-        if (valid && value) {
-          const format = data.mods.filter((val) => dateFormats.indexOf(val) !== -1)[0];
-          for (let type of data.mods) {
-            if (typeof validate[type] === "function") {
-              valid = type === "date" ? isDate(value, format) : validate[type](value);
-              break;
-            }
+      if (valid) {
+        if (includes([CHECKBOX, RADIO], field.type)) {
+          if (data.required)
+            valid = field.checked;
+          let tempArray = data.array || [];
+          if (field.type === CHECKBOX) {
+            if (field.checked && !tempArray.includes(value))
+              tempArray.push(value);
+            if (!field.checked)
+              tempArray = tempArray.filter((val) => val !== value);
           }
-          if (data.exp === false)
-            valid = false;
+          if (field.type === RADIO && field.checked)
+            tempArray = [value];
+          data.array = tempArray;
+          data.value = tempArray.toString();
+          if (includes(data.mods, GROUP)) {
+            const min = data.exp || 1;
+            valid = tempArray.length >= min;
+          }
+        } else {
+          if (data.required)
+            valid = !!value.trim();
+          if (valid && value) {
+            const format = data.mods.filter((val) => dateFormats.indexOf(val) !== -1)[0];
+            for (let type of data.mods) {
+              if (typeof validate[type] === "function") {
+                valid = type === "date" ? isDate(value, format) : validate[type](value);
+                break;
+              }
+            }
+            if (data.exp === false)
+              valid = false;
+          }
         }
       }
       data.valid = valid;

@@ -148,53 +148,61 @@ const Plugin = function (Alpine) {
 			// run basic browser validity
 			let valid = field.checkValidity();
 
-			// If checkbox/radio then assume it's a group so update array and string value based on checked
-			if (includes([CHECKBOX, RADIO], field.type)) {
-				if (data.required) valid = field.checked;
-				// data.array acts as a store of current selected values
-				let tempArray = data.array || [];
+			// if it passes browser validity then check using x-validate function
+			if (valid) {
+				// If checkbox/radio then assume it's a group so update array and string value based on checked
+				if (includes([CHECKBOX, RADIO], field.type)) {
+					if (data.required) valid = field.checked;
+					// data.array acts as a store of current selected values
+					let tempArray = data.array || [];
 
-				if (field.type === CHECKBOX) {
-					if (field.checked && !tempArray.includes(value))
-						tempArray.push(value);
-					if (!field.checked)
-						tempArray = tempArray.filter((val) => val !== value);
-				}
-
-				// Radio buttons only can select one so max array is 1.
-				if (field.type === RADIO && field.checked) tempArray = [value];
-
-				// update with revised array
-				data.array = tempArray;
-				// update value with string of array items
-				data.value = tempArray.toString();
-				// if group than run valid based on group min number
-				if (includes(data.mods, GROUP)) {
-					const min = data.exp || 1;
-					valid = tempArray.length >= min;
-				}
-			} else {
-				if (data.required) valid = !!value.trim();
-				// only run validation check if valid and has value
-				if (valid && value) {
-					// see if there is a date format
-					const format = data.mods.filter(
-						(val) => dateFormats.indexOf(val) !== -1
-					)[0];
-					for (let type of data.mods) {
-						// check if mod is a validation function
-						if (typeof validate[type] === "function") {
-							// if it is a date then do isDate; otherwise do matching function
-							valid =
-								type === "date"
-									? isDate(value, format)
-									: validate[type](value);
-							break;
-						}
+					if (field.type === CHECKBOX) {
+						if (field.checked && !tempArray.includes(value))
+							tempArray.push(value);
+						if (!field.checked)
+							tempArray = tempArray.filter(
+								(val) => val !== value
+							);
 					}
-					if (data.exp === false) valid = false;
+
+					// Radio buttons only can select one so max array is 1.
+					if (field.type === RADIO && field.checked)
+						tempArray = [value];
+
+					// update with revised array
+					data.array = tempArray;
+					// update value with string of array items
+					data.value = tempArray.toString();
+					// if group than run valid based on group min number
+					if (includes(data.mods, GROUP)) {
+						const min = data.exp || 1;
+						valid = tempArray.length >= min;
+					}
+				} else {
+					// check if it's required and if there is a value
+					if (data.required) valid = !!value.trim();
+					// only run validation check if valid and has value
+					if (valid && value) {
+						// see if there is a date format
+						const format = data.mods.filter(
+							(val) => dateFormats.indexOf(val) !== -1
+						)[0];
+						for (let type of data.mods) {
+							// check if mod is a validation function
+							if (typeof validate[type] === "function") {
+								// if it is a date then do isDate; otherwise do matching function
+								valid =
+									type === "date"
+										? isDate(value, format)
+										: validate[type](value);
+								break;
+							}
+						}
+						if (data.exp === false) valid = false;
+					}
 				}
 			}
+
 			data.valid = valid;
 
 			// update with new data
@@ -277,7 +285,6 @@ const Plugin = function (Alpine) {
 		toggleError(getEl(field), valid);
 
 	// Check if form is completed and prevent default if not
-	// TODO: focus on invalid
 	validateMagic.submit = (e) => {
 		let invalid = 0;
 		getData(e.target).forEach((val) => {
