@@ -1,82 +1,144 @@
 <!DOCTYPE html>
 <html lang="en">
+	<head>
+		<title>Simple Form Validation Alpine Plugin</title>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<meta
+			name="description"
+			content="example page for simple form validation alpinejs plugin"
+		/>
+		<script defer src="/alpine.validate.js"></script>
+		<script
+			defer
+			src="https://unpkg.com/alpinejs@3.10.2/dist/cdn.min.js"
+		></script>
+		<link
+			href="https://unpkg.com/@csstools/normalize.css"
+			rel="stylesheet"
+		/>
+		<link href="/styles.css" rel="stylesheet" />
+		<link href="/nav.css" rel="stylesheet" />
+	</head>
 
-<head>
-    <title>Simple Form Validation Alpine Plugin</title>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <meta name="description" content="example page for simple form validation alpinejs plugin" />
-    <script defer src="/alpine.validate.js"></script>
-    <script defer src="https://unpkg.com/alpinejs@3.10.2/dist/cdn.min.js"></script>
-    <link href="https://unpkg.com/@csstools/normalize.css" rel="stylesheet" />
-    <link href="/styles.css" rel="stylesheet" />
-    <link href="/nav.css" rel="stylesheet" />
-</head>
-
-<body>
-    <h1>Simple Form Validation Alpine Plugin</h1>
-    <nav x-data="{htmlPage: window.location.pathname.split('/').pop(), links: [{ name: 'README Example', page: 'index.html'},{name: 'Validation', page:'validation.html'},{name: 'Multiform', page: 'multiform.html'},{name: 'Complicated Form', page: 'complicated.html'},{name: 'Stepped Form', page: 'steps.html'}]}">
-        <template x-for="a in links">
-            <a :href="'/' + a.page" x-text="a.name" :class="a.page === htmlPage && 'active'"></a>
-        </template>
-    </nav>
-    <form x-data x-validate.bluronly @submit="$validate.submit" x-ref="form">
-        <p class="description">Form <code>x-validate.bluronly</code></p>
-        <div>
-            <label for="name">Your Name *</label>
-            <input type="text" id="name" name="name" required />
-        </div>
-        <div> 
-            <label for="email">Your Email *</label>
-            <input type="email" id="email" name="email" required />
-        </div>
-        <div>
-            <label for="phone">Your Phone</label>
-            <input type="phone" id="phone" name="phone" />
-        </div>
-        <div class="checkbox-wrapper">
-            <label><input type="checkbox" required name="yolo" id="yolo" value="Sell all my secret data!" /> Sell all my secret data!
-                YOLO! <span class="error-msg"></span></label>
-        </div>
-        <div>
-            <button type="submit" :disabled="!$validate.isComplete($refs.form)">Submit</button>
-        </div>
-        <div class="form-validation-log">
-            <h3>Validations</h3>
-            <ul>
-                <template x-for="v in $validate.data($refs.form)">
-                    <li>field: <b x-text="v.name"></b> <span x-text="v.value"></span> <i x-text="v.valid"></i></li>
-                </template>
-            </ul>
-        </div>
-    </form>
-    <form x-data id="dogform" x-validate.input @submit="$validate.submit" x-ref="dogform">
-        <p class="description">Form <code>x-validate.input</code></p>
-        <div>
-            <label for="dogname">Your Dog's Name *</label>
-            <input type="text" id="dogname" name="dogname" required />
-        </div>
-        <div>
-            <label for="dogage">Your Dog's Age *</label>
-            <input type="text" id="dogage" name="dogage" required x-validate.wholenumber/>
-        </div>
-        <div>
-            <label for="dognick">Your Dog's nickname</label>
-            <input type="text" id="dognick" name="dognick" />
-        </div>
-        <!-- submit button is disabled until email and phone are added -->
-        <div>
-            <button type="submit" :disabled="!$validate.isComplete($refs.dogform)">Submit</button>
-        </div>
-        <div class="form-validation-log">
-            <h3>Validations</h3>
-            <ul>
-                <template x-for="v in $validate.data('dogform')">
-                    <li>field: <b x-text="v.name"></b> <span x-text="v.value"></span> <i x-text="v.valid"></i></li>
-                </template>
-            </ul>
-        </div>
-    </form>
-</body>
-
+	<body>
+		<h1>Simple Form Validation Alpine Plugin</h1>
+		<nav
+			x-data="{htmlPage: window.location.pathname.split('/').pop(), links: [{ name: 'README Example', page: 'index.html'},{name: 'Validation', page:'validation.html'},{name: 'Multiform', page: 'multiform.html'},{name: 'Complicated Form', page: 'complicated.html'},{name: 'Stepped Form', page: 'steps.html'}]}"
+		>
+			<template x-for="a in links">
+				<a
+					:href="'/' + a.page"
+					x-text="a.name"
+					:class="a.page === htmlPage && 'active'"
+				></a>
+			</template>
+		</nav>
+		<form
+			x-data
+			x-validate.bluronly
+			@submit="$validate.submit"
+			x-ref="form"
+		>
+			<p class="description">Form <code>x-validate.bluronly</code></p>
+			<div>
+				<label for="name">Your Name *</label>
+				<input type="text" id="name" name="name" required />
+				<div class="error-msg text-sm mt-2 text-red-600">
+					name is required
+				</div>
+			</div>
+			<div>
+				<label for="email">Your Email *</label>
+				<input type="email" id="email" name="email" required />
+			</div>
+			<div>
+				<label for="phone">Your Phone</label>
+				<input type="phone" id="phone" name="phone" />
+			</div>
+			<div class="checkbox-wrapper">
+				<label
+					><input
+						type="checkbox"
+						required
+						name="yolo"
+						id="yolo"
+						value="Sell all my secret data!" />
+					Sell all my secret data! YOLO!
+					<span class="error-msg"></span
+				></label>
+			</div>
+			<div>
+				<button
+					type="submit"
+					:disabled="!$validate.isComplete($refs.form)"
+				>
+					Submit
+				</button>
+			</div>
+			<div class="form-validation-log">
+				<h3>Validations</h3>
+				<ul>
+					<template x-for="v in $validate.data($refs.form)">
+						<li>
+							field: <b x-text="v.name"></b>
+							<span x-text="v.value"></span>
+							<i x-text="v.valid"></i>
+						</li>
+					</template>
+				</ul>
+			</div>
+		</form>
+		<form
+			x-data
+			id="dogform"
+			x-validate.input
+			@submit="$validate.submit"
+			x-ref="dogform"
+		>
+			<p class="description">Form <code>x-validate.input</code></p>
+			<div>
+				<label for="dogname">Your Dog's Name *</label>
+				<input type="text" id="dogname" name="dogname" required />
+			</div>
+			<div>
+				<label for="dogage">Your Dog's Age *</label>
+				<input
+					type="text"
+					id="dogage"
+					name="dogage"
+					required
+					x-validate.wholenumber
+				/>
+			</div>
+			<div>
+				<label for="dognick">Your Dog's nickname</label>
+				<input type="text" id="dognick" name="dognick" />
+				<div class="error-msg text-sm mt-2 text-red-600">
+					dog nickname is required
+				</div>
+			</div>
+			<!-- submit button is disabled until email and phone are added -->
+			<div>
+				<button
+					type="submit"
+					:disabled="!$validate.isComplete($refs.dogform)"
+				>
+					Submit
+				</button>
+			</div>
+			<div class="form-validation-log">
+				<h3>Validations</h3>
+				<ul>
+					<template x-for="v in $validate.data('dogform')">
+						<li>
+							field: <b x-text="v.name"></b>
+							<span x-text="v.value"></span>
+							<i x-text="v.valid"></i>
+						</li>
+					</template>
+				</ul>
+			</div>
+		</form>
+	</body>
 </html>

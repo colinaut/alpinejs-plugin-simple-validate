@@ -490,11 +490,9 @@ const Plugin = function (Alpine) {
 	/* -------------------------------------------------------------------------- */
 
 	function toggleError(field, valid) {
-		const name = getName(field);
-
 		const parentNode = getData(field).parentNode;
 
-		const errorMsgNode = getEl(`${ERROR_MSG_CLASS}-${name}`);
+		const errorMsgNode = getErrorMsgFromId(field);
 
 		/* ---------------------------- Set aria-invalid ---------------------------- */
 		setAttr(field, "aria-invalid", !valid);
@@ -516,9 +514,9 @@ const Plugin = function (Alpine) {
 	/*                        Set Up Error Msg Node in DOM                        */
 	/* -------------------------------------------------------------------------- */
 
-	/* ----------------- Helper function to find error msg node ----------------- */
+	/* ------------ Helper function to find sibling error msg node -------------- */
 
-	function findErrorMsgNode(el) {
+	function findSiblingErrorMsgNode(el) {
 		while (el) {
 			// jump to next sibling element
 			el = el.nextElementSibling;
@@ -528,6 +526,14 @@ const Plugin = function (Alpine) {
 			if (isHtmlElement(el, FIELD_SELECTOR)) return false;
 		}
 		return false;
+	}
+
+	/* -------------- Helper function to get error msg node from id ------------- */
+
+	function getErrorMsgFromId(field) {
+		const name = getName(field);
+		const form = getForm(field);
+		return form.querySelector(`#${ERROR_MSG_CLASS}-${name}`);
 	}
 
 	/* ------ Function to setup errorMsgNode by finding it or creating one ------ */
@@ -547,8 +553,12 @@ const Plugin = function (Alpine) {
 		// If there is an adjacent error message with the right id or class then use that. If not create one.
 		const span = document.createElement("span");
 		span.className = ERROR_MSG_CLASS;
+
+		// If there already is an error-msg with the proper id in the form than use that
+		const errorMsg = getErrorMsgFromId(field);
+
 		const errorMsgNode =
-			getEl(errorMsgId) || findErrorMsgNode(targetNode) || span;
+			errorMsg || findSiblingErrorMsgNode(targetNode) || span;
 
 		// add id tag and hidden attribute
 		setAttr(errorMsgNode, "id", errorMsgId);

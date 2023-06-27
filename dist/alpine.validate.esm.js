@@ -251,9 +251,8 @@ var Plugin = function(Alpine) {
     }
   });
   function toggleError(field, valid) {
-    const name = getName(field);
     const parentNode = getData(field).parentNode;
-    const errorMsgNode = getEl(`${ERROR_MSG_CLASS}-${name}`);
+    const errorMsgNode = getErrorMsgFromId(field);
     setAttr(field, "aria-invalid", !valid);
     if (valid) {
       setAttr(errorMsgNode, HIDDEN);
@@ -263,7 +262,7 @@ var Plugin = function(Alpine) {
       setAttr(parentNode, DATA_ERROR, errorMsgNode.textContent);
     }
   }
-  function findErrorMsgNode(el) {
+  function findSiblingErrorMsgNode(el) {
     while (el) {
       el = el.nextElementSibling;
       if (isHtmlElement(el, `.${ERROR_MSG_CLASS}`))
@@ -273,6 +272,11 @@ var Plugin = function(Alpine) {
     }
     return false;
   }
+  function getErrorMsgFromId(field) {
+    const name = getName(field);
+    const form = getForm(field);
+    return form.querySelector(`#${ERROR_MSG_CLASS}-${name}`);
+  }
   function addErrorMsg(field) {
     const name = getName(field);
     const errorMsgId = `${ERROR_MSG_CLASS}-${name}`;
@@ -280,7 +284,8 @@ var Plugin = function(Alpine) {
     const targetNode = includes(fieldData.mods, GROUP) ? fieldData.parentNode : field;
     const span = document.createElement("span");
     span.className = ERROR_MSG_CLASS;
-    const errorMsgNode = getEl(errorMsgId) || findErrorMsgNode(targetNode) || span;
+    const errorMsg = getErrorMsgFromId(field);
+    const errorMsgNode = errorMsg || findSiblingErrorMsgNode(targetNode) || span;
     setAttr(errorMsgNode, "id", errorMsgId);
     setAttr(errorMsgNode, HIDDEN);
     if (!errorMsgNode.innerHTML)
