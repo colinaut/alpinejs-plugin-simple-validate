@@ -401,7 +401,10 @@ const Plugin = function (Alpine) {
 			if (isHtmlElement(el, FORM)) {
 				// el is form
 				// disable in-browser validation
-				el.setAttribute("novalidate", true);
+				if (!modifiers.includes("use-browser")) {
+					el.setAttribute("novalidate", true);
+				}
+
 				// save all form modifiers
 				formModifiers.set(form, modifiers);
 

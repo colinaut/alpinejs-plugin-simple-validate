@@ -19,6 +19,7 @@ Version 1.7 adds x-required directive for toggling if the field is required.
 * 1.7.12: normal form reset replaces formData with new empty values
 * 1.7.14: x-validate adds `novalidate` on form tag to the browser's validation doesn't interfere with the plugin's validation
 * 1.7.15: added ability to update field value and formData using $validate.value(el,value)
+* 1.7.18: opt out of `novalidate` by adding `x-validate.use-browser` as a modifier on the form tag.
 
 ## Simple Usage
 

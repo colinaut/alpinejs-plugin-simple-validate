@@ -213,7 +213,9 @@ var Plugin = function(Alpine) {
         addEvent(field, INPUT, checkIfValid);
     }
     if (isHtmlElement(el, FORM)) {
-      el.setAttribute("novalidate", true);
+      if (!modifiers.includes("use-browser")) {
+        el.setAttribute("novalidate", true);
+      }
       formModifiers.set(form, modifiers);
       const fields = el.querySelectorAll(FIELD_SELECTOR);
       addEvent(el, "reset", () => {
