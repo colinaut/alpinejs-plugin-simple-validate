@@ -136,6 +136,8 @@ const Plugin = function (Alpine) {
 				...data,
 			};
 
+			const fieldset = data.set;
+
 			// update required if not included
 			data.required =
 				data.required ||
@@ -143,13 +145,18 @@ const Plugin = function (Alpine) {
 				includes(data.mods, GROUP) ||
 				field.hasAttribute(REQUIRED);
 
+			// check if disabled
+			const disabled =
+				field.hasAttribute("disabled") ||
+				fieldset?.hasAttribute("disabled");
+
 			const value = data.value;
 
 			// run basic browser validity
 			let valid = field.checkValidity();
 
-			// if it passes browser validity then check using x-validate function
-			if (valid) {
+			// if it is not disabled and passes browser validity then check using x-validate function
+			if (!disabled && valid) {
 				// If checkbox/radio then assume it's a group so update array and string value based on checked
 				if (includes([CHECKBOX, RADIO], field.type)) {
 					if (data.required) valid = field.checked;
@@ -369,9 +376,10 @@ const Plugin = function (Alpine) {
 					field.closest(".field-parent") || includes(modifiers, GROUP)
 						? field.parentNode.parentNode
 						: field.parentNode;
+				const fieldset = field.closest(FIELDSET);
 				return {
 					mods: [...modifiers, field.type],
-					set: field.closest(FIELDSET),
+					set: fieldset,
 					parentNode: parentNode,
 					exp: expression && evaluate(expression),
 				};

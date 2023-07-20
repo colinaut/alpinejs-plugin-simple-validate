@@ -90,10 +90,12 @@ var Plugin = function(Alpine) {
         value: field.value,
         ...data
       };
+      const fieldset = data.set;
       data.required = data.required || includes(data.mods, REQUIRED) || includes(data.mods, GROUP) || field.hasAttribute(REQUIRED);
+      const disabled = field.hasAttribute("disabled") || (fieldset == null ? void 0 : fieldset.hasAttribute("disabled"));
       const value = data.value;
       let valid = field.checkValidity();
-      if (valid) {
+      if (!disabled && valid) {
         if (includes([CHECKBOX, RADIO], field.type)) {
           if (data.required)
             valid = field.checked;
@@ -210,9 +212,10 @@ var Plugin = function(Alpine) {
     const form = getForm(el);
     const defaultData = (field) => {
       const parentNode = field.closest(".field-parent") || includes(modifiers, GROUP) ? field.parentNode.parentNode : field.parentNode;
+      const fieldset = field.closest(FIELDSET);
       return {
         mods: [...modifiers, field.type],
-        set: field.closest(FIELDSET),
+        set: fieldset,
         parentNode,
         exp: expression && evaluate(expression)
       };
