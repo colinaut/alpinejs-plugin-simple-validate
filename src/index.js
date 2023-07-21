@@ -113,8 +113,8 @@ const Plugin = function (Alpine) {
 	/*                           formData function                                */
 	/* -------------------------------------------------------------------------- */
 
-	function updateFormData(field, data, triggerErrorMsg) {
-		// console.log("🚀 ~ file: index.js ~ line 86 ~ updateFormData ~ data", field, data, required)
+	function updateFieldData(field, data, triggerErrorMsg) {
+		// console.log("🚀 ~ file: index.js ~ line 86 ~ updateFieldData ~ data", field, data, required)
 		// data = {name: 'field id or name if no id', node: field, value:'field value', array:[optional used for groups], valid: true, set: form node or fieldset node}
 		const form = getForm(field);
 		const name = getName(field);
@@ -214,7 +214,7 @@ const Plugin = function (Alpine) {
 
 			// update with new data
 			tempData[name] = data;
-			// console.log("🚀 ~ file: index.js ~ line 165 ~ updateFormData ~ data", name, data.exp, data.valid, data.mods)
+			// console.log("🚀 ~ file: index.js ~ line 165 ~ updateFieldData ~ data", name, data.exp, data.valid, data.mods)
 			formData.set(form, tempData);
 		}
 
@@ -222,6 +222,16 @@ const Plugin = function (Alpine) {
 		return data;
 	}
 
+	function updateData(el, data, triggerErrorMsg) {
+		if (isHtmlElement(el, FORM) || isHtmlElement(el, FIELDSET)) {
+			const data = getData(el);
+			data.forEach((item) => {
+				updateFieldData(item.node);
+			});
+		}
+		if (isHtmlElement(el, FIELD_SELECTOR))
+			updateFieldData(el, data, triggerErrorMsg);
+	}
 	/* -------------------------------------------------------------------------- */
 	/*                            Validation Functions                            */
 	/* -------------------------------------------------------------------------- */
@@ -278,14 +288,14 @@ const Plugin = function (Alpine) {
 		if (value) {
 			data.value = value;
 			el.value = value;
-			updateFormData(el);
+			updateFieldData(el);
 		}
 		return data.value;
 	};
 
 	// add or update formData
-	validateMagic.updateData = (field, data, triggerErrorMsg) =>
-		updateFormData(getEl(field), data, triggerErrorMsg);
+	validateMagic.updateData = (el, data, triggerErrorMsg) =>
+		updateData(getEl(el), data, triggerErrorMsg);
 
 	// toggle error message
 	validateMagic.toggleError = (field, valid) =>
@@ -310,6 +320,11 @@ const Plugin = function (Alpine) {
 	// isComplete works for the form as a whole and fieldsets using either the node itself or the id
 	validateMagic.isComplete = (el) => {
 		const data = getData(el);
+		// console.log(
+		// 	"isComplete",
+		// 	el.closest(FIELDSET)?.getAttribute("id"),
+		// 	el.closest(FIELDSET)?.disabled
+		// );
 		// if this is array then data is form or fieldset
 		return Array.isArray(data)
 			? !data.some((val) => !val.valid)
@@ -344,13 +359,14 @@ const Plugin = function (Alpine) {
 			// only run if has expression
 			if (expression) {
 				// Alpine effect watches values for changes
+				console.log("x-required is depreciated. Use :required");
 				Alpine.effect(() => {
 					const evalExp = evaluate(expression);
 					// if it has value than use that as the field name to test; otherwise evaluate the expression
 					const required = value
 						? getData(value)?.value === evalExp
 						: evalExp;
-					updateFormData(el, { required: required });
+					updateFieldData(el, { required: required });
 					// hide error message if not required
 					if (!required) toggleError(el, true);
 				});
@@ -364,12 +380,42 @@ const Plugin = function (Alpine) {
 
 	Alpine.directive(
 		PLUGIN_NAME,
-		(el, { modifiers, expression }, { evaluate }) => {
+		(el, { modifiers, expression }, { Alpine, evaluate }) => {
 			/* -------------------------------------------------------------------------- */
 			/*                  Directive Specific Helper Functions                       */
 			/* -------------------------------------------------------------------------- */
 
 			const form = getForm(el);
+
+			// MutationObserver that watches for changes with required or disabled
+			const watchElement = (element) => {
+				// Create a new MutationObserver instance
+				const observer = new MutationObserver((mutationsList) => {
+					for (const mutation of mutationsList) {
+						if (mutation.type === "attributes") {
+							if (mutation.attributeName === "disabled") {
+								Alpine.nextTick(() => {
+									updateData(element);
+								});
+							}
+							if (mutation.attributeName === "required") {
+								Alpine.nextTick(() => {
+									updateData(element, {
+										required:
+											element.hasAttribute("required"),
+									});
+								});
+							}
+						}
+					}
+				});
+
+				// Start observing the element for attribute changes
+				observer.observe(element, { attributes: true });
+
+				// Return the observer instance in case you want to disconnect it later
+				return observer;
+			};
 
 			const defaultData = (field) => {
 				const parentNode =
@@ -377,6 +423,11 @@ const Plugin = function (Alpine) {
 						? field.parentNode.parentNode
 						: field.parentNode;
 				const fieldset = field.closest(FIELDSET);
+
+				// watch field and fieldset for changes to required or disabled
+				watchElement(field);
+				if (fieldset) watchElement(fieldset);
+
 				return {
 					mods: [...modifiers, field.type],
 					set: fieldset,
@@ -402,6 +453,8 @@ const Plugin = function (Alpine) {
 					addEvent(field, INPUT, checkIfValid);
 			}
 
+			// console.log(Alpine.nextTick(() => {});
+
 			/* -------------------------------------------------------------------------- */
 			/*                 If x-validate on <form> validate all fields                */
 			/* -------------------------------------------------------------------------- */
@@ -424,13 +477,13 @@ const Plugin = function (Alpine) {
 					const data = getData(el);
 					// need a short delay for reset to take effect and reread values
 					setTimeout(() => {
-						data.forEach((field) => updateFormData(field.node));
+						data.forEach((field) => updateFieldData(field.node));
 					}, 50);
 				});
 
 				fields.forEach((field) => {
 					if (getName(field)) {
-						updateFormData(field, defaultData(field));
+						updateFieldData(field, defaultData(field));
 						// Don't add events or error msgs if it doesn't have a name/id or has x-validate on it so we aren't duplicating function
 						// TODO: somehow detect if this is a group of checkboxes or radio buttons with required. Might need to run a forEach twice?
 						if (
@@ -458,7 +511,7 @@ const Plugin = function (Alpine) {
 				// include form level modifiers so they are also referenced
 				modifiers = [...modifiers, ...formMods];
 				// el is field element
-				updateFormData(el, defaultData(el));
+				updateFieldData(el, defaultData(el));
 				addEvents(el);
 			}
 
@@ -471,7 +524,7 @@ const Plugin = function (Alpine) {
 				const mods = getData(field).mods;
 
 				/* --- Update formData with value and expression and trigger error message --- */
-				const updatedData = updateFormData(
+				const updatedData = updateFieldData(
 					field,
 					{ exp: expression && evaluate(expression) },
 					true

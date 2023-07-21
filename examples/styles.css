@@ -168,3 +168,9 @@ code {
 	border-radius: 0.3rem;
 	font-style: normal;
 }
+
+.card {
+	border-radius: 0.3em;
+	border: 3px solid navy;
+	padding: 0.8em;
+}

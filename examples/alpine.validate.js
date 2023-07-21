@@ -63,7 +63,7 @@
     }
     const formData = new WeakMap();
     const formModifiers = new WeakMap();
-    function updateFormData(field, data, triggerErrorMsg) {
+    function updateFieldData(field, data, triggerErrorMsg) {
       const form = getForm(field);
       const name = getName(field);
       if (form && name) {
@@ -126,6 +126,16 @@
         toggleError(field, data.valid);
       return data;
     }
+    function updateData(el, data, triggerErrorMsg) {
+      if (isHtmlElement(el, FORM) || isHtmlElement(el, FIELDSET)) {
+        const data2 = getData(el);
+        data2.forEach((item) => {
+          updateFieldData(item.node);
+        });
+      }
+      if (isHtmlElement(el, FIELD_SELECTOR))
+        updateFieldData(el, data, triggerErrorMsg);
+    }
     const validate = {};
     validate.email = (str) => /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(cleanText(str));
     validate.tel = (str) => /^((\+|0)\d{1,4})?[-\s.]?[-\s.]?\d[-\s.]?\d[-\s.]?\d[-\s.]?\d[-\s.]?\d[-\s.]?\d[-\s.]?\d[-\s.]?\d[-\s.]?(\d{1,2})$/.test(cleanText(str));
@@ -155,11 +165,11 @@
       if (value) {
         data.value = value;
         el.value = value;
-        updateFormData(el);
+        updateFieldData(el);
       }
       return data.value;
     };
-    validateMagic.updateData = (field, data, triggerErrorMsg) => updateFormData(getEl(field), data, triggerErrorMsg);
+    validateMagic.updateData = (el, data, triggerErrorMsg) => updateData(getEl(el), data, triggerErrorMsg);
     validateMagic.toggleError = (field, valid) => toggleError(getEl(field), valid);
     validateMagic.submit = (e) => {
       let invalid = 0;
@@ -186,21 +196,47 @@
       expression
     }, { evaluate }) => {
       if (expression) {
+        console.log("x-required is depreciated. Use :required");
         Alpine.effect(() => {
           var _a;
           const evalExp = evaluate(expression);
           const required = value ? ((_a = getData(value)) == null ? void 0 : _a.value) === evalExp : evalExp;
-          updateFormData(el, { required });
+          updateFieldData(el, { required });
           if (!required)
             toggleError(el, true);
         });
       }
     });
-    Alpine.directive(PLUGIN_NAME, (el, { modifiers, expression }, { evaluate }) => {
+    Alpine.directive(PLUGIN_NAME, (el, { modifiers, expression }, { Alpine: Alpine2, evaluate }) => {
       const form = getForm(el);
+      const watchElement = (element) => {
+        const observer = new MutationObserver((mutationsList) => {
+          for (const mutation of mutationsList) {
+            if (mutation.type === "attributes") {
+              if (mutation.attributeName === "disabled") {
+                Alpine2.nextTick(() => {
+                  updateData(element);
+                });
+              }
+              if (mutation.attributeName === "required") {
+                Alpine2.nextTick(() => {
+                  updateData(element, {
+                    required: element.hasAttribute("required")
+                  });
+                });
+              }
+            }
+          }
+        });
+        observer.observe(element, { attributes: true });
+        return observer;
+      };
       const defaultData = (field) => {
         const parentNode = field.closest(".field-parent") || includes(modifiers, GROUP) ? field.parentNode.parentNode : field.parentNode;
         const fieldset = field.closest(FIELDSET);
+        watchElement(field);
+        if (fieldset)
+          watchElement(fieldset);
         return {
           mods: [...modifiers, field.type],
           set: fieldset,
@@ -226,12 +262,12 @@
           el.reset();
           const data = getData(el);
           setTimeout(() => {
-            data.forEach((field) => updateFormData(field.node));
+            data.forEach((field) => updateFieldData(field.node));
           }, 50);
         });
         fields.forEach((field) => {
           if (getName(field)) {
-            updateFormData(field, defaultData(field));
+            updateFieldData(field, defaultData(field));
             if (!field.getAttributeNames().some((attr) => attr.includes(`x-${PLUGIN_NAME}`))) {
               addEvents(field);
             }
@@ -241,13 +277,13 @@
       if (getName(el) && isHtmlElement(el, FIELD_SELECTOR)) {
         const formMods = formModifiers.has(form) ? formModifiers.get(form) : [];
         modifiers = [...modifiers, ...formMods];
-        updateFormData(el, defaultData(el));
+        updateFieldData(el, defaultData(el));
         addEvents(el);
       }
       function checkIfValid(e) {
         const field = this;
         const mods = getData(field).mods;
-        const updatedData = updateFormData(field, { exp: expression && evaluate(expression) }, true);
+        const updatedData = updateFieldData(field, { exp: expression && evaluate(expression) }, true);
         if (!updatedData.valid && !includes(mods, "bluronly") && e.type === "blur") {
           addEvent(field, INPUT, checkIfValid);
         }

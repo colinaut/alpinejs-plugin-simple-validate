@@ -20,6 +20,8 @@ Version 1.7 adds x-required directive for toggling if the field is required.
 * 1.7.14: x-validate adds `novalidate` on form tag to the browser's validation doesn't interfere with the plugin's validation
 * 1.7.15: added ability to update field value and formData using $validate.value(el,value)
 * 1.7.18: opt out of `novalidate` by adding `x-validate.use-browser` as a modifier on the form tag.
+* 1.7.19: FIX: skip validation for `disabled` fields and fieldsets
+* 1.7.20: added observer for `required` attribute on fields and `disabled` attribute on fields and fieldsets. Now x-validate reacts to changes to these attributes so you can use AlpineJS :required and :disabled to set them.
 
 ## Simple Usage
 
@@ -48,7 +50,6 @@ Add a `x-data`, and `x-validate` to your `<form>` element (you don't need any va
 * Use `x-validate.group` on groups of checkboxes or radio buttons to validate that at least one is selected.
 * Add a specific test to a field like `x-validate='$el.value === 'bunny'`; this can be paired up with other validations. For example: `x-validate.website='$el.includes('bunny')` for only websites with the word bunny in the name.
 * Use `$validate.isComplete(el)` to detect if the form, `<fieldset>` groups or any field is completed
-* Use `x-required` directive with a boolean function to set if a field is required or not. This is useful for if you have a field that only shows when another field is set to a certain value. For example if a select field has an 'other' option and you want an 'other' text field.
 * You can an skip `x-validate` on the `<form>` and just add `x-validate` on fields directly if you only want a couple fields validated. The x-data is still required on `<form>`.
 * The examples folder in the git repo shows some of what you can do with this plugin.
 
@@ -96,12 +97,12 @@ You can validate that at least one is selected by adding `x-validate.group` to e
 
 ## Directive x-required
 
-The x-required directive is used on a field if you want to toggle required depending on another field value or other variable. 
+Depreciated just use base AlpineJS `:required`; x-required will be removed in version 1.8
 
-* x-required="expression" — evaluates the expression as a boolean function to toggle required on the element
-* x-required:name="'value'" — this shorthand allows you to easily test if a another named field has a particular value set. If it does have the value than it sets required to true.
+~~The x-required directive is used on a field if you want to toggle required depending on another field value or other variable.~~ 
 
-*Note: basic Alpine allows toggling with `:required="expression"` and this will work. However, x-required has an advantage is it immediately updates `valid` in formData when the expression changes. Whereas changing the required attribute only updates formData on the blur/change event.*
+* ~~x-required="expression" — evaluates the expression as a boolean function to toggle required on the element~~
+* ~~x-required:name="'value'" — this shorthand allows you to easily test if a another named field has a particular value set. If it does have the value than it sets required to true.~~
 
 ## Magic functions
 

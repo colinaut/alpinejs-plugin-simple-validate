@@ -111,19 +111,9 @@
 					type="email"
 					id="email"
 					name="email"
-					x-required:preferred="'email'"
+					m
+					:required="$validate.value('preferred') === 'email'"
 					x-ref="email"
-				/>
-			</div>
-			<div>
-				<label for="password">Password <span>*</span></label>
-				<input
-					type="password"
-					id="password"
-					name="password"
-					x-ref="password"
-					required
-					pattern=".{8,}"
 				/>
 			</div>
 			<div x-show="$validate.data('phone').required">
@@ -137,9 +127,20 @@
 					type="tel"
 					id="phone"
 					name="phone"
-					x-required="$validate.data('preferred').value === 'phone'"
+					:required="$validate.value('preferred') === 'phone'"
 				/>
 				<span class="error-msg">Please enter a valid phone number</span>
+			</div>
+			<div>
+				<label for="password">Password <span>*</span></label>
+				<input
+					type="password"
+					id="password"
+					name="password"
+					x-ref="password"
+					required
+					pattern=".{8,}"
+				/>
 			</div>
 			<div>
 				<label for="whole-number">Whole Number</label>
@@ -193,54 +194,81 @@
 					x-model="date"
 				/>
 			</div>
-			<div>
-				<label for="favorite-food">Favorite Food <span>*</span></label>
-				<input type="text" id="favorite-food" />
-			</div>
-			<div>
-				<label for="favorite-food-dup"
-					>Write Same Favorite Food Again<span>*</span></label
+			<div class="checkbox-wrapper" data-error-msg="you must choose">
+				<h4>Enable food questions? *</h4>
+				<label
+					><input
+						type="radio"
+						name="food"
+						value="yes"
+						x-validate.group
+					/>
+					Yes</label
 				>
-				<input
-					type="text"
-					id="favorite-food-dup"
-					required
-					x-validate="$el.value === $validate.data('favorite-food').value"
-					data-error-msg="must write the same as Favorite Food above"
-				/>
+				<label
+					><input
+						type="radio"
+						name="food"
+						value="no"
+						x-validate.group
+						checked
+					/>
+					No</label
+				>
 			</div>
-			<div>
+			<fieldset class="card" :disabled="$validate.value('food') === 'no'">
+				<legend>Food Questions</legend>
 				<div>
-					<label for="select">Pick your favorite cheese! *</label>
-					<select
-						name="cheese"
-						id="cheese"
-						required
-						title="select favorite cheese"
+					<label for="favorite-food"
+						>Favorite Food <span>*</span></label
 					>
-						<option disabled selected value="">
-							-- choose one --
-						</option>
-						<option value="brie">brie</option>
-						<option value="cheddar">cheddar</option>
-						<option value="swiss">swiss</option>
-						<option value="gouda">gouda</option>
-						<option value="other">other</option>
-					</select>
+					<input type="text" id="favorite-food" required />
 				</div>
-				<div x-show="$validate.data('cheese').value === 'other'">
-					<label for="othercheese">Other Cheese *</label>
+				<div>
+					<label for="favorite-food-dup"
+						>Write Same Favorite Food Again<span>*</span></label
+					>
 					<input
 						type="text"
-						id="othercheese"
-						name="othercheese"
-						x-validate="!/american/i.test($el.value)"
-						x-required:cheese="'other'"
-						x-ref="othercheese"
-						data-error-msg="any cheese other than American"
+						id="favorite-food-dup"
+						required
+						x-validate="$el.value === $validate.data('favorite-food').value"
+						data-error-msg="must write the same as Favorite Food above"
 					/>
 				</div>
-			</div>
+				<div>
+					<div>
+						<label for="select">Pick your favorite cheese! *</label>
+						<select
+							name="cheese"
+							id="cheese"
+							required
+							title="select favorite cheese"
+						>
+							<option disabled selected value="">
+								-- choose one --
+							</option>
+							<option value="brie">brie</option>
+							<option value="cheddar">cheddar</option>
+							<option value="swiss">swiss</option>
+							<option value="gouda">gouda</option>
+							<option value="other">other</option>
+						</select>
+					</div>
+					<div x-show="$validate.data('cheese').value === 'other'">
+						<label for="othercheese">Other Cheese *</label>
+						<input
+							type="text"
+							id="othercheese"
+							name="othercheese"
+							x-validate="!/american/i.test($el.value)"
+							:required="$validate.value('cheese') === 'other'"
+							x-ref="othercheese"
+							data-error-msg="any cheese other than American"
+						/>
+					</div>
+				</div>
+			</fieldset>
 			<div
 				id="animals"
 				class="checkbox-wrapper"
