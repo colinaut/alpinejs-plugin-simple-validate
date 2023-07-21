@@ -380,7 +380,7 @@ const Plugin = function (Alpine) {
 
 	Alpine.directive(
 		PLUGIN_NAME,
-		(el, { modifiers, expression }, { Alpine, evaluate }) => {
+		(el, { modifiers, expression }, { evaluate }) => {
 			/* -------------------------------------------------------------------------- */
 			/*                  Directive Specific Helper Functions                       */
 			/* -------------------------------------------------------------------------- */
@@ -394,16 +394,11 @@ const Plugin = function (Alpine) {
 					for (const mutation of mutationsList) {
 						if (mutation.type === "attributes") {
 							if (mutation.attributeName === "disabled") {
-								Alpine.nextTick(() => {
-									updateData(element);
-								});
+								updateData(element);
 							}
 							if (mutation.attributeName === "required") {
-								Alpine.nextTick(() => {
-									updateData(element, {
-										required:
-											element.hasAttribute("required"),
-									});
+								updateData(element, {
+									required: element.hasAttribute("required"),
 								});
 							}
 						}

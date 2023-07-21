@@ -219,22 +219,18 @@ var Plugin = function(Alpine) {
       });
     }
   });
-  Alpine.directive(PLUGIN_NAME, (el, { modifiers, expression }, { Alpine: Alpine2, evaluate }) => {
+  Alpine.directive(PLUGIN_NAME, (el, { modifiers, expression }, { evaluate }) => {
     const form = getForm(el);
     const watchElement = (element) => {
       const observer = new MutationObserver((mutationsList) => {
         for (const mutation of mutationsList) {
           if (mutation.type === "attributes") {
             if (mutation.attributeName === "disabled") {
-              Alpine2.nextTick(() => {
-                updateData(element);
-              });
+              updateData(element);
             }
             if (mutation.attributeName === "required") {
-              Alpine2.nextTick(() => {
-                updateData(element, {
-                  required: element.hasAttribute("required")
-                });
+              updateData(element, {
+                required: element.hasAttribute("required")
               });
             }
           }
