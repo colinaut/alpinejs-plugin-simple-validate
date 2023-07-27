@@ -324,8 +324,7 @@ var Plugin = function(Alpine) {
   }
   function getErrorMsgFromId(field) {
     const name = getName(field);
-    const form = getForm(field);
-    return form.querySelector(`#${ERROR_MSG_CLASS}-${name}`);
+    return document.getElementById(`${ERROR_MSG_CLASS}-${name}`);
   }
   function addErrorMsg(field) {
     const name = getName(field);

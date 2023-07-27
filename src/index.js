@@ -320,12 +320,6 @@ const Plugin = function (Alpine) {
 	// isComplete works for the form as a whole and fieldsets using either the node itself or the id
 	validateMagic.isComplete = (el) => {
 		const data = getData(el);
-		// console.log(
-		// 	"isComplete",
-		// 	el.closest(FIELDSET)?.getAttribute("id"),
-		// 	el.closest(FIELDSET)?.disabled
-		// );
-		// if this is array then data is form or fieldset
 		return Array.isArray(data)
 			? !data.some((val) => !val.valid)
 			: data && data.valid;
@@ -591,8 +585,7 @@ const Plugin = function (Alpine) {
 
 	function getErrorMsgFromId(field) {
 		const name = getName(field);
-		const form = getForm(field);
-		return form.querySelector(`#${ERROR_MSG_CLASS}-${name}`);
+		return document.getElementById(`${ERROR_MSG_CLASS}-${name}`);
 	}
 
 	/* ------ Function to setup errorMsgNode by finding it or creating one ------ */
