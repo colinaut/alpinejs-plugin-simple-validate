@@ -1,38 +1,38 @@
 {
-  "name": "@colinaut/alpinejs-plugin-simple-validate",
-  "version": "1.7.20",
-  "description": "Simple Alpine form validation plugin",
-  "main": "dist/alpine.validate.cjs.js",
-  "module": "dist/alpine.validate.esm.js",
-  "unpkg": "dist/alpine.validate.min.js",
-  "keywords": [
-    "Alpine",
-    "Alpine JS",
-    "forms",
-    "validation"
-  ],
-  "author": "Colin Fahrion",
-  "license": "MIT",
-  "repository": "https://github.com/colinaut/alpinejs-plugin-simple-validate.git",
-  "publishConfig": {
-    "access": "public"
-  },
-  "dependencies": {
-    "concurrently": "^7.3.0",
-    "esbuild": "^0.12.22"
-  },
-  "scripts": {
-    "test": "echo \"No test specified\"",
-    "build": "node scripts/build.js",
-    "dev": "concurrently \"pnpm watch\" \"pnpm serve\"",
-    "watch": "node scripts/build.js --watch",
-    "serve": "npx browser-sync start -c 'bs-config.js'",
-    "prepare": "husky install",
-    "release": "release-it"
-  },
-  "devDependencies": {
-    "eslint": "^8.20.0",
-    "husky": "^8.0.1",
-    "release-it": "^15.10.1"
-  }
+	"name": "@colinaut/alpinejs-plugin-simple-validate",
+	"version": "1.7.20",
+	"description": "Simple Alpine form validation plugin",
+	"main": "dist/alpine.validate.cjs.js",
+	"module": "dist/alpine.validate.esm.js",
+	"unpkg": "dist/alpine.validate.min.js",
+	"keywords": [
+		"Alpine",
+		"Alpine JS",
+		"forms",
+		"validation"
+	],
+	"author": "Colin Fahrion",
+	"license": "MIT",
+	"repository": "https://github.com/colinaut/alpinejs-plugin-simple-validate.git",
+	"publishConfig": {
+		"access": "public"
+	},
+	"dependencies": {
+		"concurrently": "^7.3.0",
+		"esbuild": "^0.12.22"
+	},
+	"scripts": {
+		"test": "echo \"No test specified\"",
+		"build": "node scripts/build.js",
+		"dev": "concurrently \"pnpm watch\" \"pnpm serve\"",
+		"watch": "node scripts/build.js --watch",
+		"serve": "npx browser-sync start -c 'bs-config.js'",
+		"prepare": "husky install",
+		"release": "release-it"
+	},
+	"devDependencies": {
+		"eslint": "^8.20.0",
+		"husky": "^8.0.1",
+		"release-it": "^16.1.3"
+	}
 }
