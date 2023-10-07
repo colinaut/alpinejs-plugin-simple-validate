@@ -226,11 +226,11 @@ const Plugin = function (Alpine) {
 		if (isHtmlElement(el, FORM) || isHtmlElement(el, FIELDSET)) {
 			const data = getData(el);
 			data.forEach((item) => {
-				updateFieldData(item.node);
+				return updateFieldData(item.node);
 			});
 		}
 		if (isHtmlElement(el, FIELD_SELECTOR))
-			updateFieldData(el, data, triggerErrorMsg);
+			return updateFieldData(el, data, triggerErrorMsg);
 	}
 	/* -------------------------------------------------------------------------- */
 	/*                            Validation Functions                            */
@@ -305,6 +305,8 @@ const Plugin = function (Alpine) {
 	validateMagic.submit = (e) => {
 		let invalid = 0;
 		getData(e.target).forEach((val) => {
+			// double check validation
+			val = updateData(val.node);
 			if (val.valid === false) {
 				invalid++;
 				// focus on first invalid field

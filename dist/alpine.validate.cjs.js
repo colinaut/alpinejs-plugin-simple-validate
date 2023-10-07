@@ -142,11 +142,11 @@ var Plugin = function(Alpine) {
     if (isHtmlElement(el, FORM) || isHtmlElement(el, FIELDSET)) {
       const data2 = getData(el);
       data2.forEach((item) => {
-        updateFieldData(item.node);
+        return updateFieldData(item.node);
       });
     }
     if (isHtmlElement(el, FIELD_SELECTOR))
-      updateFieldData(el, data, triggerErrorMsg);
+      return updateFieldData(el, data, triggerErrorMsg);
   }
   const validate = {};
   validate.email = (str) => /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(cleanText(str));
@@ -186,6 +186,7 @@ var Plugin = function(Alpine) {
   validateMagic.submit = (e) => {
     let invalid = 0;
     getData(e.target).forEach((val) => {
+      val = updateData(val.node);
       if (val.valid === false) {
         invalid++;
         if (invalid === 1)
