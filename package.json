@@ -1,6 +1,6 @@
 {
 	"name": "@colinaut/alpinejs-plugin-simple-validate",
-	"version": "1.7.22",
+	"version": "1.7.23",
 	"description": "Simple Alpine form validation plugin",
 	"main": "dist/alpine.validate.cjs.js",
 	"module": "dist/alpine.validate.esm.js",
