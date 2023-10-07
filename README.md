@@ -22,6 +22,7 @@ Version 1.7 adds x-required directive for toggling if the field is required.
 * 1.7.18: opt out of `novalidate` by adding `x-validate.use-browser` as a modifier on the form tag.
 * 1.7.19: FIX: skip validation for `disabled` fields and fieldsets
 * 1.7.20: added observer for `required` attribute on fields and `disabled` attribute on fields and fieldsets. Now x-validate reacts to changes to these attributes so you can use AlpineJS :required and :disabled to set them.
+* 1.7.22: added `validate-on-submit` option to automatically validate on submit
 
 ## Simple Usage
 
@@ -63,6 +64,8 @@ The UI modifiers are mainly for setting global defaults on `<form>` but you can 
 * `x-validate.bluronly` — change the default never to use 'input' event listener on fillable form fields
 * `x-validate.input` sets fields to use both 'blur' and 'input' event listener for all validation
 * `x-validate.refocus` sets fields to force focus on form element when invalid
+* `x-validate.use-browser` use the browser's built in validation as well as x-validate
+* `x-validate.validate-on-submit` automatically trigger validation on submit
 
 ### Field Element Directives
 

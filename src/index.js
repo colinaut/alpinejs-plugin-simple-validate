@@ -455,6 +455,12 @@ const Plugin = function (Alpine) {
 					el.setAttribute("novalidate", true);
 				}
 
+				if (modifiers.includes("validate-on-submit")) {
+					el.addEventListener("submit", function (e) {
+						validateMagic.submit(e);
+					});
+				}
+
 				// save all form modifiers
 				formModifiers.set(form, modifiers);
 

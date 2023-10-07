@@ -252,6 +252,11 @@
         if (!modifiers.includes("use-browser")) {
           el.setAttribute("novalidate", true);
         }
+        if (modifiers.includes("validate-on-submit")) {
+          el.addEventListener("submit", function(e) {
+            validateMagic.submit(e);
+          });
+        }
         formModifiers.set(form, modifiers);
         const fields = el.querySelectorAll(FIELD_SELECTOR);
         addEvent(el, "reset", () => {
