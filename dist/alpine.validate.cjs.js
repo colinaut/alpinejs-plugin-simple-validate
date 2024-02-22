@@ -38,6 +38,7 @@ var Plugin = function(Alpine) {
   const getEl = (el) => isHtmlElement(el) ? el : document.getElementById(el) || document.querySelector(`[name ="${el}"]`);
   const getForm = (el) => el && el.closest(FORM);
   const getName = (el) => getAttr(el, "name") || getAttr(el, "id");
+  const getId = (el) => getAttr(el, "id") || getAttr(el, "name");
   const cleanText = (str) => String(str).trim();
   const getData = (strOrEl) => {
     const el = getEl(strOrEl);
@@ -329,12 +330,13 @@ var Plugin = function(Alpine) {
     return false;
   }
   function getErrorMsgFromId(field) {
-    const name = getName(field);
-    return document.getElementById(`${ERROR_MSG_CLASS}-${name}`);
+    const id = getId(field);
+    const form = getForm(field);
+    return form.querySelector(`#${ERROR_MSG_CLASS}-${id}`);
   }
   function addErrorMsg(field) {
-    const name = getName(field);
-    const errorMsgId = `${ERROR_MSG_CLASS}-${name}`;
+    const id = getId(field);
+    const errorMsgId = `${ERROR_MSG_CLASS}-${id}`;
     const fieldData = getData(field);
     const targetNode = includes(fieldData.mods, GROUP) ? fieldData.parentNode : field;
     const span = document.createElement("span");
@@ -343,6 +345,7 @@ var Plugin = function(Alpine) {
     const errorMsgNode = errorMsg || findSiblingErrorMsgNode(targetNode) || span;
     setAttr(errorMsgNode, "id", errorMsgId);
     setAttr(errorMsgNode, HIDDEN);
+    const name = getName(field);
     if (!errorMsgNode.innerHTML)
       errorMsgNode.textContent = getAttr(targetNode, DATA_ERROR_MSG) || `${name.replace(/[-_]/g, " ")} ${REQUIRED}`;
     setAttr(field, "aria-errormessage", errorMsgId);

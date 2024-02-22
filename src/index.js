@@ -52,7 +52,10 @@ const Plugin = function (Alpine) {
 
 	const getForm = (el) => el && el.closest(FORM);
 
+	// Used for field data naming
 	const getName = (el) => getAttr(el, "name") || getAttr(el, "id");
+	// Used for error msg id
+	const getId = (el) => getAttr(el, "id") || getAttr(el, "name");
 
 	const cleanText = (str) => String(str).trim();
 
@@ -592,15 +595,17 @@ const Plugin = function (Alpine) {
 	/* -------------- Helper function to get error msg node from id ------------- */
 
 	function getErrorMsgFromId(field) {
-		const name = getName(field);
-		return document.getElementById(`${ERROR_MSG_CLASS}-${name}`);
+		const id = getId(field);
+		const form = getForm(field);
+		return form.querySelector(`#${ERROR_MSG_CLASS}-${id}`);
 	}
 
 	/* ------ Function to setup errorMsgNode by finding it or creating one ------ */
 
 	function addErrorMsg(field) {
-		const name = getName(field);
-		const errorMsgId = `${ERROR_MSG_CLASS}-${name}`;
+		const id = getId(field);
+
+		const errorMsgId = `${ERROR_MSG_CLASS}-${id}`;
 		const fieldData = getData(field);
 
 		// set targetNode. The span.error-msg typically appears after the field but groups assign it to set after the wrapper
@@ -625,6 +630,7 @@ const Plugin = function (Alpine) {
 		setAttr(errorMsgNode, HIDDEN);
 
 		// add error text if it isn't already there
+		const name = getName(field);
 		if (!errorMsgNode.innerHTML)
 			errorMsgNode.textContent =
 				getAttr(targetNode, DATA_ERROR_MSG) ||
