@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Simple Form Validation Alpine Plugin</title>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<meta
+			name="description"
+			content="example page for simple form validation alpinejs plugin"
+		/>
+		<script defer src="/alpine.validate.js"></script>
+		<!-- <script
+			defer
+			src="https://unpkg.com/alpinejs@3.10.2/dist/cdn.min.js"
+		></script> -->
+		<script
+			defer
+			src="https://cdn.jsdelivr.net/npm/@alpinejs/csp@3.x.x/dist/cdn.min.js"
+		></script>
+
+		<link
+			href="https://unpkg.com/@csstools/normalize.css"
+			rel="stylesheet"
+		/>
+		<link href="/styles.css" rel="stylesheet" />
+		<link href="/nav.css" rel="stylesheet" />
+	</head>
+
+	<body>
+		<h1>Simple Form Validation Alpine Plugin</h1>
+		<form x-data="form" x-validate x-ref="form">
+			<div>
+				<label for="name">Your Name *</label>
+				<input type="text" id="name" name="name" required />
+				<div class="error-msg text-sm mt-2 text-red-600">
+					name is required
+				</div>
+			</div>
+			<div>
+				<label for="email">Your Email *</label>
+				<input type="email" id="email" name="email" required />
+			</div>
+			<fieldset>
+				<h3 style="margin: 0">Phone</h3>
+				<div><em>Only one phone number is required</em></div>
+				<div>
+					<label for="phone-personal">Personal Phone</label>
+					<input
+						type="phone"
+						id="phone-personal"
+						name="phone-personal"
+						x-bind="phones"
+					/>
+				</div>
+				<div>
+					<label for="phone-cell">Cell Phone</label>
+					<input
+						type="phone"
+						id="phone-cell"
+						name="phone-cell"
+						x-bind="phones"
+					/>
+				</div>
+				<div>
+					<label for="phone-work">Work Phone</label>
+					<input
+						type="phone"
+						id="phone-work"
+						name="phone-work"
+						x-bind="phones"
+					/>
+				</div>
+				<script>
+					document.addEventListener("alpine:init", () => {
+						Alpine.data("form", () => {
+							return {};
+						});
+						Alpine.bind("phones", function () {
+							return {
+								":required"() {
+									return !(
+										this.$validate.value(
+											"phone-personal"
+										) ||
+										this.$validate.value("phone-cell") ||
+										this.$validate.value("phone-work")
+									);
+								},
+							};
+						});
+					});
+				</script>
+			</fieldset>
+			<div class="checkbox-wrapper">
+				<label
+					><input
+						type="checkbox"
+						required
+						name="yolo"
+						id="yolo"
+						value="Sell all my secret data!" />
+					Sell all my secret data! YOLO!
+					<span class="error-msg"></span
+				></label>
+			</div>
+			<div>
+				<button type="submit">Submit</button>
+			</div>
+		</form>
+	</body>
+</html>

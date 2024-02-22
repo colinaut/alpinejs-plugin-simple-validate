@@ -13,6 +13,11 @@
 			defer
 			src="https://unpkg.com/alpinejs@3.10.2/dist/cdn.min.js"
 		></script>
+		<!-- <script
+			defer
+			src="https://cdn.jsdelivr.net/npm/@alpinejs/csp@3.x.x/dist/cdn.min.js"
+		></script> -->
+
 		<link
 			href="https://unpkg.com/@csstools/normalize.css"
 			rel="stylesheet"
@@ -34,12 +39,7 @@
 				></a>
 			</template>
 		</nav>
-		<form
-			x-data
-			x-validate.bluronly
-			@submit="$validate.submit"
-			x-ref="form"
-		>
+		<form x-data x-validate @submit="$validate.submit" x-ref="form">
 			<p class="description">Form <code>x-validate.bluronly</code></p>
 			<div>
 				<label for="name">Your Name *</label>
@@ -52,10 +52,53 @@
 				<label for="email">Your Email *</label>
 				<input type="email" id="email" name="email" required />
 			</div>
-			<div>
-				<label for="phone">Your Phone</label>
-				<input type="phone" id="phone" name="phone" />
-			</div>
+			<fieldset>
+				<h3 style="margin: 0">Phone</h3>
+				<div><em>Only one phone number is required</em></div>
+				<div>
+					<label for="phone-personal">Personal Phone</label>
+					<input
+						type="phone"
+						id="phone-personal"
+						name="phone-personal"
+						x-bind="phones"
+					/>
+				</div>
+				<div>
+					<label for="phone-cell">Cell Phone</label>
+					<input
+						type="phone"
+						id="phone-cell"
+						name="phone-cell"
+						x-bind="phones"
+					/>
+				</div>
+				<div>
+					<label for="phone-work">Work Phone</label>
+					<input
+						type="phone"
+						id="phone-work"
+						name="phone-work"
+						x-bind="phones"
+					/>
+				</div>
+				<script>
+					document.addEventListener("alpine:init", () => {
+						Alpine.bind("phones", () => ({
+							type: "input",
+							":required":
+								"!($validate.value('phone-personal') || $validate.value('phone-cell') || $validate.value('phone-work'))",
+							// ":required"() {
+							// 	const phones = document.querySelectorAll(
+							// 		'input[x-bind="phones"]'
+							// 	);
+							// 	console.log(phones);
+							// 	return !Array.from(phones).some((p) => p.value);
+							// },
+						}));
+					});
+				</script>
+			</fieldset>
 			<div class="checkbox-wrapper">
 				<label
 					><input
@@ -91,12 +134,15 @@
 		</form>
 		<form
 			x-data
-			id="dogform"
 			x-validate.input
 			@submit="$validate.submit"
 			x-ref="dogform"
 		>
 			<p class="description">Form <code>x-validate.input</code></p>
+			<div>
+				<label for="email2">Your Email *</label>
+				<input type="email" id="email2" name="email" required />
+			</div>
 			<div>
 				<label for="dogname">Your Dog's Name *</label>
 				<input type="text" id="dogname" name="dogname" required />

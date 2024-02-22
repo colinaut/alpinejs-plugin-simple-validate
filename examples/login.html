@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Simple Form Validation Alpine Plugin</title>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<meta
+			name="description"
+			content="example page for simple form validation alpinejs plugin"
+		/>
+		<script defer src="/alpine.validate.js"></script>
+		<script defer src="/alpine.cdn.min.js"></script>
+		<link
+			href="https://unpkg.com/@csstools/normalize.css"
+			rel="stylesheet"
+		/>
+		<link href="/styles.css" rel="stylesheet" />
+		<link href="/nav.css" rel="stylesheet" />
+	</head>
+
+	<body>
+		<h1>Simple Form Validation Alpine Plugin</h1>
+		<nav
+			x-data="{htmlPage: window.location.pathname.split('/').pop(), links: [{ name: 'README Example', page: 'index.html'},{name: 'Validation', page:'validation.html'},{name: 'Multiform', page: 'multiform.html'},{name: 'Complicated Form', page: 'complicated.html'},{name: 'Stepped Form', page: 'steps.html'},{name: 'Login', page: 'login.html'}]}"
+		>
+			<template x-for="a in links">
+				<a
+					:href="'/' + a.page"
+					x-text="a.name"
+					:class="a.page === htmlPage && 'active'"
+				></a>
+			</template>
+		</nav>
+		<form id="form" x-data x-validate.validate-on-submit x-ref="form">
+			<p>
+				This README example has been left mostly unstyled. See other
+				examples for more elaborate styling of form and error message
+				display
+			</p>
+			<p><em>* required</em></p>
+			<div>
+				<label for="login">Login *</label>
+				<input type="text" id="login" name="login" required />
+			</div>
+			<div>
+				<label for="password">Password *</label>
+				<input type="password" id="password" name="password" required />
+			</div>
+
+			<div>
+				<input type="submit" value="submit" />
+			</div>
+			<div class="form-validation-log">
+				<h3>Validations</h3>
+				<p>
+					<small
+						>List of data from
+						<code>$validate.data($refs.form)</code></small
+					>
+				</p>
+				<table>
+					<thead>
+						<tr>
+							<th>name</th>
+							<th>required</th>
+							<th>value</th>
+							<th>valid</th>
+						</tr>
+					</thead>
+					<tbody>
+						<template x-for="v in $validate.data($refs.form)">
+							<tr>
+								<td>
+									<span x-text="v.name"></span
+									><span
+										x-text="v.group ? ' (group)' : ''"
+									></span>
+								</td>
+								<td x-text="v.required ? '&#x2713;' : ''"></td>
+								<td x-text="v.value"></td>
+								<td x-text="v.valid ? '&#x2713;' : ''"></td>
+							</tr>
+						</template>
+					</tbody>
+				</table>
+				<p>
+					$validate.isComplete:
+					<b x-text="$validate.isComplete($refs.form)"></b>
+				</p>
+				<a
+					href=""
+					@click.prevent="console.log($validate.formData($refs.form))"
+					>console.log($validate.formData($refs.form))</a
+				>
+				<a
+					href=""
+					@click.prevent="console.log($validate.value($refs.form))"
+					>console.log($validate.value($refs.form))</a
+				>
+			</div>
+		</form>
+		<style type="text/css">
+			form {
+				width: 22rem;
+				margin: 2rem auto;
+				display: flex;
+				flex-direction: column;
+				gap: 1rem;
+			}
+
+			/* style to display the error message */
+			.error-msg {
+				color: red;
+			}
+		</style>
+	</body>
+</html>
