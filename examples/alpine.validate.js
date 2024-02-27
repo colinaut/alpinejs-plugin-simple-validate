@@ -23,7 +23,7 @@
     const addEvent = (el, event, callback) => el.addEventListener(event, callback);
     const getAttr = (el, attr) => el.getAttribute(attr);
     const setAttr = (el, attr, value = "") => el.setAttribute(attr, value);
-    const getEl = (el) => isHtmlElement(el) ? el : document.getElementById(el) || document.querySelector(`[name ="${el}"]`);
+    const getEl = (el, parent = document) => isHtmlElement(el) ? el : parent.querySelector(`#${el}`) || parent.querySelector(`[name ="${el}"]`);
     const getForm = (el) => el && el.closest(FORM);
     const getName = (el) => getAttr(el, "name") || getAttr(el, "id");
     const getId = (el) => getAttr(el, "id") || getAttr(el, "name");
@@ -251,6 +251,9 @@
           addEvent(field, INPUT, checkIfValid);
       }
       if (isHtmlElement(el, FORM)) {
+        if (!el.id) {
+          el.id = `form-${Math.random().toString(36).substring(2, 9)}`;
+        }
         if (!modifiers.includes("use-browser")) {
           el.setAttribute("novalidate", true);
         }
@@ -320,16 +323,19 @@
     function getErrorMsgFromId(field) {
       const id = getId(field);
       const form = getForm(field);
-      return form.querySelector(`#${ERROR_MSG_CLASS}-${id}`);
+      const formId = getId(form);
+      return form.querySelector(`#${ERROR_MSG_CLASS}-${formId}-${id}`);
     }
     function addErrorMsg(field) {
       const id = getId(field);
-      const errorMsgId = `${ERROR_MSG_CLASS}-${id}`;
+      const formId = getId(getForm(field));
+      const errorMsgId = `${ERROR_MSG_CLASS}-${formId}-${id}`;
       const fieldData = getData(field);
       const targetNode = includes(fieldData.mods, GROUP) ? fieldData.parentNode : field;
       const span = document.createElement("span");
       span.className = ERROR_MSG_CLASS;
       const errorMsg = getErrorMsgFromId(field);
+      console.log(field, errorMsg);
       const errorMsgNode = errorMsg || findSiblingErrorMsgNode(targetNode) || span;
       setAttr(errorMsgNode, "id", errorMsgId);
       setAttr(errorMsgNode, HIDDEN);
@@ -337,7 +343,7 @@
       if (!errorMsgNode.innerHTML)
         errorMsgNode.textContent = getAttr(targetNode, DATA_ERROR_MSG) || `${name.replace(/[-_]/g, " ")} ${REQUIRED}`;
       setAttr(field, "aria-errormessage", errorMsgId);
-      if (!getEl(errorMsgId))
+      if (!getEl(errorMsgId, getForm(field)))
         targetNode.after(errorMsgNode);
     }
   };

@@ -44,11 +44,11 @@ const Plugin = function (Alpine) {
 
 	const setAttr = (el, attr, value = "") => el.setAttribute(attr, value);
 
-	const getEl = (el) =>
+	const getEl = (el, parent = document) =>
 		isHtmlElement(el)
 			? el
-			: document.getElementById(el) ||
-			  document.querySelector(`[name ="${el}"]`);
+			: parent.querySelector(`#${el}`) ||
+			  parent.querySelector(`[name ="${el}"]`);
 
 	const getForm = (el) => el && el.closest(FORM);
 
@@ -455,6 +455,13 @@ const Plugin = function (Alpine) {
 
 			if (isHtmlElement(el, FORM)) {
 				// el is form
+
+				// check for ID attribute if not then add one
+				if (!el.id) {
+					el.id = `form-${Math.random()
+						.toString(36)
+						.substring(2, 9)}`;
+				}
 				// disable in-browser validation
 				if (!modifiers.includes("use-browser")) {
 					el.setAttribute("novalidate", true);
@@ -597,15 +604,17 @@ const Plugin = function (Alpine) {
 	function getErrorMsgFromId(field) {
 		const id = getId(field);
 		const form = getForm(field);
-		return form.querySelector(`#${ERROR_MSG_CLASS}-${id}`);
+		const formId = getId(form);
+		return form.querySelector(`#${ERROR_MSG_CLASS}-${formId}-${id}`);
 	}
 
 	/* ------ Function to setup errorMsgNode by finding it or creating one ------ */
 
 	function addErrorMsg(field) {
 		const id = getId(field);
+		const formId = getId(getForm(field));
 
-		const errorMsgId = `${ERROR_MSG_CLASS}-${id}`;
+		const errorMsgId = `${ERROR_MSG_CLASS}-${formId}-${id}`;
 		const fieldData = getData(field);
 
 		// set targetNode. The span.error-msg typically appears after the field but groups assign it to set after the wrapper
@@ -621,6 +630,7 @@ const Plugin = function (Alpine) {
 
 		// If there already is an error-msg with the proper id in the form than use that
 		const errorMsg = getErrorMsgFromId(field);
+		console.log(field, errorMsg);
 
 		const errorMsgNode =
 			errorMsg || findSiblingErrorMsgNode(targetNode) || span;
@@ -640,7 +650,7 @@ const Plugin = function (Alpine) {
 		setAttr(field, "aria-errormessage", errorMsgId);
 
 		//  Only add element if it does not yet exist
-		if (!getEl(errorMsgId)) targetNode.after(errorMsgNode);
+		if (!getEl(errorMsgId, getForm(field))) targetNode.after(errorMsgNode);
 	}
 };
 
