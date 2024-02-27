@@ -326,8 +326,7 @@
     }
     function getErrorMsgFromId(field) {
       const id = getAttr(field, "id");
-      const form = getForm(field);
-      return form.querySelector(`#${ERROR_MSG_CLASS}-${id}`);
+      return document.getElementById(`${ERROR_MSG_CLASS}-${id}`);
     }
     function addErrorMsg(field) {
       const fieldData = getData(field);

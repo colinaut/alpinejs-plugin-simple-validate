@@ -24,7 +24,7 @@ Version 1.7 adds x-required directive for toggling if the field is required.
 * 1.7.20: added observer for `required` attribute on fields and `disabled` attribute on fields and fieldsets. Now x-validate reacts to changes to these attributes so you can use AlpineJS :required and :disabled to set them.
 * 1.7.22: added `validate-on-submit` option to automatically validate on submit
 * 1.7.23: fix for submit so that it double checks validation on fields. There was a bug where if the user hit return and didn't tab out of a field it didn't update.
-* 1.7.26: fix for 1.7.25 break. Also fixes issue for multiple forms so that error messages have unique ids
+* 1.7.27: fix for 1.7.25 break where id based error messages stopped working. Also fixes issue for multiple forms so that error messages have unique ids.
 
 ## Simple Usage
 

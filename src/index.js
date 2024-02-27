@@ -605,8 +605,7 @@ const Plugin = function (Alpine) {
 
 	function getErrorMsgFromId(field) {
 		const id = getAttr(field, "id");
-		const form = getForm(field);
-		return form.querySelector(`#${ERROR_MSG_CLASS}-${id}`);
+		return document.getElementById(`${ERROR_MSG_CLASS}-${id}`);
 	}
 
 	/* ------ Function to setup errorMsgNode by finding it or creating one ------ */
