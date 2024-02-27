@@ -24,6 +24,7 @@ Version 1.7 adds x-required directive for toggling if the field is required.
 * 1.7.20: added observer for `required` attribute on fields and `disabled` attribute on fields and fieldsets. Now x-validate reacts to changes to these attributes so you can use AlpineJS :required and :disabled to set them.
 * 1.7.22: added `validate-on-submit` option to automatically validate on submit
 * 1.7.23: fix for submit so that it double checks validation on fields. There was a bug where if the user hit return and didn't tab out of a field it didn't update.
+* 1.7.26: fix for 1.7.25 break. Also fixes issue for multiple forms so that error messages have unique ids
 
 ## Simple Usage
 
@@ -47,8 +48,8 @@ Add a `x-data`, and `x-validate` to your `<form>` element (you don't need any va
 * Use `x-validate` directive along with modifiers directly on form fields to add additional validation, such as  `x-validate.wholenumber`
 * Write a custom error message one of two ways:
   * Add `data-error-msg='custom error message'` on field itself
-  * Add a sibling element with `error-msg` class and write your own error message there. The plugin searches all next siblings and will add the proper aria-errormessage linked id tags for you. This is also useful if you want some descriptive text or other element before the error message or if you want to use special styling to a specific error message.
-  * Add an element with the correct id attribute anywhere on the page (id is `error-msg-${name}`) and it will use that.
+  * Add a sibling element with `error-msg` class and write your own error message there. The plugin searches all next siblings and will add the proper aria-errormessage with linked id tags for you. This is also useful if you want some descriptive text or other element before the error message or if you want to use special styling to a specific error message.
+  * Add an element with the correct id attribute anywhere on the page (id is `error-msg-${id of matching field}`) and it will use that.
 * Use `x-validate.group` on groups of checkboxes or radio buttons to validate that at least one is selected.
 * Add a specific test to a field like `x-validate='$el.value === 'bunny'`; this can be paired up with other validations. For example: `x-validate.website='$el.includes('bunny')` for only websites with the word bunny in the name.
 * Use `$validate.isComplete(el)` to detect if the form, `<fieldset>` groups or any field is completed

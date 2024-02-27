@@ -174,3 +174,6 @@ code {
 	border: 3px solid navy;
 	padding: 0.8em;
 }
+[hidden] {
+	display: none;
+}

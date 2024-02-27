@@ -55,7 +55,15 @@ const Plugin = function (Alpine) {
 	// Used for field data naming
 	const getName = (el) => getAttr(el, "name") || getAttr(el, "id");
 	// Used for error msg id
-	const getId = (el) => getAttr(el, "id") || getAttr(el, "name");
+	const getMakeId = (el) => {
+		const id = getAttr(el, "id");
+		if (id) return id;
+		const randomId = `${el.tagName.toLowerCase()}-${Math.random()
+			.toString(36)
+			.substring(2, 9)}`;
+		setAttr(el, "id", randomId);
+		return randomId;
+	};
 
 	const cleanText = (str) => String(str).trim();
 
@@ -456,12 +464,6 @@ const Plugin = function (Alpine) {
 			if (isHtmlElement(el, FORM)) {
 				// el is form
 
-				// check for ID attribute if not then add one
-				if (!el.id) {
-					el.id = `form-${Math.random()
-						.toString(36)
-						.substring(2, 9)}`;
-				}
 				// disable in-browser validation
 				if (!modifiers.includes("use-browser")) {
 					el.setAttribute("novalidate", true);
@@ -602,19 +604,15 @@ const Plugin = function (Alpine) {
 	/* -------------- Helper function to get error msg node from id ------------- */
 
 	function getErrorMsgFromId(field) {
-		const id = getId(field);
+		const id = getAttr(field, "id");
 		const form = getForm(field);
-		const formId = getId(form);
-		return form.querySelector(`#${ERROR_MSG_CLASS}-${formId}-${id}`);
+		return form.querySelector(`#${ERROR_MSG_CLASS}-${id}`);
 	}
 
 	/* ------ Function to setup errorMsgNode by finding it or creating one ------ */
 
 	function addErrorMsg(field) {
-		const id = getId(field);
-		const formId = getId(getForm(field));
-
-		const errorMsgId = `${ERROR_MSG_CLASS}-${formId}-${id}`;
+		// get fieldData
 		const fieldData = getData(field);
 
 		// set targetNode. The span.error-msg typically appears after the field but groups assign it to set after the wrapper
@@ -628,15 +626,25 @@ const Plugin = function (Alpine) {
 		const span = document.createElement("span");
 		span.className = ERROR_MSG_CLASS;
 
-		// If there already is an error-msg with the proper id in the form than use that
-		const errorMsg = getErrorMsgFromId(field);
-		console.log(field, errorMsg);
+		// If there already is an error-msg with the proper id in the form than use that; else find sibling error msg with error-msg class; else use generated span.
 
 		const errorMsgNode =
-			errorMsg || findSiblingErrorMsgNode(targetNode) || span;
+			getErrorMsgFromId(field) ||
+			findSiblingErrorMsgNode(targetNode) ||
+			span;
 
-		// add id tag and hidden attribute
-		setAttr(errorMsgNode, "id", errorMsgId);
+		// get field id or make one if it doesn't exist
+		const id = getMakeId(field);
+
+		// set error msg id
+		const errorMsgId = `${ERROR_MSG_CLASS}-${id}`;
+
+		// if id doesn't match then set it
+		if (getAttr(errorMsgNode, "id") !== errorMsgId) {
+			setAttr(errorMsgNode, "id", errorMsgId);
+		}
+
+		// add hidden attribute
 		setAttr(errorMsgNode, HIDDEN);
 
 		// add error text if it isn't already there

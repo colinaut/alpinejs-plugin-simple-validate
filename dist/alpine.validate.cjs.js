@@ -38,7 +38,14 @@ var Plugin = function(Alpine) {
   const getEl = (el, parent = document) => isHtmlElement(el) ? el : parent.querySelector(`#${el}`) || parent.querySelector(`[name ="${el}"]`);
   const getForm = (el) => el && el.closest(FORM);
   const getName = (el) => getAttr(el, "name") || getAttr(el, "id");
-  const getId = (el) => getAttr(el, "id") || getAttr(el, "name");
+  const getMakeId = (el) => {
+    const id = getAttr(el, "id");
+    if (id)
+      return id;
+    const randomId = `${el.tagName.toLowerCase()}-${Math.random().toString(36).substring(2, 9)}`;
+    setAttr(el, "id", randomId);
+    return randomId;
+  };
   const cleanText = (str) => String(str).trim();
   const getData = (strOrEl) => {
     const el = getEl(strOrEl);
@@ -263,9 +270,6 @@ var Plugin = function(Alpine) {
         addEvent(field, INPUT, checkIfValid);
     }
     if (isHtmlElement(el, FORM)) {
-      if (!el.id) {
-        el.id = `form-${Math.random().toString(36).substring(2, 9)}`;
-      }
       if (!modifiers.includes("use-browser")) {
         el.setAttribute("novalidate", true);
       }
@@ -333,23 +337,21 @@ var Plugin = function(Alpine) {
     return false;
   }
   function getErrorMsgFromId(field) {
-    const id = getId(field);
+    const id = getAttr(field, "id");
     const form = getForm(field);
-    const formId = getId(form);
-    return form.querySelector(`#${ERROR_MSG_CLASS}-${formId}-${id}`);
+    return form.querySelector(`#${ERROR_MSG_CLASS}-${id}`);
   }
   function addErrorMsg(field) {
-    const id = getId(field);
-    const formId = getId(getForm(field));
-    const errorMsgId = `${ERROR_MSG_CLASS}-${formId}-${id}`;
     const fieldData = getData(field);
     const targetNode = includes(fieldData.mods, GROUP) ? fieldData.parentNode : field;
     const span = document.createElement("span");
     span.className = ERROR_MSG_CLASS;
-    const errorMsg = getErrorMsgFromId(field);
-    console.log(field, errorMsg);
-    const errorMsgNode = errorMsg || findSiblingErrorMsgNode(targetNode) || span;
-    setAttr(errorMsgNode, "id", errorMsgId);
+    const errorMsgNode = getErrorMsgFromId(field) || findSiblingErrorMsgNode(targetNode) || span;
+    const id = getMakeId(field);
+    const errorMsgId = `${ERROR_MSG_CLASS}-${id}`;
+    if (getAttr(errorMsgNode, "id") !== errorMsgId) {
+      setAttr(errorMsgNode, "id", errorMsgId);
+    }
     setAttr(errorMsgNode, HIDDEN);
     const name = getName(field);
     if (!errorMsgNode.innerHTML)
