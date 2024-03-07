@@ -466,7 +466,7 @@ const Plugin = function (Alpine) {
 
 				// disable in-browser validation
 				if (!modifiers.includes("use-browser")) {
-					el.setAttribute("novalidate", true);
+					setAttr(el, "novalidate", "true");
 				}
 
 				if (modifiers.includes("validate-on-submit")) {
@@ -565,7 +565,9 @@ const Plugin = function (Alpine) {
 	function toggleError(field, valid) {
 		const parentNode = getData(field).parentNode;
 
-		const errorMsgNode = getErrorMsgFromId(field);
+		const errorMsgNode = document.getElementById(
+			getAttr(field, "aria-errormessage")
+		);
 
 		/* ---------------------------- Set aria-invalid ---------------------------- */
 		setAttr(field, "aria-invalid", !valid);
@@ -601,13 +603,6 @@ const Plugin = function (Alpine) {
 		return false;
 	}
 
-	/* -------------- Helper function to get error msg node from id ------------- */
-
-	function getErrorMsgFromId(field) {
-		const id = getAttr(field, "id");
-		return document.getElementById(`${ERROR_MSG_CLASS}-${id}`);
-	}
-
 	/* ------ Function to setup errorMsgNode by finding it or creating one ------ */
 
 	function addErrorMsg(field) {
@@ -628,12 +623,14 @@ const Plugin = function (Alpine) {
 		// If there already is an error-msg with the proper id in the form than use that; else find sibling error msg with error-msg class; else use generated span.
 
 		const errorMsgNode =
-			getErrorMsgFromId(field) ||
+			document.getElementById(
+				`${ERROR_MSG_CLASS}-${getAttr(targetNode, "id")}`
+			) ||
 			findSiblingErrorMsgNode(targetNode) ||
 			span;
 
 		// get field id or make one if it doesn't exist
-		const id = getMakeId(field);
+		const id = getMakeId(targetNode);
 
 		// set error msg id
 		const errorMsgId = `${ERROR_MSG_CLASS}-${id}`;

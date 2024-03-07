@@ -259,7 +259,7 @@
       }
       if (isHtmlElement(el, FORM)) {
         if (!modifiers.includes("use-browser")) {
-          el.setAttribute("novalidate", true);
+          setAttr(el, "novalidate", "true");
         }
         if (modifiers.includes("validate-on-submit")) {
           el.addEventListener("submit", function(e) {
@@ -304,7 +304,7 @@
     });
     function toggleError(field, valid) {
       const parentNode = getData(field).parentNode;
-      const errorMsgNode = getErrorMsgFromId(field);
+      const errorMsgNode = document.getElementById(getAttr(field, "aria-errormessage"));
       setAttr(field, "aria-invalid", !valid);
       if (valid) {
         setAttr(errorMsgNode, HIDDEN);
@@ -324,17 +324,13 @@
       }
       return false;
     }
-    function getErrorMsgFromId(field) {
-      const id = getAttr(field, "id");
-      return document.getElementById(`${ERROR_MSG_CLASS}-${id}`);
-    }
     function addErrorMsg(field) {
       const fieldData = getData(field);
       const targetNode = includes(fieldData.mods, GROUP) ? fieldData.parentNode : field;
       const span = document.createElement("span");
       span.className = ERROR_MSG_CLASS;
-      const errorMsgNode = getErrorMsgFromId(field) || findSiblingErrorMsgNode(targetNode) || span;
-      const id = getMakeId(field);
+      const errorMsgNode = document.getElementById(`${ERROR_MSG_CLASS}-${getAttr(targetNode, "id")}`) || findSiblingErrorMsgNode(targetNode) || span;
+      const id = getMakeId(targetNode);
       const errorMsgId = `${ERROR_MSG_CLASS}-${id}`;
       if (getAttr(errorMsgNode, "id") !== errorMsgId) {
         setAttr(errorMsgNode, "id", errorMsgId);
