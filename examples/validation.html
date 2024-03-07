@@ -270,7 +270,6 @@
 				</div>
 			</fieldset>
 			<div
-				id="animals"
 				class="checkbox-wrapper"
 				data-error-msg="you must pick at least two animals"
 			>
@@ -346,8 +345,12 @@
 					rows="4"
 					x-validate.required="/\p{Extended_Pictographic}/u.test($el.value) === false"
 				></textarea>
-				<span class="error-msg"
-					>Please enter some text (NO EMOJIS ALLOWED!)</span
+				<span
+					id="error-msg-noemoji"
+					hidden
+					style="color: red; font-weight: bold"
+				>
+					Please enter some text (NO EMOJIS ALLOWED!)</span
 				>
 			</div>
 			<div class="checkbox-wrapper">
