@@ -1,40 +1,49 @@
 :root {
-    font-family: Helvetica, Arial, sans-serif;
-    /* Fluid font size from Utopia */
-    font-size: clamp(1rem, 0.9rem + 0.49vw, 1.25rem);
-    /* Safari Resize fix */
-    min-height: 1vw;
+	font-family: Helvetica, Arial, sans-serif;
+	/* Fluid font size from Utopia */
+	font-size: clamp(1rem, 0.9rem + 0.49vw, 1.25rem);
+	/* Safari Resize fix */
+	min-height: 1vw;
 }
 
 h1 {
-    width: 24rem;
-    margin: 2rem auto;
-    text-align: center;
+	width: 24rem;
+	margin: 2rem auto;
+	text-align: center;
 }
-h2,h3,ul,p {
-    margin: 0 0 1rem;
+h2,
+h3,
+ul,
+p {
+	margin: 0 0 1rem;
 }
 h4 {
-    margin: 0 0 0.2rem;
+	margin: 0 0 0.2rem;
 }
 nav {
-    width: 30rem;
-    margin: 2rem auto;
-    text-align: center;
-    display: flex;
-    justify-content: space-evenly;
-    gap: 1rem;
+	width: 30rem;
+	margin: 2rem auto;
+	text-align: center;
+	display: flex;
+	justify-content: space-evenly;
+	gap: 0.4rem;
 }
 
 nav a {
-    color: white;
-    background-color: saddlebrown;
-    text-decoration: none;
-    display: block;
-    padding: 0.3rem 0.6rem;
-    border-radius: 0.5rem;
+	color: white;
+	background-color: saddlebrown;
+	text-decoration: none;
+	display: block;
+	padding: 0.3rem 0.6rem;
+	border-radius: 0.3rem;
+	font-size: 0.9em;
 }
 
 nav a:hover {
-    background-color: darkorange;
+	background-color: darkorange;
+}
+
+nav .active {
+	background-color: brown;
+	color: white;
 }

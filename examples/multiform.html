@@ -11,12 +11,9 @@
 		<script defer src="/alpine.validate.js"></script>
 		<script
 			defer
-			src="https://unpkg.com/alpinejs@3.10.2/dist/cdn.min.js"
+			src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"
 		></script>
-		<!-- <script
-			defer
-			src="https://cdn.jsdelivr.net/npm/@alpinejs/csp@3.x.x/dist/cdn.min.js"
-		></script> -->
+		<script src="/script.js"></script>
 
 		<link
 			href="https://unpkg.com/@csstools/normalize.css"
@@ -28,9 +25,7 @@
 
 	<body>
 		<h1>Simple Form Validation Alpine Plugin</h1>
-		<nav
-			x-data="{htmlPage: window.location.pathname.split('/').pop(), links: [{ name: 'README Example', page: 'index.html'},{name: 'Validation', page:'validation.html'},{name: 'Multiform', page: 'multiform.html'},{name: 'Complicated Form', page: 'complicated.html'},{name: 'Stepped Form', page: 'steps.html'}]}"
-		>
+		<nav x-data="nav">
 			<template x-for="a in links">
 				<a
 					:href="'/' + a.page"
@@ -64,7 +59,7 @@
 				<div>
 					<label for="phone-personal">Personal Phone</label>
 					<input
-						type="phone"
+						type="tel"
 						id="phone-personal"
 						name="phone-personal"
 						x-bind="phones"
@@ -73,7 +68,7 @@
 				<div>
 					<label for="phone-cell">Cell Phone</label>
 					<input
-						type="phone"
+						type="tel"
 						id="phone-cell"
 						name="phone-cell"
 						x-bind="phones"
@@ -82,7 +77,7 @@
 				<div>
 					<label for="phone-work">Work Phone</label>
 					<input
-						type="phone"
+						type="tel"
 						id="phone-work"
 						name="phone-work"
 						x-bind="phones"
@@ -94,13 +89,6 @@
 							type: "input",
 							":required":
 								"!($validate.value('phone-personal') || $validate.value('phone-cell') || $validate.value('phone-work'))",
-							// ":required"() {
-							// 	const phones = document.querySelectorAll(
-							// 		'input[x-bind="phones"]'
-							// 	);
-							// 	console.log(phones);
-							// 	return !Array.from(phones).some((p) => p.value);
-							// },
 						}));
 					});
 				</script>
@@ -127,15 +115,33 @@
 			</div>
 			<div class="form-validation-log">
 				<h3>Validations</h3>
-				<ul>
-					<template x-for="v in $validate.data($refs.form)">
-						<li>
-							field: <b x-text="v.name"></b>
-							<span x-text="v.value"></span>
-							<i x-text="v.valid"></i>
-						</li>
-					</template>
-				</ul>
+				<table>
+					<thead>
+						<tr>
+							<th>name</th>
+							<th>required</th>
+							<th>value</th>
+							<th>disabled</th>
+							<th>valid</th>
+						</tr>
+					</thead>
+					<tbody>
+						<template x-for="v in $validate.data($refs.form)">
+							<tr>
+								<td>
+									<span x-text="v.name"></span
+									><span
+										x-text="v.group ? ' (group)' : ''"
+									></span>
+								</td>
+								<td x-text="v.required ? '&#x2713;' : ''"></td>
+								<td x-text="v.value"></td>
+								<td x-text="v.disabled ? '&#x2713;' : ''"></td>
+								<td x-text="v.valid ? '&#x2713;' : ''"></td>
+							</tr>
+						</template>
+					</tbody>
+				</table>
 			</div>
 		</form>
 		<form
@@ -184,15 +190,33 @@
 			</div>
 			<div class="form-validation-log">
 				<h3>Validations</h3>
-				<ul>
-					<template x-for="v in $validate.data('dogform')">
-						<li>
-							field: <b x-text="v.name"></b>
-							<span x-text="v.value"></span>
-							<i x-text="v.valid"></i>
-						</li>
-					</template>
-				</ul>
+				<table>
+					<thead>
+						<tr>
+							<th>name</th>
+							<th>required</th>
+							<th>value</th>
+							<th>disabled</th>
+							<th>valid</th>
+						</tr>
+					</thead>
+					<tbody>
+						<template x-for="v in $validate.data($refs.dogform)">
+							<tr>
+								<td>
+									<span x-text="v.name"></span
+									><span
+										x-text="v.group ? ' (group)' : ''"
+									></span>
+								</td>
+								<td x-text="v.required ? '&#x2713;' : ''"></td>
+								<td x-text="v.value"></td>
+								<td x-text="v.disabled ? '&#x2713;' : ''"></td>
+								<td x-text="v.valid ? '&#x2713;' : ''"></td>
+							</tr>
+						</template>
+					</tbody>
+				</table>
 			</div>
 		</form>
 	</body>

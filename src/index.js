@@ -72,8 +72,14 @@ const Plugin = function (Alpine) {
 		let data = formData.get(getForm(el));
 		if (!data) return false;
 		if (isHtmlElement(el, FORM)) return Object.values(data);
-		if (isHtmlElement(el, FIELDSET))
-			return Object.values(data).filter((val) => val.set === el);
+		if (isHtmlElement(el, FIELDSET)) {
+			// return all the sub fields that match. This allows for nested fieldsets
+			// TODO: make this more performant. Maybe set up to add data.disabled
+			const fields = el.querySelectorAll(FIELD_SELECTOR);
+			return Object.values(data).filter((val) =>
+				Array.from(fields).some((el) => val.node === el)
+			);
+		}
 		if (isHtmlElement(el, FIELD_SELECTOR)) return data[getName(el)];
 	};
 
@@ -125,8 +131,8 @@ const Plugin = function (Alpine) {
 	/* -------------------------------------------------------------------------- */
 
 	function updateFieldData(field, data, triggerErrorMsg) {
-		// console.log("🚀 ~ file: index.js ~ line 86 ~ updateFieldData ~ data", field, data, required)
-		// data = {name: 'field id or name if no id', node: field, value:'field value', array:[optional used for groups], valid: true, set: form node or fieldset node}
+		console.log("🚀 ~ updateFieldData", field, data);
+		// data = {name: 'field id or name if no id', node: field, value:'field value', array:[optional used for groups], valid: true, required: false, disabled: false}
 		const form = getForm(field);
 		const name = getName(field);
 
@@ -138,28 +144,22 @@ const Plugin = function (Alpine) {
 			}
 			let tempData = formData.get(form);
 
+			// check if field disabled
+			const disabled = field.matches(":disabled");
+
+			// update required if not included
+			const required = tempData[name]?.required || field.required;
+
 			// Add any data from formData, then name, node, and value if it's not being passed along
 			data = {
 				...tempData[name],
-				name: name,
+				name,
 				node: field,
-				value: field.value,
+				value: disabled ? "" : field.value,
+				required,
+				disabled,
 				...data,
 			};
-
-			const fieldset = data.set;
-
-			// update required if not included
-			data.required =
-				data.required ||
-				includes(data.mods, REQUIRED) ||
-				includes(data.mods, GROUP) ||
-				field.hasAttribute(REQUIRED);
-
-			// check if disabled
-			const disabled =
-				field.hasAttribute("disabled") ||
-				fieldset?.hasAttribute("disabled");
 
 			const value = data.value;
 
@@ -167,7 +167,7 @@ const Plugin = function (Alpine) {
 			let valid = field.checkValidity();
 
 			// if it is not disabled and passes browser validity then check using x-validate function
-			if (!disabled && valid) {
+			if (!data.disabled && valid) {
 				// If checkbox/radio then assume it's a group so update array and string value based on checked
 				if (includes([CHECKBOX, RADIO], field.type)) {
 					if (data.required) valid = field.checked;
@@ -349,39 +349,6 @@ const Plugin = function (Alpine) {
 	Alpine.magic("formData", (el) => formData.get(getForm(getEl(el))));
 
 	/* -------------------------------------------------------------------------- */
-	/*                            x-required directive                            */
-	/* -------------------------------------------------------------------------- */
-
-	Alpine.directive(
-		REQUIRED,
-		(
-			el,
-			{
-				// modifiers,
-				value,
-				expression,
-			},
-			{ evaluate }
-		) => {
-			// only run if has expression
-			if (expression) {
-				// Alpine effect watches values for changes
-				console.log("x-required is depreciated. Use :required");
-				Alpine.effect(() => {
-					const evalExp = evaluate(expression);
-					// if it has value than use that as the field name to test; otherwise evaluate the expression
-					const required = value
-						? getData(value)?.value === evalExp
-						: evalExp;
-					updateFieldData(el, { required: required });
-					// hide error message if not required
-					if (!required) toggleError(el, true);
-				});
-			}
-		}
-	);
-
-	/* -------------------------------------------------------------------------- */
 	/*                            x-validate directive                            */
 	/* -------------------------------------------------------------------------- */
 
@@ -392,28 +359,36 @@ const Plugin = function (Alpine) {
 			/*                  Directive Specific Helper Functions                       */
 			/* -------------------------------------------------------------------------- */
 
-			const form = getForm(el);
-
 			// MutationObserver that watches for changes with required or disabled
 			const watchElement = (element) => {
 				// Create a new MutationObserver instance
 				const observer = new MutationObserver((mutationsList) => {
 					for (const mutation of mutationsList) {
+						const target = mutation.target;
 						if (mutation.type === "attributes") {
-							if (mutation.attributeName === "disabled") {
-								updateData(element);
+							const attr = mutation.attributeName;
+							if (
+								target.matches(FIELD_SELECTOR) &&
+								["disabled", "required", "value"].includes(attr)
+							) {
+								updateData(target);
 							}
-							if (mutation.attributeName === "required") {
-								updateData(element, {
-									required: element.hasAttribute("required"),
-								});
+							if (
+								target.matches(FIELDSET) &&
+								attr === "disabled"
+							) {
+								updateData(target);
 							}
 						}
 					}
 				});
 
 				// Start observing the element for attribute changes
-				observer.observe(element, { attributes: true });
+				observer.observe(element, {
+					attributes: true,
+					childList: true,
+					subtree: true,
+				});
 
 				// Return the observer instance in case you want to disconnect it later
 				return observer;
@@ -424,22 +399,26 @@ const Plugin = function (Alpine) {
 					field.closest(".field-parent") || includes(modifiers, GROUP)
 						? field.parentNode.parentNode
 						: field.parentNode;
-				const fieldset = field.closest(FIELDSET);
 
-				// watch field and fieldset for changes to required or disabled
-				watchElement(field);
-				if (fieldset) watchElement(fieldset);
+				const mods = [...modifiers, field.type];
+
+				const required =
+					field.required ||
+					includes(mods, REQUIRED) ||
+					includes(mods, GROUP);
+
+				const disabled = field.matches(":disabled");
 
 				return {
-					mods: [...modifiers, field.type],
-					set: fieldset,
+					mods,
+					required,
+					disabled,
 					parentNode: parentNode,
 					exp: expression && evaluate(expression),
 				};
 			};
 
 			function addEvents(field) {
-				// TODO: only add error message on required or validated fields
 				addErrorMsg(field);
 				const isClickField = includes(
 					[CHECKBOX, RADIO, "range"],
@@ -464,6 +443,7 @@ const Plugin = function (Alpine) {
 			if (isHtmlElement(el, FORM)) {
 				// el is form
 
+				watchElement(el);
 				// disable in-browser validation
 				if (!modifiers.includes("use-browser")) {
 					setAttr(el, "novalidate", "true");
@@ -476,8 +456,9 @@ const Plugin = function (Alpine) {
 				}
 
 				// save all form modifiers
-				formModifiers.set(form, modifiers);
+				formModifiers.set(el, modifiers);
 
+				// Find all fields in the form
 				const fields = el.querySelectorAll(FIELD_SELECTOR);
 
 				// bind reset with resetting all formData
@@ -494,7 +475,6 @@ const Plugin = function (Alpine) {
 					if (getName(field)) {
 						updateFieldData(field, defaultData(field));
 						// Don't add events or error msgs if it doesn't have a name/id or has x-validate on it so we aren't duplicating function
-						// TODO: somehow detect if this is a group of checkboxes or radio buttons with required. Might need to run a forEach twice?
 						if (
 							!field
 								.getAttributeNames()
@@ -514,6 +494,7 @@ const Plugin = function (Alpine) {
 
 			// Only add if has name/id and and is field
 			if (getName(el) && isHtmlElement(el, FIELD_SELECTOR)) {
+				const form = getForm(el);
 				const formMods = formModifiers.has(form)
 					? formModifiers.get(form)
 					: [];
@@ -522,6 +503,10 @@ const Plugin = function (Alpine) {
 				// el is field element
 				updateFieldData(el, defaultData(el));
 				addEvents(el);
+				// if form does not have x-validate on it then set mutation observer on element
+				if (!form.hasAttribute("x-validate")) {
+					watchElement(el);
+				}
 			}
 
 			/* -------------------------------------------------------------------------- */

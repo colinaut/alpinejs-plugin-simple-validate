@@ -15,44 +15,157 @@
 		/>
 		<link href="/styles.css" rel="stylesheet" />
 		<link href="/nav.css" rel="stylesheet" />
+		<style>
+			fieldset {
+				border: 1px solid red;
+			}
+			fieldset fieldset {
+				border: 1px solid purple;
+			}
+		</style>
 	</head>
 	<body>
 		<!-- FORM 1 -->
-		<form x-data x-validate @submit="$validate.submit" id="form1">
-			<div>
-				<label for="testing">Email</label>
-				<input type="email" name="testing" required />
-				<div class="error-msg text-sm mt-2 text-red-600">
-					E-mailadres is required
+		<form id="form" x-data x-validate.validate-on-submit>
+			<p>
+				This README example has been left mostly unstyled. See other
+				examples for more elaborate styling of form and error message
+				display.
+			</p>
+			<p><em>* required</em></p>
+			<button
+				type="button"
+				x-on:click="$refs.fs0.setAttribute('disabled', 'disabled')"
+			>
+				Disable Next Fieldset
+			</button>
+			<fieldset x-ref="fs0" id="fs0">
+				<div>
+					<label for="name">Your Name *</label>
+					<input type="text" id="name" name="name" required />
+					<p x-text="$validate.value('name')"></p>
 				</div>
-			</div>
-			<button type="submit">send</button>
-		</form>
-		<form
-			x-data
-			x-validate
-			@submit="$validate.submit"
-			x-ref="form"
-			id="form"
-		>
-			<fieldset>
-				<label for="email-testing">Email</label>
-				<input type="email" name="email-testing" required />
-				<div class="error-msg text-sm mt-2 text-blue-600">
-					E-mailadres is required
+				<div>
+					<label for="email">Your Email</label>
+					<input type="email" id="email" name="email" />
 				</div>
 			</fieldset>
-			<fieldset disabled>
-				<label for="phone">Phone</label>
-				<input type="tel" name="phone" value="" required />
-				<div
-					class="error-msg"
-					x-text="($validate.value('phone') === '') ? 'field required' : 'valid phone number required' "
+			<button
+				type="button"
+				x-on:click="$refs.fs1.setAttribute('disabled', 'disabled')"
+			>
+				Disable Next Fieldset
+			</button>
+			<button
+				type="button"
+				x-on:click="console.log($refs.wholenumber.disabled)"
+			>
+				Is wholenumber disabled
+			</button>
+			<fieldset x-ref="fs1">
+				<fieldset x-ref="fs1aa">
+					<div>
+						<label for="wholenumber">Whole Number</label>
+						<button
+							type="button"
+							x-on:click="$refs.wholenumber.setAttribute('disabled', 'disabled')"
+						>
+							Disable Next Field
+						</button>
+						<input
+							x-ref="wholenumber"
+							type="wholenumber"
+							id="wholenumber"
+							name="wholenumber"
+							required
+							x-validate.wholenumber
+							data-error-msg="positive whole number required"
+						/>
+					</div>
+				</fieldset>
+				<fieldset
+					id="animals"
+					class="checkbox-wrapper"
+					data-error-msg="you must pick at least one animal"
+					x-ref="fs1a"
 				>
-					field required
-				</div>
+					<h4>Favorite Animals *</h4>
+					<label
+						><input
+							type="checkbox"
+							x-validate.group
+							name="animal"
+							id="cat"
+							value="cat"
+						/>
+						Cat</label
+					>
+					<label
+						><input
+							type="checkbox"
+							x-validate.group
+							name="animal"
+							id="dog"
+							value="dog"
+						/>
+						Dog</label
+					>
+					<label
+						><input
+							type="checkbox"
+							x-validate.group
+							name="animal"
+							id="bunny"
+							value="bunny"
+						/>
+						Bunny</label
+					>
+				</fieldset>
+				<fieldset
+					id="transport"
+					class="checkbox-wrapper"
+					data-error-msg="you
+					must pick at least one transport"
+					x-ref="fs1b"
+				>
+					<h4>Favorite Transport *</h4>
+					<label
+						><input
+							type="radio"
+							x-validate.group
+							name="transport"
+							value="bus"
+						/>
+						Bus</label
+					>
+					<label
+						><input
+							type="radio"
+							x-validate.group
+							name="transport"
+							value="train"
+						/>
+						Train</label
+					>
+				</fieldset>
 			</fieldset>
-			<button type="submit">send</button>
+			<fieldset class="checkbox-wrapper" x-ref="fs2">
+				<h4>You must click this! *</h4>
+				<label
+					><input
+						type="checkbox"
+						required
+						name="yolo"
+						id="yolo"
+						value="yolo" />
+					Sell all my secret data! YOLO!
+					<span class="error-msg"></span
+				></label>
+			</fieldset>
+			<div>
+				<input type="submit" value="submit" />
+			</div>
+
 			<div
 				class="form-validation-log"
 				style="max-width: 30rem; margin: 0 auto"
@@ -70,11 +183,12 @@
 							<th>name</th>
 							<th>required</th>
 							<th>value</th>
+							<th>disabled</th>
 							<th>valid</th>
 						</tr>
 					</thead>
 					<tbody>
-						<template x-for="v in $validate.data($refs.form)">
+						<template x-for="v in $validate.data('form')">
 							<tr>
 								<td>
 									<span x-text="v.name"></span
@@ -84,13 +198,38 @@
 								</td>
 								<td x-text="v.required ? '&#x2713;' : ''"></td>
 								<td x-text="v.value"></td>
+								<td x-text="v.disabled? '&#x2713;' : ''"></td>
 								<td x-text="v.valid ? '&#x2713;' : ''"></td>
 							</tr>
 						</template>
 					</tbody>
 				</table>
 				<p>
-					$validate.isComplete:
+					$validate.isComplete(fs0):
+					<b x-text="$validate.isComplete($refs.fs0)"></b>
+				</p>
+				<p x-init="console.log($validate.data($refs.fs1))">
+					$validate.isComplete(fs1):
+					<b x-text="$validate.isComplete($refs.fs1)"></b>
+				</p>
+				<p>
+					$validate.isComplete(fs1aa):
+					<b x-text="$validate.isComplete($refs.fs1aa)"></b>
+				</p>
+				<p>
+					$validate.isComplete(fs1a):
+					<b x-text="$validate.isComplete($refs.fs1a)"></b>
+				</p>
+				<p>
+					$validate.isComplete(fs1b):
+					<b x-text="$validate.isComplete($refs.fs1b)"></b>
+				</p>
+				<p>
+					$validate.isComplete(fs2):
+					<b x-text="$validate.isComplete($refs.fs2)"></b>
+				</p>
+				<p>
+					$validate.isComplete(form):
 					<b x-text="$validate.isComplete($refs.form)"></b>
 				</p>
 				<a

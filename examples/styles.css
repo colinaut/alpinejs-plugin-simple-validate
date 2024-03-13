@@ -1,5 +1,5 @@
 form {
-	width: 22rem;
+	width: 26rem;
 	margin: 2rem auto;
 	display: flex;
 	flex-direction: column;
@@ -135,7 +135,7 @@ button:hover {
 	border: 1px solid orange;
 	border-radius: 0.5rem;
 	padding: 1rem;
-	margin: 1rem 0;
+	margin-block-start: 1rem;
 	background-color: lightyellow;
 }
 

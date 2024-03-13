@@ -41,8 +41,10 @@ var Plugin = function(Alpine) {
       return false;
     if (isHtmlElement(el, FORM))
       return Object.values(data);
-    if (isHtmlElement(el, FIELDSET))
-      return Object.values(data).filter((val) => val.set === el);
+    if (isHtmlElement(el, FIELDSET)) {
+      const fields = el.querySelectorAll(FIELD_SELECTOR);
+      return Object.values(data).filter((val) => Array.from(fields).some((el2) => val.node === el2));
+    }
     if (isHtmlElement(el, FIELD_SELECTOR))
       return data[getName(el)];
   };
@@ -71,6 +73,8 @@ var Plugin = function(Alpine) {
   const formData = new WeakMap();
   const formModifiers = new WeakMap();
   function updateFieldData(field, data, triggerErrorMsg) {
+    var _a;
+    console.log("\u{1F680} ~ updateFieldData", field, data);
     const form = getForm(field);
     const name = getName(field);
     if (form && name) {
@@ -78,19 +82,20 @@ var Plugin = function(Alpine) {
         formData.set(form, Alpine.reactive({}));
       }
       let tempData = formData.get(form);
+      const disabled = field.matches(":disabled");
+      const required = ((_a = tempData[name]) == null ? void 0 : _a.required) || field.required;
       data = {
         ...tempData[name],
         name,
         node: field,
-        value: field.value,
+        value: disabled ? "" : field.value,
+        required,
+        disabled,
         ...data
       };
-      const fieldset = data.set;
-      data.required = data.required || includes(data.mods, REQUIRED) || includes(data.mods, GROUP) || field.hasAttribute(REQUIRED);
-      const disabled = field.hasAttribute("disabled") || (fieldset == null ? void 0 : fieldset.hasAttribute("disabled"));
       const value = data.value;
       let valid = field.checkValidity();
-      if (!disabled && valid) {
+      if (!data.disabled && valid) {
         if (includes([CHECKBOX, RADIO], field.type)) {
           if (data.required)
             valid = field.checked;
@@ -199,51 +204,38 @@ var Plugin = function(Alpine) {
   Object.keys(validate).forEach((key) => validateMagic = { ...validateMagic, [key]: validate[key] });
   Alpine.magic(PLUGIN_NAME, () => validateMagic);
   Alpine.magic("formData", (el) => formData.get(getForm(getEl(el))));
-  Alpine.directive(REQUIRED, (el, {
-    value,
-    expression
-  }, { evaluate }) => {
-    if (expression) {
-      console.log("x-required is depreciated. Use :required");
-      Alpine.effect(() => {
-        var _a;
-        const evalExp = evaluate(expression);
-        const required = value ? ((_a = getData(value)) == null ? void 0 : _a.value) === evalExp : evalExp;
-        updateFieldData(el, { required });
-        if (!required)
-          toggleError(el, true);
-      });
-    }
-  });
   Alpine.directive(PLUGIN_NAME, (el, { modifiers, expression }, { evaluate }) => {
-    const form = getForm(el);
     const watchElement = (element) => {
       const observer = new MutationObserver((mutationsList) => {
         for (const mutation of mutationsList) {
+          const target = mutation.target;
           if (mutation.type === "attributes") {
-            if (mutation.attributeName === "disabled") {
-              updateData(element);
+            const attr = mutation.attributeName;
+            if (target.matches(FIELD_SELECTOR) && ["disabled", "required", "value"].includes(attr)) {
+              updateData(target);
             }
-            if (mutation.attributeName === "required") {
-              updateData(element, {
-                required: element.hasAttribute("required")
-              });
+            if (target.matches(FIELDSET) && attr === "disabled") {
+              updateData(target);
             }
           }
         }
       });
-      observer.observe(element, { attributes: true });
+      observer.observe(element, {
+        attributes: true,
+        childList: true,
+        subtree: true
+      });
       return observer;
     };
     const defaultData = (field) => {
       const parentNode = field.closest(".field-parent") || includes(modifiers, GROUP) ? field.parentNode.parentNode : field.parentNode;
-      const fieldset = field.closest(FIELDSET);
-      watchElement(field);
-      if (fieldset)
-        watchElement(fieldset);
+      const mods = [...modifiers, field.type];
+      const required = field.required || includes(mods, REQUIRED) || includes(mods, GROUP);
+      const disabled = field.matches(":disabled");
       return {
-        mods: [...modifiers, field.type],
-        set: fieldset,
+        mods,
+        required,
+        disabled,
         parentNode,
         exp: expression && evaluate(expression)
       };
@@ -257,6 +249,7 @@ var Plugin = function(Alpine) {
         addEvent(field, INPUT, checkIfValid);
     }
     if (isHtmlElement(el, FORM)) {
+      watchElement(el);
       if (!modifiers.includes("use-browser")) {
         setAttr(el, "novalidate", "true");
       }
@@ -265,7 +258,7 @@ var Plugin = function(Alpine) {
           validateMagic.submit(e);
         });
       }
-      formModifiers.set(form, modifiers);
+      formModifiers.set(el, modifiers);
       const fields = el.querySelectorAll(FIELD_SELECTOR);
       addEvent(el, "reset", () => {
         el.reset();
@@ -284,10 +277,14 @@ var Plugin = function(Alpine) {
       });
     }
     if (getName(el) && isHtmlElement(el, FIELD_SELECTOR)) {
+      const form = getForm(el);
       const formMods = formModifiers.has(form) ? formModifiers.get(form) : [];
       modifiers = [...modifiers, ...formMods];
       updateFieldData(el, defaultData(el));
       addEvents(el);
+      if (!form.hasAttribute("x-validate")) {
+        watchElement(el);
+      }
     }
     function checkIfValid(e) {
       const field = this;

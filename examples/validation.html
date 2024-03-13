@@ -11,8 +11,9 @@
 		<script defer src="/alpine.validate.js"></script>
 		<script
 			defer
-			src="https://unpkg.com/alpinejs@3.10.2/dist/cdn.min.js"
+			src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"
 		></script>
+		<script src="/script.js"></script>
 		<!-- <link href="https://unpkg.com/@csstools/normalize.css" rel="stylesheet" /> -->
 		<link href="/styles.css" rel="stylesheet" />
 		<link href="/nav.css" rel="stylesheet" />
@@ -20,9 +21,7 @@
 
 	<body>
 		<h1>Simple Form Validation Alpine Plugin</h1>
-		<nav
-			x-data="{htmlPage: window.location.pathname.split('/').pop(), links: [{ name: 'README Example', page: 'index.html'},{name: 'Validation', page:'validation.html'},{name: 'Multiform', page: 'multiform.html'},{name: 'Complicated Form', page: 'complicated.html'},{name: 'Stepped Form', page: 'steps.html'}]}"
-		>
+		<nav x-data="nav">
 			<template x-for="a in links">
 				<a
 					:href="'/' + a.page"
@@ -49,13 +48,7 @@
 				value="this should be ignored as it has no name or id field"
 			/>
 			<!-- testing that it grabs the :value on init -->
-			<input
-				name="hidden"
-				type="hidden"
-				:value="testValue"
-				id="test"
-				x-validate
-			/>
+			<input name="hidden" type="hidden" :value="testValue" id="test" />
 			<div>
 				<label for="name"
 					>Your Name
@@ -72,7 +65,6 @@
 					name="name-backwards"
 					type="hidden"
 					:value="[...$formData.name.value].reverse().join('')"
-					x-validate
 				/>
 			</div>
 
@@ -111,7 +103,6 @@
 					type="email"
 					id="email"
 					name="email"
-					m
 					:required="$validate.value('preferred') === 'email'"
 					x-ref="email"
 				/>
@@ -139,6 +130,7 @@
 					name="password"
 					x-ref="password"
 					required
+					data-error-msg="password with at least 8 characters is required"
 					pattern=".{8,}"
 				/>
 			</div>
@@ -180,7 +172,7 @@
 					type="text"
 					x-validate.website.required
 				/>
-				<span class="error-msg" hidden>http not required</span>
+				<span class="error-msg" hidden>website domain required</span>
 			</div>
 			<div>
 				<label for="date">Best date in 2000 (yyyy/mm/dd) *</label>
@@ -232,11 +224,11 @@
 						type="text"
 						id="favorite-food-dup"
 						required
-						x-validate="$el.value === $validate.data('favorite-food').value"
+						:pattern="$validate.data('favorite-food').value"
 						data-error-msg="must write the same as Favorite Food above"
 					/>
 				</div>
-				<div>
+				<fieldset>
 					<div>
 						<label for="select">Pick your favorite cheese! *</label>
 						<select
@@ -267,7 +259,7 @@
 							data-error-msg="any cheese other than American"
 						/>
 					</div>
-				</div>
+				</fieldset>
 			</fieldset>
 			<div
 				class="checkbox-wrapper"
@@ -395,6 +387,7 @@
 							<th>name</th>
 							<th>required</th>
 							<th>value</th>
+							<th>disabled</th>
 							<th>valid</th>
 						</tr>
 					</thead>
@@ -409,6 +402,7 @@
 								</td>
 								<td x-text="v.required ? '&#x2713;' : ''"></td>
 								<td x-text="v.value"></td>
+								<td x-text="v.disabled ? '&#x2713;' : ''"></td>
 								<td x-text="v.valid ? '&#x2713;' : ''"></td>
 							</tr>
 						</template>

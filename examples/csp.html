@@ -18,6 +18,8 @@
 			src="https://cdn.jsdelivr.net/npm/@alpinejs/csp@3.x.x/dist/cdn.min.js"
 		></script>
 
+		<script src="/script.js"></script>
+
 		<link
 			href="https://unpkg.com/@csstools/normalize.css"
 			rel="stylesheet"
@@ -28,6 +30,15 @@
 
 	<body>
 		<h1>Simple Form Validation Alpine Plugin</h1>
+		<nav x-data="nav">
+			<template x-for="a in links">
+				<a
+					:href="'/' + a.page"
+					x-text="a.name"
+					:class="a.page === htmlPage && 'active'"
+				></a>
+			</template>
+		</nav>
 		<form x-data="form" x-validate x-ref="form">
 			<div>
 				<label for="name">Your Name *</label>

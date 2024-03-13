@@ -7,24 +7,12 @@ Very simple form validation plugin for [AlpineJS](https://alpinejs.dev). This pl
 
 The x-validate directive allows for simple validation and error display. It also captures all form data in a reactive formData. The $validate magic function grants access to validation functions, formData, and simple submit validation check.
 
-## Update 1.7
+## Update 1.8
 
-Version 1.7 adds x-required directive for toggling if the field is required.
-
-* The magic functions isRequired and makeRequired have been removed. You can check if the field is required by using `$validate.data('name').required`
-* Added some customization options for targeting parent element and placement of error message.
-* 1.7.2: checks for validity on init, incase values are already set due to browser back button, value, or x-model.
-* 1.7.3: fix for x-validate mods on multiple forms on the same page; date defaults to yyyy-mm-dd format; and code clean up.
-* 1.7.6: fix where it breaks when fields are missing name or id attributes. Now it skips these.
-* 1.7.12: normal form reset replaces formData with new empty values
-* 1.7.14: x-validate adds `novalidate` on form tag to the browser's validation doesn't interfere with the plugin's validation
-* 1.7.15: added ability to update field value and formData using $validate.value(el,value)
-* 1.7.18: opt out of `novalidate` by adding `x-validate.use-browser` as a modifier on the form tag.
-* 1.7.19: FIX: skip validation for `disabled` fields and fieldsets
-* 1.7.20: added observer for `required` attribute on fields and `disabled` attribute on fields and fieldsets. Now x-validate reacts to changes to these attributes so you can use AlpineJS :required and :disabled to set them.
-* 1.7.22: added `validate-on-submit` option to automatically validate on submit
-* 1.7.23: fix for submit so that it double checks validation on fields. There was a bug where if the user hit return and didn't tab out of a field it didn't update.
-* 1.7.27: fix for 1.7.25 break where id based error messages stopped working. Also fixes issue for multiple forms so that error messages have unique ids.
+* Works with nested fieldsets for $validate magic functions like isComplete(), data(), or value().
+* Disabled is now a field property of the formData object. When a field is disabled, either by setting disabled on the field itself or a parent fieldset, the disabled property is set to true. _Disabled fields are valid by default and return no value._ Disabled is watched for by a mutation observer so AlpineJS binding of `:disabled` will work.
+* Hidden attributes no longer require x-validate in order to update when set with `:value` or other javascript that dynamically updates the value. The mutation observer automatically spots the change and updates.
+* **BREAKING CHANGE** x-required is removed. Use AlpineJS binding `:required` instead to set the required dynamically.
 
 ## Simple Usage
 
@@ -51,7 +39,7 @@ Add a `x-data`, and `x-validate` to your `<form>` element (you don't need any va
   * Add a sibling element with `error-msg` class and write your own error message there. The plugin searches all next siblings and will add the proper aria-errormessage with linked id tags for you. This is also useful if you want some descriptive text or other element before the error message or if you want to use special styling to a specific error message.
   * Add an element with the correct id attribute anywhere on the page (id is `error-msg-${id of matching field}`) and it will use that.
 * Use `x-validate.group` on groups of checkboxes or radio buttons to validate that at least one is selected.
-* Add a specific test to a field like `x-validate='$el.value === 'bunny'`; this can be paired up with other validations. For example: `x-validate.website='$el.includes('bunny')` for only websites with the word bunny in the name.
+* Add a specific test to a field like `x-validate='$el.value === 'bunny'` (see Using Expressions for Validation below).
 * Use `$validate.isComplete(el)` to detect if the form, `<fieldset>` groups or any field is completed
 * You can an skip `x-validate` on the `<form>` and just add `x-validate` on fields directly if you only want a couple fields validated. The x-data is still required on `<form>`.
 * The examples folder in the git repo shows some of what you can do with this plugin.
@@ -71,10 +59,11 @@ The UI modifiers are mainly for setting global defaults on `<form>` but you can 
 
 ### Field Element Directives
 
+These are bonus directives for built in regex validation. You can also ignore these and use the `pattern` attribute with your own regex.
+
 Used on `<input>`, `<select>`, `<textarea>`
 
-* `x-validate` — only captures data; useful if not set on `<form>` or if value is added on element via Alpine `:value`
-  * For example its useful on hidden fields: `<input type="hidden" :value="foo" x-validate />` will grab the value but if you only had x-validate on the form it would not due to form x-validate actions triggering before `:value ` does.
+* `x-validate` — only captures data; Useful on it's own if not set on `<form>`. Also useful with paired with an expression for specific field validation like `x-validate='$el.value === 'bunny'`. _Note that in many cases the normal [pattern attribute](https://www.w3schools.com/TAGS/att_input_pattern.asp) may be all you need._
 * `x-validate.required` — replacement for `required` attribute *
 * `x-validate.tel` - works the same as type='tel' using improved regex *
 * `x-validate.email` - works the same as type='email' using improved regex *
@@ -92,6 +81,10 @@ Used on `<input>`, `<select>`, `<textarea>`
 
 \* this allows you to use `x-validate.required` instead of `required` attribute or `x-validate.tel` on `type='text'` instead of `type='tel'`
 
+#### Using Expressions for Validation
+
+You can add a specific test to a field like `x-validate='$el.value === 'bunny'`; this can be paired up with other validations. For example: `x-validate.website='$el.includes('bunny')` for only websites with the word bunny in the name. _Note that in many cases the normal [pattern attribute](https://www.w3schools.com/TAGS/att_input_pattern.asp) may be all you need._
+
 ### Checkbox and Radio Button Groups
 
 Checkboxes and radio buttons that share the same name attribute update the same formData field data object. Radio buttons update the value with the currently selected button. Checkboxes save as both a comma separated string value and as an array.
@@ -99,15 +92,6 @@ Checkboxes and radio buttons that share the same name attribute update the same 
 You can validate that at least one is selected by adding `x-validate.group` to every checkbox or radio button in a named group. If you want the user to select multiple checkboxes, use an added expression with the minimum number `x-validate.group="2"`.
 
 ***Note:** Checkbox and radio button groups add their error message after the wrapper for the group. This is either the closest `field-parent` class parent element or it uses `.parentNode.parentNode` by default. It's assumed that each checkbox/radio is wrapped in a label or list item, and then has a wrapper around the group.*
-
-## Directive x-required
-
-Depreciated just use base AlpineJS `:required`; x-required will be removed in version 1.8
-
-~~The x-required directive is used on a field if you want to toggle required depending on another field value or other variable.~~ 
-
-* ~~x-required="expression" — evaluates the expression as a boolean function to toggle required on the element~~
-* ~~x-required:name="'value'" — this shorthand allows you to easily test if a another named field has a particular value set. If it does have the value than it sets required to true.~~
 
 ## Magic functions
 
