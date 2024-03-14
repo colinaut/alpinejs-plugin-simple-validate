@@ -186,28 +186,20 @@
 					x-model="date"
 				/>
 			</div>
-			<div class="checkbox-wrapper" data-error-msg="you must choose">
+			<fieldset
+				class="checkbox-wrapper"
+				data-error-msg="you must choose"
+				data-group
+			>
 				<h4>Enable food questions? *</h4>
 				<label
-					><input
-						type="radio"
-						name="food"
-						value="yes"
-						x-validate.group
-					/>
-					Yes</label
+					><input type="radio" name="food" value="yes" /> Yes</label
 				>
 				<label
-					><input
-						type="radio"
-						name="food"
-						value="no"
-						x-validate.group
-						checked
-					/>
+					><input type="radio" name="food" value="no" checked />
 					No</label
 				>
-			</div>
+			</fieldset>
 			<fieldset class="card" :disabled="$validate.value('food') === 'no'">
 				<legend>Food Questions</legend>
 				<div>
@@ -298,32 +290,22 @@
 			<div
 				x-text="$validate.data('animal').value && `You choose a ${$validate.data('animal').value}!!!`"
 			></div>
-			<div
+			<fieldset
 				id="transports"
 				class="checkbox-wrapper"
 				data-error-msg="you must pick at least one transport"
+				data-group="1"
 			>
-				<!-- TODO: figure out if I can make this work without group -->
 				<h4>Favorite Transport *</h4>
 				<label
-					><input
-						type="radio"
-						name="transport"
-						value="bus"
-						x-validate.group
-					/>
+					><input type="radio" name="transport" value="bus" />
 					Bus</label
 				>
 				<label
-					><input
-						type="radio"
-						name="transport"
-						value="train"
-						x-validate.group
-					/>
+					><input type="radio" name="transport" value="train" />
 					Train</label
 				>
-			</div>
+			</fieldset>
 			<div>
 				<label for="noemoji"
 					>Some long form text (NO EMOJIS ALLOWED!)</label
