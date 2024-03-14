@@ -131,7 +131,7 @@ const Plugin = function (Alpine) {
 	/* -------------------------------------------------------------------------- */
 
 	function updateFieldData(field, data, triggerErrorMsg) {
-		console.log("🚀 ~ updateFieldData", field, data);
+		// console.log("🚀 ~ updateFieldData", field, data);
 		// data = {name: 'field id or name if no id', node: field, value:'field value', array:[optional used for groups], valid: true, required: false, disabled: false}
 		const form = getForm(field);
 		const name = getName(field);
@@ -169,6 +169,7 @@ const Plugin = function (Alpine) {
 			// if it is not disabled and passes browser validity then check using x-validate function
 			if (!data.disabled && valid) {
 				// If checkbox/radio then assume it's a group so update array and string value based on checked
+				// TODO: reimplement grouping validation.
 				if (includes([CHECKBOX, RADIO], field.type)) {
 					if (data.required) valid = field.checked;
 					// data.array acts as a store of current selected values
@@ -192,32 +193,7 @@ const Plugin = function (Alpine) {
 					// update value with string of array items
 					data.value = tempArray.toString();
 					// if group than run valid based on group min number
-					if (includes(data.mods, GROUP)) {
-						const min = data.exp || 1;
-						valid = tempArray.length >= min;
-					}
-				} else {
-					// check if it's required and if there is a value
-					if (data.required) valid = !!value.trim();
-					// only run validation check if valid and has value
-					if (valid && value) {
-						// see if there is a date format
-						const format = data.mods.filter(
-							(val) => dateFormats.indexOf(val) !== -1
-						)[0];
-						for (let type of data.mods) {
-							// check if mod is a validation function
-							if (typeof validate[type] === "function") {
-								// if it is a date then do isDate; otherwise do matching function
-								valid =
-									type === "date"
-										? isDate(value, format)
-										: validate[type](value);
-								break;
-							}
-						}
-						if (data.exp === false) valid = false;
-					}
+					// TODO: reimplement grouping validation.
 				}
 			}
 
@@ -243,37 +219,6 @@ const Plugin = function (Alpine) {
 		if (isHtmlElement(el, FIELD_SELECTOR))
 			return updateFieldData(el, data, triggerErrorMsg);
 	}
-	/* -------------------------------------------------------------------------- */
-	/*                            Validation Functions                            */
-	/* -------------------------------------------------------------------------- */
-
-	const validate = {};
-
-	validate.email = (str) =>
-		/^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(
-			cleanText(str)
-		);
-	validate.tel = (str) =>
-		/^((\+|0)\d{1,4})?[-\s.]?[-\s.]?\d[-\s.]?\d[-\s.]?\d[-\s.]?\d[-\s.]?\d[-\s.]?\d[-\s.]?\d[-\s.]?\d[-\s.]?(\d{1,2})$/.test(
-			cleanText(str)
-		);
-	validate.website = (str) =>
-		/^(https?:\/\/)?(www\.)?([-a-zA-Z0-9@:%._+~#=]+(-?[a-zA-Z0-9])*\.)+[\w]{2,}(\/\S*)?$/.test(
-			cleanText(str)
-		);
-	validate.url = (str) =>
-		/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()!@:%_+.~#?&/=]*)/.test(
-			cleanText(str)
-		);
-	validate.number = (str) => !isNaN(parseFloat(str)) && isFinite(str);
-	validate.integer = (str) =>
-		validate.number(str) && Number.isInteger(Number(str));
-	validate.wholenumber = (str) => validate.integer(str) && Number(str) > 0;
-	validate.date = (str) => isDate(str);
-
-	dateFormats.forEach((format) => {
-		validate.date[format] = (str) => isDate(str, format);
-	});
 
 	/* -------------------------------------------------------------------------- */
 	/*                          Validate Magic Function                           */
@@ -338,11 +283,6 @@ const Plugin = function (Alpine) {
 			: data && data.valid;
 	};
 
-	// Add validate functions to validateMagic object
-	Object.keys(validate).forEach(
-		(key) => (validateMagic = { ...validateMagic, [key]: validate[key] })
-	);
-
 	// Main $validate magic function
 	Alpine.magic(PLUGIN_NAME, () => validateMagic);
 	// $formData magic function
@@ -352,195 +292,162 @@ const Plugin = function (Alpine) {
 	/*                            x-validate directive                            */
 	/* -------------------------------------------------------------------------- */
 
-	Alpine.directive(
-		PLUGIN_NAME,
-		(el, { modifiers, expression }, { evaluate }) => {
-			/* -------------------------------------------------------------------------- */
-			/*                  Directive Specific Helper Functions                       */
-			/* -------------------------------------------------------------------------- */
+	Alpine.directive(PLUGIN_NAME, (el, { modifiers }) => {
+		/* -------------------------------------------------------------------------- */
+		/*                  Directive Specific Helper Functions                       */
+		/* -------------------------------------------------------------------------- */
 
-			// MutationObserver that watches for changes with required or disabled
-			const watchElement = (element) => {
-				// Create a new MutationObserver instance
-				const observer = new MutationObserver((mutationsList) => {
-					for (const mutation of mutationsList) {
-						const target = mutation.target;
-						if (mutation.type === "attributes") {
-							const attr = mutation.attributeName;
-							if (
-								target.matches(FIELD_SELECTOR) &&
-								["disabled", "required", "value"].includes(attr)
-							) {
-								updateData(target);
-							}
-							if (
-								target.matches(FIELDSET) &&
-								attr === "disabled"
-							) {
-								updateData(target);
-							}
-						}
-					}
-				});
-
-				// Start observing the element for attribute changes
-				observer.observe(element, {
-					attributes: true,
-					childList: true,
-					subtree: true,
-				});
-
-				// Return the observer instance in case you want to disconnect it later
-				return observer;
-			};
-
-			const defaultData = (field) => {
-				const parentNode =
-					field.closest(".field-parent") || includes(modifiers, GROUP)
-						? field.parentNode.parentNode
-						: field.parentNode;
-
-				const mods = [...modifiers, field.type];
-
-				const required =
-					field.required ||
-					includes(mods, REQUIRED) ||
-					includes(mods, GROUP);
-
-				const disabled = field.matches(":disabled");
-
-				return {
-					mods,
-					required,
-					disabled,
-					parentNode: parentNode,
-					exp: expression && evaluate(expression),
-				};
-			};
-
-			function addEvents(field) {
-				addErrorMsg(field);
-				const isClickField = includes(
-					[CHECKBOX, RADIO, "range"],
-					field.type
-				);
-				const eventType = isClickField
-					? "click"
-					: isHtmlElement(field, "select")
-					? "change"
-					: "blur";
-				addEvent(field, eventType, checkIfValid);
-				if (includes(modifiers, INPUT) && !isClickField)
-					addEvent(field, INPUT, checkIfValid);
-			}
-
-			// console.log(Alpine.nextTick(() => {});
-
-			/* -------------------------------------------------------------------------- */
-			/*                 If x-validate on <form> validate all fields                */
-			/* -------------------------------------------------------------------------- */
-
-			if (isHtmlElement(el, FORM)) {
-				// el is form
-
-				watchElement(el);
-				// disable in-browser validation
-				if (!modifiers.includes("use-browser")) {
-					setAttr(el, "novalidate", "true");
-				}
-
-				if (modifiers.includes("validate-on-submit")) {
-					el.addEventListener("submit", function (e) {
-						validateMagic.submit(e);
-					});
-				}
-
-				// save all form modifiers
-				formModifiers.set(el, modifiers);
-
-				// Find all fields in the form
-				const fields = el.querySelectorAll(FIELD_SELECTOR);
-
-				// bind reset with resetting all formData
-				addEvent(el, "reset", () => {
-					el.reset();
-					const data = getData(el);
-					// need a short delay for reset to take effect and reread values
-					setTimeout(() => {
-						data.forEach((field) => updateFieldData(field.node));
-					}, 50);
-				});
-
-				fields.forEach((field) => {
-					if (getName(field)) {
-						updateFieldData(field, defaultData(field));
-						// Don't add events or error msgs if it doesn't have a name/id or has x-validate on it so we aren't duplicating function
+		// MutationObserver that watches for changes with required or disabled
+		const watchElement = (element) => {
+			// Create a new MutationObserver instance
+			const observer = new MutationObserver((mutationsList) => {
+				for (const mutation of mutationsList) {
+					const target = mutation.target;
+					if (mutation.type === "attributes") {
+						const attr = mutation.attributeName;
 						if (
-							!field
-								.getAttributeNames()
-								.some((attr) =>
-									attr.includes(`x-${PLUGIN_NAME}`)
-								)
+							target.matches(FIELD_SELECTOR) &&
+							["disabled", "required", "value"].includes(attr)
 						) {
-							addEvents(field);
+							updateData(target);
+						}
+						if (target.matches(FIELDSET) && attr === "disabled") {
+							updateData(target);
 						}
 					}
+				}
+			});
+
+			// Start observing the element for attribute changes
+			observer.observe(element, {
+				attributes: true,
+				childList: true,
+				subtree: true,
+			});
+
+			// Return the observer instance in case you want to disconnect it later
+			return observer;
+		};
+
+		const defaultData = (field) => {
+			const parentNode =
+				field.closest(".field-parent") || includes(modifiers, GROUP)
+					? field.parentNode.parentNode
+					: field.parentNode;
+
+			const mods = [...modifiers, field.type];
+
+			const required =
+				field.required ||
+				includes(mods, REQUIRED) ||
+				includes(mods, GROUP);
+
+			const disabled = field.matches(":disabled");
+
+			return {
+				mods,
+				required,
+				disabled,
+				parentNode: parentNode,
+			};
+		};
+
+		function addEvents(field) {
+			addErrorMsg(field);
+			const isClickField = includes(
+				[CHECKBOX, RADIO, "range"],
+				field.type
+			);
+			const eventType = isClickField
+				? "click"
+				: isHtmlElement(field, "select")
+				? "change"
+				: "blur";
+			addEvent(field, eventType, checkIfValid);
+			if (includes(modifiers, INPUT) && !isClickField)
+				addEvent(field, INPUT, checkIfValid);
+		}
+
+		// console.log(Alpine.nextTick(() => {});
+
+		/* -------------------------------------------------------------------------- */
+		/*                 If x-validate on <form> validate all fields                */
+		/* -------------------------------------------------------------------------- */
+
+		if (isHtmlElement(el, FORM)) {
+			// el is form
+
+			watchElement(el);
+			// disable in-browser validation
+			if (!modifiers.includes("use-browser")) {
+				setAttr(el, "novalidate", "true");
+			}
+
+			if (modifiers.includes("validate-on-submit")) {
+				el.addEventListener("submit", function (e) {
+					validateMagic.submit(e);
 				});
 			}
 
-			/* -------------------------------------------------------------------------- */
-			/*      If x-validate on input, select, or textarea validate this field       */
-			/* -------------------------------------------------------------------------- */
+			// save all form modifiers
+			formModifiers.set(el, modifiers);
 
-			// Only add if has name/id and and is field
-			if (getName(el) && isHtmlElement(el, FIELD_SELECTOR)) {
-				const form = getForm(el);
-				const formMods = formModifiers.has(form)
-					? formModifiers.get(form)
-					: [];
-				// include form level modifiers so they are also referenced
-				modifiers = [...modifiers, ...formMods];
-				// el is field element
-				updateFieldData(el, defaultData(el));
-				addEvents(el);
-				// if form does not have x-validate on it then set mutation observer on element
-				if (!form.hasAttribute("x-validate")) {
-					watchElement(el);
+			// Find all fields in the form
+			const fields = el.querySelectorAll(FIELD_SELECTOR);
+
+			// bind reset with resetting all formData
+			addEvent(el, "reset", () => {
+				el.reset();
+				const data = getData(el);
+				// need a short delay for reset to take effect and reread values
+				setTimeout(() => {
+					data.forEach((field) => updateFieldData(field.node));
+				}, 50);
+			});
+
+			fields.forEach((field) => {
+				if (getName(field)) {
+					updateFieldData(field, defaultData(field));
+					// Don't add events or error msgs if it doesn't have a name/id or has x-validate on it so we aren't duplicating function
+					if (
+						!field
+							.getAttributeNames()
+							.some((attr) => attr.includes(`x-${PLUGIN_NAME}`))
+					) {
+						addEvents(field);
+					}
 				}
-			}
-
-			/* -------------------------------------------------------------------------- */
-			/*                           Check Validity Function                          */
-			/* -------------------------------------------------------------------------- */
-
-			function checkIfValid(e) {
-				const field = this;
-				const mods = getData(field).mods;
-
-				/* --- Update formData with value and expression and trigger error message --- */
-				const updatedData = updateFieldData(
-					field,
-					{ exp: expression && evaluate(expression) },
-					true
-				);
-
-				// add input event to blur events once it fails the first time
-
-				if (
-					!updatedData.valid &&
-					!includes(mods, "bluronly") &&
-					e.type === "blur"
-				) {
-					addEvent(field, INPUT, checkIfValid);
-				}
-				// refocus if modifier is enabled
-				if (!updatedData.valid && includes(mods, "refocus"))
-					field.focus();
-
-				return updatedData.valid;
-			}
+			});
 		}
-	);
+
+		/* -------------------------------------------------------------------------- */
+		/*                           Check Validity Function                          */
+		/* -------------------------------------------------------------------------- */
+
+		function checkIfValid(e) {
+			const field = this;
+			const mods = getData(field).mods;
+
+			/* --- Update formData with value --- */
+			const updatedData = updateFieldData(field);
+
+			toggleError(field, updatedData.valid);
+
+			// add input event to blur events once it fails the first time
+
+			if (
+				!updatedData.valid &&
+				!includes(mods, "bluronly") &&
+				e.type === "blur"
+			) {
+				addEvent(field, INPUT, checkIfValid);
+			}
+			// refocus if modifier is enabled
+			if (!updatedData.valid && includes(mods, "refocus")) field.focus();
+
+			return updatedData.valid;
+		}
+	});
 	/* ------------------------- End Validate Directive ------------------------- */
 
 	/* -------------------------------------------------------------------------- */

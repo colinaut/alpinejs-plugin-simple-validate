@@ -74,7 +74,6 @@ var Plugin = function(Alpine) {
   const formModifiers = new WeakMap();
   function updateFieldData(field, data, triggerErrorMsg) {
     var _a;
-    console.log("\u{1F680} ~ updateFieldData", field, data);
     const form = getForm(field);
     const name = getName(field);
     if (form && name) {
@@ -110,24 +109,6 @@ var Plugin = function(Alpine) {
             tempArray = [value];
           data.array = tempArray;
           data.value = tempArray.toString();
-          if (includes(data.mods, GROUP)) {
-            const min = data.exp || 1;
-            valid = tempArray.length >= min;
-          }
-        } else {
-          if (data.required)
-            valid = !!value.trim();
-          if (valid && value) {
-            const format = data.mods.filter((val) => dateFormats.indexOf(val) !== -1)[0];
-            for (let type of data.mods) {
-              if (typeof validate[type] === "function") {
-                valid = type === "date" ? isDate(value, format) : validate[type](value);
-                break;
-              }
-            }
-            if (data.exp === false)
-              valid = false;
-          }
         }
       }
       data.valid = valid;
@@ -148,18 +129,6 @@ var Plugin = function(Alpine) {
     if (isHtmlElement(el, FIELD_SELECTOR))
       return updateFieldData(el, data, triggerErrorMsg);
   }
-  const validate = {};
-  validate.email = (str) => /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(cleanText(str));
-  validate.tel = (str) => /^((\+|0)\d{1,4})?[-\s.]?[-\s.]?\d[-\s.]?\d[-\s.]?\d[-\s.]?\d[-\s.]?\d[-\s.]?\d[-\s.]?\d[-\s.]?\d[-\s.]?(\d{1,2})$/.test(cleanText(str));
-  validate.website = (str) => /^(https?:\/\/)?(www\.)?([-a-zA-Z0-9@:%._+~#=]+(-?[a-zA-Z0-9])*\.)+[\w]{2,}(\/\S*)?$/.test(cleanText(str));
-  validate.url = (str) => /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()!@:%_+.~#?&/=]*)/.test(cleanText(str));
-  validate.number = (str) => !isNaN(parseFloat(str)) && isFinite(str);
-  validate.integer = (str) => validate.number(str) && Number.isInteger(Number(str));
-  validate.wholenumber = (str) => validate.integer(str) && Number(str) > 0;
-  validate.date = (str) => isDate(str);
-  dateFormats.forEach((format) => {
-    validate.date[format] = (str) => isDate(str, format);
-  });
   let validateMagic = {};
   validateMagic.data = (el) => getData(el);
   validateMagic.formData = (el) => formData.get(getForm(getEl(el)));
@@ -201,10 +170,9 @@ var Plugin = function(Alpine) {
     const data = getData(el);
     return Array.isArray(data) ? !data.some((val) => !val.valid) : data && data.valid;
   };
-  Object.keys(validate).forEach((key) => validateMagic = { ...validateMagic, [key]: validate[key] });
   Alpine.magic(PLUGIN_NAME, () => validateMagic);
   Alpine.magic("formData", (el) => formData.get(getForm(getEl(el))));
-  Alpine.directive(PLUGIN_NAME, (el, { modifiers, expression }, { evaluate }) => {
+  Alpine.directive(PLUGIN_NAME, (el, { modifiers }) => {
     const watchElement = (element) => {
       const observer = new MutationObserver((mutationsList) => {
         for (const mutation of mutationsList) {
@@ -236,8 +204,7 @@ var Plugin = function(Alpine) {
         mods,
         required,
         disabled,
-        parentNode,
-        exp: expression && evaluate(expression)
+        parentNode
       };
     };
     function addEvents(field) {
@@ -276,20 +243,11 @@ var Plugin = function(Alpine) {
         }
       });
     }
-    if (getName(el) && isHtmlElement(el, FIELD_SELECTOR)) {
-      const form = getForm(el);
-      const formMods = formModifiers.has(form) ? formModifiers.get(form) : [];
-      modifiers = [...modifiers, ...formMods];
-      updateFieldData(el, defaultData(el));
-      addEvents(el);
-      if (!form.hasAttribute("x-validate")) {
-        watchElement(el);
-      }
-    }
     function checkIfValid(e) {
       const field = this;
       const mods = getData(field).mods;
-      const updatedData = updateFieldData(field, { exp: expression && evaluate(expression) }, true);
+      const updatedData = updateFieldData(field);
+      toggleError(field, updatedData.valid);
       if (!updatedData.valid && !includes(mods, "bluronly") && e.type === "blur") {
         addEvent(field, INPUT, checkIfValid);
       }

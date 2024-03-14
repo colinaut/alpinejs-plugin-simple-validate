@@ -54,7 +54,13 @@
 					>Your Name
 					<span x-show="$formData.name.required">*</span></label
 				>
-				<input type="text" id="name" name="name" required />
+				<input
+					type="text"
+					id="name"
+					name="name"
+					required
+					:pattern="$pattern('email')"
+				/>
 			</div>
 			<div>
 				<label>Your Name Backwards</label>

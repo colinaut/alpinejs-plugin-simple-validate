@@ -7,12 +7,16 @@ Very simple form validation plugin for [AlpineJS](https://alpinejs.dev). This pl
 
 The x-validate directive allows for simple validation and error display. It also captures all form data in a reactive formData. The $validate magic function grants access to validation functions, formData, and simple submit validation check.
 
-## Update 1.8
+## Update 2.0
 
-* Works with nested fieldsets for $validate magic functions like isComplete(), data(), or value().
-* Disabled is now a field property of the formData object. When a field is disabled, either by setting disabled on the field itself or a parent fieldset, the disabled property is set to true. _Disabled fields are valid by default and return no value._ Disabled is watched for by a mutation observer so AlpineJS binding of `:disabled` will work.
-* Hidden attributes no longer require x-validate in order to update when set with `:value` or other javascript that dynamically updates the value. The mutation observer automatically spots the change and updates.
-* **BREAKING CHANGE** x-required is removed. Use AlpineJS binding `:required` instead to set the required dynamically.
+ - [x] - Remove all regex enhanced validation
+ - [x] - Remove expressions validation
+ - [x] - Remove x-validate directive for fields
+ - [ ] - Move eventListeners to form itself rather than adding to individual input fields
+ - [ ] - Separate updating with error messages
+ - [ ] - Revamp how groups are handled
+ - [ ] - Simplify magic functions
+ - [ ] - Dual error messages
 
 ## Simple Usage
 
@@ -242,12 +246,6 @@ eleventyConfig.addPassthroughCopy({
 <script src="/js/alpine.validate.min.js" defer></script>
 <script src="/js/alpine.min.js" defer></script>
 ```
-
-## Roadmap
-
-* Clean up the code more.
-* Fix issue where fields get added error message even when they are not required.
-* Maybe add x-value to allow easier updating of values dynamically?
 
 Feel free to add any enhancement requests on github.
 
