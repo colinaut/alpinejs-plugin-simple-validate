@@ -5,15 +5,9 @@
     const DATA_ERROR_MSG = `${DATA_ERROR}-msg`;
     const ERROR_MSG_CLASS = "error-msg";
     const PLUGIN_NAME = "validate";
-    const REQUIRED = "required";
-    const INPUT = "input";
-    const CHECKBOX = "checkbox";
-    const RADIO = "radio";
-    const GROUP = "group";
     const FORM = "form";
     const FIELDSET = "fieldset";
-    const notType = (type) => `:not([type="${type}"])`;
-    const FIELD_SELECTOR = `${INPUT}${notType("search")}${notType("reset")}${notType("submit")},select,textarea`;
+    const FIELD_SELECTOR = `input:not([type="search"], [type="reset"], [type="submit"]),select,textarea`;
     const HIDDEN = "hidden";
     const isHtmlElement = (el, type) => {
       const isInstanceOfHTML = el instanceof HTMLElement;
@@ -62,7 +56,6 @@
     const formData = new WeakMap();
     function updateFieldData(field, data, triggerErrorMsg) {
       var _a, _b;
-      console.log("\u{1F680} ~ updateFieldData", field, data);
       const form = getForm(field);
       const name = getName(field);
       if (form && name) {
@@ -84,20 +77,19 @@
         const value = data.value;
         let valid = field.checkValidity();
         if (!data.disabled && valid) {
-          if (includes([CHECKBOX, RADIO], field.type)) {
-            if (data.required)
-              valid = field.checked;
+          if (includes(["checkbox", "radio"], field.type)) {
             let tempArray = data.array || [];
-            if (field.type === CHECKBOX) {
+            if (field.type === "checkbox") {
               if (field.checked && !tempArray.includes(value))
                 tempArray.push(value);
               if (!field.checked)
                 tempArray = tempArray.filter((val) => val !== value);
             }
-            if (field.type === RADIO && field.checked)
+            if (field.type === "radio" && field.checked)
               tempArray = [value];
             data.array = tempArray;
             data.value = tempArray.toString();
+            console.log("checking validation", field.name);
             if ((_a = data.parentNode) == null ? void 0 : _a.dataset.group) {
               const min = parseInt((_b = data.parentNode) == null ? void 0 : _b.dataset.group) || 1;
               valid = tempArray.length >= min;
@@ -155,7 +147,7 @@
             val.node.focus();
           toggleError(val.node, false);
           e.preventDefault();
-          console.error(`${val.name} ${REQUIRED}`);
+          console.error(`${val.name} required`);
         }
       });
     };
@@ -291,7 +283,7 @@
       setAttr(errorMsgNode, HIDDEN);
       const name = getName(field);
       if (!errorMsgNode.innerHTML)
-        errorMsgNode.textContent = getAttr(targetNode, DATA_ERROR_MSG) || `${name.replace(/[-_]/g, " ")} ${REQUIRED}`;
+        errorMsgNode.textContent = getAttr(targetNode, DATA_ERROR_MSG) || `${name.replace(/[-_]/g, " ")} required`;
       setAttr(field, "aria-errormessage", errorMsgId);
       if (!getEl(errorMsgId, getForm(field)))
         targetNode.after(errorMsgNode);

@@ -12,17 +12,9 @@ const Plugin = function (Alpine) {
 
 	/* ----------------- These are just for better minification ------------------ */
 
-	const REQUIRED = "required";
-	const INPUT = "input";
-	const CHECKBOX = "checkbox";
-	const RADIO = "radio";
-	const GROUP = "group";
 	const FORM = "form";
 	const FIELDSET = "fieldset";
-	const notType = (type) => `:not([type="${type}"])`;
-	const FIELD_SELECTOR = `${INPUT}${notType("search")}${notType(
-		"reset"
-	)}${notType("submit")},select,textarea`;
+	const FIELD_SELECTOR = `input:not([type="search"], [type="reset"], [type="submit"]),select,textarea`;
 	const HIDDEN = "hidden";
 
 	/* -------------------------------------------------------------------------- */
@@ -124,7 +116,7 @@ const Plugin = function (Alpine) {
 	/* -------------------------------------------------------------------------- */
 
 	function updateFieldData(field, data, triggerErrorMsg) {
-		console.log("🚀 ~ updateFieldData", field, data);
+		// console.log("🚀 ~ updateFieldData", field, data);
 		// data = {name: 'field id or name if no id', node: field, value:'field value', array:[optional used for groups], valid: true, required: false, disabled: false}
 		const form = getForm(field);
 		const name = getName(field);
@@ -162,13 +154,11 @@ const Plugin = function (Alpine) {
 			// if it is not disabled and passes browser validity then check using x-validate function
 			if (!data.disabled && valid) {
 				// If checkbox/radio then assume it's a group so update array and string value based on checked
-				// TODO: reimplement grouping validation.
-				if (includes([CHECKBOX, RADIO], field.type)) {
-					if (data.required) valid = field.checked;
+				if (includes(["checkbox", "radio"], field.type)) {
 					// data.array acts as a store of current selected values
 					let tempArray = data.array || [];
 
-					if (field.type === CHECKBOX) {
+					if (field.type === "checkbox") {
 						if (field.checked && !tempArray.includes(value))
 							tempArray.push(value);
 						if (!field.checked)
@@ -178,7 +168,7 @@ const Plugin = function (Alpine) {
 					}
 
 					// Radio buttons only can select one so max array is 1.
-					if (field.type === RADIO && field.checked)
+					if (field.type === "radio" && field.checked)
 						tempArray = [value];
 
 					// update with revised array
@@ -186,7 +176,7 @@ const Plugin = function (Alpine) {
 					// update value with string of array items
 					data.value = tempArray.toString();
 					// if group than run valid based on group min number
-					// TODO: reimplement grouping validation.
+					console.log("checking validation", field.name);
 					if (data.parentNode?.dataset.group) {
 						const min =
 							parseInt(data.parentNode?.dataset.group) || 1;
@@ -268,7 +258,7 @@ const Plugin = function (Alpine) {
 				toggleError(val.node, false);
 				e.preventDefault();
 				// eslint-disable-next-line no-console -- this error helps with submit and is the only one that should stay in production.
-				console.error(`${val.name} ${REQUIRED}`);
+				console.error(`${val.name} required`);
 			}
 		});
 	};
@@ -526,7 +516,7 @@ const Plugin = function (Alpine) {
 		if (!errorMsgNode.innerHTML)
 			errorMsgNode.textContent =
 				getAttr(targetNode, DATA_ERROR_MSG) ||
-				`${name.replace(/[-_]/g, " ")} ${REQUIRED}`;
+				`${name.replace(/[-_]/g, " ")} required`;
 
 		// Add aria-errormessage using the ID to field
 		setAttr(field, "aria-errormessage", errorMsgId);
