@@ -65,8 +65,6 @@ const Plugin = function (Alpine) {
 		return randomId;
 	};
 
-	const cleanText = (str) => String(str).trim();
-
 	const getData = (strOrEl) => {
 		const el = getEl(strOrEl);
 		let data = formData.get(getForm(el));
@@ -83,38 +81,36 @@ const Plugin = function (Alpine) {
 		if (isHtmlElement(el, FIELD_SELECTOR)) return data[getName(el)];
 	};
 
-	/* -------------------------------------------------------------------------- */
-	/*                                 Validators                                 */
-	/* -------------------------------------------------------------------------- */
+	/**
+	 * Get the common ancestor of two or more elements
+	 * {@link https://gist.github.com/kieranbarker/cd86310d0782b7c52ce90cd7f45bb3eb}
+	 * @param {String} selector A valid CSS selector
+	 * @returns {Element} The common ancestor
+	 */
+	function getCommonAncestor(selector, searchArea = document) {
+		// Get the elements matching the selector
+		const elems = searchArea.querySelectorAll(selector);
 
-	const dateFormats = ["mmddyyyy", "ddmmyyyy", "yyyymmdd"];
+		// If there are no elements, return null
+		if (elems.length < 1) return null;
 
-	const yearLastDateRegex = /^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/;
-	const yearFirstDateRegex = /^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/;
+		// If there's only one element, return it
+		if (elems.length < 2) return elems[0];
 
-	function isDate(str, format = dateFormats[2]) {
-		// format defaults to yyyymmdd
-		const dateArray = str.split(/[-/.]/);
-		const formatIndexInArray = dateFormats.indexOf(format);
+		// Otherwise, create a new Range
+		const range = document.createRange();
 
-		let mm, dd, yyyy;
+		// Start at the beginning of the first element
+		range.setStart(elems[0], 0);
 
-		if (yearLastDateRegex.test(str)) {
-			if (formatIndexInArray === 0) [mm, dd, yyyy] = dateArray;
-			if (formatIndexInArray === 1) [dd, mm, yyyy] = dateArray;
-		} else if (yearFirstDateRegex.test(str) && formatIndexInArray === 2) {
-			[yyyy, mm, dd] = dateArray;
-		}
+		// Stop at the end of the last element
+		range.setEnd(
+			elems[elems.length - 1],
+			elems[elems.length - 1].childNodes.length
+		);
 
-		const isoFormattedStr = `${yyyy}-${mm}-${dd}`;
-		const date = new Date(isoFormattedStr);
-
-		const timestamp = date.getTime();
-
-		if (!typeof timestamp === "number" || Number.isNaN(timestamp))
-			return false;
-
-		return date.toISOString().startsWith(isoFormattedStr);
+		// Return the common ancestor
+		return range.commonAncestorContainer;
 	}
 
 	/* -------------------------------------------------------------------------- */
@@ -123,15 +119,12 @@ const Plugin = function (Alpine) {
 
 	const formData = new WeakMap();
 
-	// non-reactive variable for modifiers on a per form basis
-	const formModifiers = new WeakMap();
-
 	/* -------------------------------------------------------------------------- */
 	/*                           formData function                                */
 	/* -------------------------------------------------------------------------- */
 
 	function updateFieldData(field, data, triggerErrorMsg) {
-		// console.log("🚀 ~ updateFieldData", field, data);
+		console.log("🚀 ~ updateFieldData", field, data);
 		// data = {name: 'field id or name if no id', node: field, value:'field value', array:[optional used for groups], valid: true, required: false, disabled: false}
 		const form = getForm(field);
 		const name = getName(field);
@@ -148,7 +141,7 @@ const Plugin = function (Alpine) {
 			const disabled = field.matches(":disabled");
 
 			// update required if not included
-			const required = tempData[name]?.required || field.required;
+			const required = field.required;
 
 			// Add any data from formData, then name, node, and value if it's not being passed along
 			data = {
@@ -194,6 +187,11 @@ const Plugin = function (Alpine) {
 					data.value = tempArray.toString();
 					// if group than run valid based on group min number
 					// TODO: reimplement grouping validation.
+					if (data.parentNode?.dataset.group) {
+						const min =
+							parseInt(data.parentNode?.dataset.group) || 1;
+						valid = tempArray.length >= min;
+					}
 				}
 			}
 
@@ -309,6 +307,7 @@ const Plugin = function (Alpine) {
 							target.matches(FIELD_SELECTOR) &&
 							["disabled", "required", "value"].includes(attr)
 						) {
+							console.log("mutation", target, attr);
 							updateData(target);
 						}
 						if (target.matches(FIELDSET) && attr === "disabled") {
@@ -330,17 +329,22 @@ const Plugin = function (Alpine) {
 		};
 
 		const defaultData = (field) => {
-			const parentNode =
-				field.closest(".field-parent") || includes(modifiers, GROUP)
-					? field.parentNode.parentNode
-					: field.parentNode;
+			let parentNode;
+			// If checkbox or radio group then find common ancestor parentNode
+			if (isHtmlElement(field, "[type=checkbox], [type=radio]")) {
+				const form = getForm(field);
+				const inputs = form.querySelectorAll(`[name=${field.name}]`);
+				if (inputs.length > 1) {
+					parentNode = getCommonAncestor(
+						`[name=${field.name}]`,
+						form
+					);
+				}
+			}
 
 			const mods = [...modifiers, field.type];
 
-			const required =
-				field.required ||
-				includes(mods, REQUIRED) ||
-				includes(mods, GROUP);
+			const required = field.required;
 
 			const disabled = field.matches(":disabled");
 
@@ -348,57 +352,38 @@ const Plugin = function (Alpine) {
 				mods,
 				required,
 				disabled,
-				parentNode: parentNode,
+				parentNode,
 			};
 		};
-
-		function addEvents(field) {
-			addErrorMsg(field);
-			const isClickField = includes(
-				[CHECKBOX, RADIO, "range"],
-				field.type
-			);
-			const eventType = isClickField
-				? "click"
-				: isHtmlElement(field, "select")
-				? "change"
-				: "blur";
-			addEvent(field, eventType, checkIfValid);
-			if (includes(modifiers, INPUT) && !isClickField)
-				addEvent(field, INPUT, checkIfValid);
-		}
-
-		// console.log(Alpine.nextTick(() => {});
 
 		/* -------------------------------------------------------------------------- */
 		/*                 If x-validate on <form> validate all fields                */
 		/* -------------------------------------------------------------------------- */
 
 		if (isHtmlElement(el, FORM)) {
-			// el is form
+			// form is form
 
-			watchElement(el);
+			const form = el;
+
+			watchElement(form);
 			// disable in-browser validation
 			if (!modifiers.includes("use-browser")) {
-				setAttr(el, "novalidate", "true");
+				setAttr(form, "novalidate", "true");
 			}
 
 			if (modifiers.includes("validate-on-submit")) {
-				el.addEventListener("submit", function (e) {
+				form.addEventListener("submit", function (e) {
 					validateMagic.submit(e);
 				});
 			}
 
-			// save all form modifiers
-			formModifiers.set(el, modifiers);
-
 			// Find all fields in the form
-			const fields = el.querySelectorAll(FIELD_SELECTOR);
+			const fields = form.querySelectorAll(FIELD_SELECTOR);
 
 			// bind reset with resetting all formData
-			addEvent(el, "reset", () => {
-				el.reset();
-				const data = getData(el);
+			addEvent(form, "reset", () => {
+				form.reset();
+				const data = getData(form);
 				// need a short delay for reset to take effect and reread values
 				setTimeout(() => {
 					data.forEach((field) => updateFieldData(field.node));
@@ -406,46 +391,39 @@ const Plugin = function (Alpine) {
 			});
 
 			fields.forEach((field) => {
-				if (getName(field)) {
-					updateFieldData(field, defaultData(field));
-					// Don't add events or error msgs if it doesn't have a name/id or has x-validate on it so we aren't duplicating function
-					if (
-						!field
-							.getAttributeNames()
-							.some((attr) => attr.includes(`x-${PLUGIN_NAME}`))
-					) {
-						addEvents(field);
-					}
+				// update data for every field
+				updateFieldData(field, defaultData(field));
+				addErrorMsg(field);
+			});
+			// add event listener to form to update formData
+			// TODO: add input event after initial invalidation (see checkIfValid() function)
+			// TODO: add refocus if mod set. Revise how refocus for individual fields
+			// TODO: allow input for all or blur only
+			form.addEventListener("input", (e) => {
+				const field = e.target;
+				console.log("input", field.name);
+				updateFieldData(field);
+				if (
+					isHtmlElement(
+						field,
+						"select, input[type=checkbox], input[type=radio], input[type=range]"
+					)
+				) {
+					checkError(field);
 				}
 			});
-		}
-
-		/* -------------------------------------------------------------------------- */
-		/*                           Check Validity Function                          */
-		/* -------------------------------------------------------------------------- */
-
-		function checkIfValid(e) {
-			const field = this;
-			const mods = getData(field).mods;
-
-			/* --- Update formData with value --- */
-			const updatedData = updateFieldData(field);
-
-			toggleError(field, updatedData.valid);
-
-			// add input event to blur events once it fails the first time
-
-			if (
-				!updatedData.valid &&
-				!includes(mods, "bluronly") &&
-				e.type === "blur"
-			) {
-				addEvent(field, INPUT, checkIfValid);
-			}
-			// refocus if modifier is enabled
-			if (!updatedData.valid && includes(mods, "refocus")) field.focus();
-
-			return updatedData.valid;
+			form.addEventListener("focusout", (e) => {
+				const field = e.target;
+				if (
+					!isHtmlElement(
+						field,
+						"select, input[type=checkbox], input[type=radio], input[type=range]"
+					)
+				) {
+					console.log("focusout", field.name);
+					checkError(field);
+				}
+			});
 		}
 	});
 	/* ------------------------- End Validate Directive ------------------------- */
@@ -454,8 +432,14 @@ const Plugin = function (Alpine) {
 	/*                            Toggle Error Message                            */
 	/* -------------------------------------------------------------------------- */
 
+	function checkError(field) {
+		const data = getData(field);
+		toggleError(field, data.valid);
+	}
+
 	function toggleError(field, valid) {
-		const parentNode = getData(field).parentNode;
+		console.log("toggleError", field, valid);
+		const targetNode = getData(field).parentNode || field;
 
 		const errorMsgNode = document.getElementById(
 			getAttr(field, "aria-errormessage")
@@ -467,13 +451,16 @@ const Plugin = function (Alpine) {
 		/* ------------------ Check valid and set and remove error ------------------ */
 		if (valid) {
 			// console.log(`${name} valid`);
+			field.setCustomValidity("");
 			setAttr(errorMsgNode, HIDDEN);
-			parentNode.removeAttribute(DATA_ERROR);
+			targetNode.removeAttribute(DATA_ERROR);
 			// hideErrorMsg()
 		} else {
-			// console.log(`${name} not valid`);
+			// console.log(`${field.name} not valid`);
 			errorMsgNode.removeAttribute(HIDDEN);
-			setAttr(parentNode, DATA_ERROR, errorMsgNode.textContent);
+			// TODO: make this work with the custom error message?
+			field.setCustomValidity("Invalid");
+			setAttr(targetNode, DATA_ERROR, errorMsgNode.textContent);
 		}
 	}
 
@@ -502,9 +489,8 @@ const Plugin = function (Alpine) {
 		const fieldData = getData(field);
 
 		// set targetNode. The span.error-msg typically appears after the field but groups assign it to set after the wrapper
-		const targetNode = includes(fieldData.mods, GROUP)
-			? fieldData.parentNode
-			: field;
+		const targetNode =
+			fieldData.parentNode || field.closest("label") || field;
 
 		/* --------------------- Find or Make Error Message Node -------------------- */
 

@@ -54,13 +54,7 @@
 					>Your Name
 					<span x-show="$formData.name.required">*</span></label
 				>
-				<input
-					type="text"
-					id="name"
-					name="name"
-					required
-					:pattern="$pattern('email')"
-				/>
+				<input type="text" id="name" name="name" required />
 			</div>
 			<div>
 				<label>Your Name Backwards</label>
@@ -267,15 +261,15 @@
 					</div>
 				</fieldset>
 			</fieldset>
-			<div
+			<fieldset
 				class="checkbox-wrapper"
 				data-error-msg="you must pick at least two animals"
+				data-group="2"
 			>
 				<h4>Favorite Animals *</h4>
 				<label
 					><input
 						type="checkbox"
-						x-validate.group="2"
 						name="animal"
 						id="cat"
 						value="cat"
@@ -285,7 +279,6 @@
 				<label
 					><input
 						type="checkbox"
-						x-validate.group="2"
 						name="animal"
 						id="dog"
 						value="dog"
@@ -295,14 +288,13 @@
 				<label
 					><input
 						type="checkbox"
-						x-validate.group="2"
 						name="animal"
 						id="bunny"
 						value="bunny"
 					/>
 					Bunny</label
 				>
-			</div>
+			</fieldset>
 			<div
 				x-text="$validate.data('animal').value && `You choose a ${$validate.data('animal').value}!!!`"
 			></div>

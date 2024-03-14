@@ -12,9 +12,9 @@ The x-validate directive allows for simple validation and error display. It also
  - [x] - Remove all regex enhanced validation
  - [x] - Remove expressions validation
  - [x] - Remove x-validate directive for fields
- - [ ] - Move eventListeners to form itself rather than adding to individual input fields
- - [ ] - Separate updating with error messages
- - [ ] - Revamp how groups are handled
+ - [x] - Move eventListeners to form itself rather than adding to individual input fields
+ - [x] - Separate updating with error messages
+ - [x] - Revamp how groups are handled
  - [ ] - Simplify magic functions
  - [ ] - Dual error messages
 

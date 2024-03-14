@@ -34,7 +34,6 @@
       setAttr(el, "id", randomId);
       return randomId;
     };
-    const cleanText = (str) => String(str).trim();
     const getData = (strOrEl) => {
       const el = getEl(strOrEl);
       let data = formData.get(getForm(el));
@@ -49,32 +48,21 @@
       if (isHtmlElement(el, FIELD_SELECTOR))
         return data[getName(el)];
     };
-    const dateFormats = ["mmddyyyy", "ddmmyyyy", "yyyymmdd"];
-    const yearLastDateRegex = /^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/;
-    const yearFirstDateRegex = /^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/;
-    function isDate(str, format = dateFormats[2]) {
-      const dateArray = str.split(/[-/.]/);
-      const formatIndexInArray = dateFormats.indexOf(format);
-      let mm, dd, yyyy;
-      if (yearLastDateRegex.test(str)) {
-        if (formatIndexInArray === 0)
-          [mm, dd, yyyy] = dateArray;
-        if (formatIndexInArray === 1)
-          [dd, mm, yyyy] = dateArray;
-      } else if (yearFirstDateRegex.test(str) && formatIndexInArray === 2) {
-        [yyyy, mm, dd] = dateArray;
-      }
-      const isoFormattedStr = `${yyyy}-${mm}-${dd}`;
-      const date = new Date(isoFormattedStr);
-      const timestamp = date.getTime();
-      if (!typeof timestamp === "number" || Number.isNaN(timestamp))
-        return false;
-      return date.toISOString().startsWith(isoFormattedStr);
+    function getCommonAncestor(selector, searchArea = document) {
+      const elems = searchArea.querySelectorAll(selector);
+      if (elems.length < 1)
+        return null;
+      if (elems.length < 2)
+        return elems[0];
+      const range = document.createRange();
+      range.setStart(elems[0], 0);
+      range.setEnd(elems[elems.length - 1], elems[elems.length - 1].childNodes.length);
+      return range.commonAncestorContainer;
     }
     const formData = new WeakMap();
-    const formModifiers = new WeakMap();
     function updateFieldData(field, data, triggerErrorMsg) {
-      var _a;
+      var _a, _b;
+      console.log("\u{1F680} ~ updateFieldData", field, data);
       const form = getForm(field);
       const name = getName(field);
       if (form && name) {
@@ -83,7 +71,7 @@
         }
         let tempData = formData.get(form);
         const disabled = field.matches(":disabled");
-        const required = ((_a = tempData[name]) == null ? void 0 : _a.required) || field.required;
+        const required = field.required;
         data = {
           ...tempData[name],
           name,
@@ -110,6 +98,10 @@
               tempArray = [value];
             data.array = tempArray;
             data.value = tempArray.toString();
+            if ((_a = data.parentNode) == null ? void 0 : _a.dataset.group) {
+              const min = parseInt((_b = data.parentNode) == null ? void 0 : _b.dataset.group) || 1;
+              valid = tempArray.length >= min;
+            }
           }
         }
         data.valid = valid;
@@ -181,6 +173,7 @@
             if (mutation.type === "attributes") {
               const attr = mutation.attributeName;
               if (target.matches(FIELD_SELECTOR) && ["disabled", "required", "value"].includes(attr)) {
+                console.log("mutation", target, attr);
                 updateData(target);
               }
               if (target.matches(FIELDSET) && attr === "disabled") {
@@ -197,9 +190,16 @@
         return observer;
       };
       const defaultData = (field) => {
-        const parentNode = field.closest(".field-parent") || includes(modifiers, GROUP) ? field.parentNode.parentNode : field.parentNode;
+        let parentNode;
+        if (isHtmlElement(field, "[type=checkbox], [type=radio]")) {
+          const form = getForm(field);
+          const inputs = form.querySelectorAll(`[name=${field.name}]`);
+          if (inputs.length > 1) {
+            parentNode = getCommonAncestor(`[name=${field.name}]`, form);
+          }
+        }
         const mods = [...modifiers, field.type];
-        const required = field.required || includes(mods, REQUIRED) || includes(mods, GROUP);
+        const required = field.required;
         const disabled = field.matches(":disabled");
         return {
           mods,
@@ -208,65 +208,63 @@
           parentNode
         };
       };
-      function addEvents(field) {
-        addErrorMsg(field);
-        const isClickField = includes([CHECKBOX, RADIO, "range"], field.type);
-        const eventType = isClickField ? "click" : isHtmlElement(field, "select") ? "change" : "blur";
-        addEvent(field, eventType, checkIfValid);
-        if (includes(modifiers, INPUT) && !isClickField)
-          addEvent(field, INPUT, checkIfValid);
-      }
       if (isHtmlElement(el, FORM)) {
-        watchElement(el);
+        const form = el;
+        watchElement(form);
         if (!modifiers.includes("use-browser")) {
-          setAttr(el, "novalidate", "true");
+          setAttr(form, "novalidate", "true");
         }
         if (modifiers.includes("validate-on-submit")) {
-          el.addEventListener("submit", function(e) {
+          form.addEventListener("submit", function(e) {
             validateMagic.submit(e);
           });
         }
-        formModifiers.set(el, modifiers);
-        const fields = el.querySelectorAll(FIELD_SELECTOR);
-        addEvent(el, "reset", () => {
-          el.reset();
-          const data = getData(el);
+        const fields = form.querySelectorAll(FIELD_SELECTOR);
+        addEvent(form, "reset", () => {
+          form.reset();
+          const data = getData(form);
           setTimeout(() => {
             data.forEach((field) => updateFieldData(field.node));
           }, 50);
         });
         fields.forEach((field) => {
-          if (getName(field)) {
-            updateFieldData(field, defaultData(field));
-            if (!field.getAttributeNames().some((attr) => attr.includes(`x-${PLUGIN_NAME}`))) {
-              addEvents(field);
-            }
+          updateFieldData(field, defaultData(field));
+          addErrorMsg(field);
+        });
+        form.addEventListener("input", (e) => {
+          const field = e.target;
+          console.log("input", field.name);
+          updateFieldData(field);
+          if (isHtmlElement(field, "select, input[type=checkbox], input[type=radio], input[type=range]")) {
+            checkError(field);
+          }
+        });
+        form.addEventListener("focusout", (e) => {
+          const field = e.target;
+          if (!isHtmlElement(field, "select, input[type=checkbox], input[type=radio], input[type=range]")) {
+            console.log("focusout", field.name);
+            checkError(field);
           }
         });
       }
-      function checkIfValid(e) {
-        const field = this;
-        const mods = getData(field).mods;
-        const updatedData = updateFieldData(field);
-        toggleError(field, updatedData.valid);
-        if (!updatedData.valid && !includes(mods, "bluronly") && e.type === "blur") {
-          addEvent(field, INPUT, checkIfValid);
-        }
-        if (!updatedData.valid && includes(mods, "refocus"))
-          field.focus();
-        return updatedData.valid;
-      }
     });
+    function checkError(field) {
+      const data = getData(field);
+      toggleError(field, data.valid);
+    }
     function toggleError(field, valid) {
-      const parentNode = getData(field).parentNode;
+      console.log("toggleError", field, valid);
+      const targetNode = getData(field).parentNode || field;
       const errorMsgNode = document.getElementById(getAttr(field, "aria-errormessage"));
       setAttr(field, "aria-invalid", !valid);
       if (valid) {
+        field.setCustomValidity("");
         setAttr(errorMsgNode, HIDDEN);
-        parentNode.removeAttribute(DATA_ERROR);
+        targetNode.removeAttribute(DATA_ERROR);
       } else {
         errorMsgNode.removeAttribute(HIDDEN);
-        setAttr(parentNode, DATA_ERROR, errorMsgNode.textContent);
+        field.setCustomValidity("Invalid");
+        setAttr(targetNode, DATA_ERROR, errorMsgNode.textContent);
       }
     }
     function findSiblingErrorMsgNode(el) {
@@ -281,7 +279,7 @@
     }
     function addErrorMsg(field) {
       const fieldData = getData(field);
-      const targetNode = includes(fieldData.mods, GROUP) ? fieldData.parentNode : field;
+      const targetNode = fieldData.parentNode || field.closest("label") || field;
       const span = document.createElement("span");
       span.className = ERROR_MSG_CLASS;
       const errorMsgNode = document.getElementById(`${ERROR_MSG_CLASS}-${getAttr(targetNode, "id")}`) || findSiblingErrorMsgNode(targetNode) || span;
