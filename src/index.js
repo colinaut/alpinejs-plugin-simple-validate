@@ -419,7 +419,25 @@ const Plugin = function (Alpine) {
 			};
 
 			function addEvents(field) {
-				if (!field.matches("[type=hidden]")) addErrorMsg(field);
+				const attrs = Array.from(field.attributes).map(
+					(attr) => attr.name
+				);
+				// attributes that should trigger validation
+				const triggers = [
+					"required",
+					":required",
+					"pattern",
+					":pattern",
+					":disabled",
+				];
+				// compare the attrs array with the triggers array
+				const hasTrigger = attrs.some(
+					(attr) =>
+						triggers.includes(attr) || attr.includes("x-validate")
+				);
+				// ignore hidden fields and fields that do not require validation
+				if (field.matches("[type=hidden]") || !hasTrigger) return;
+				addErrorMsg(field);
 				const isClickField = includes(
 					[CHECKBOX, RADIO, "range"],
 					field.type

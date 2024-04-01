@@ -240,8 +240,18 @@ var Plugin = function(Alpine) {
       };
     };
     function addEvents(field) {
-      if (!field.matches("[type=hidden]"))
-        addErrorMsg(field);
+      const attrs = Array.from(field.attributes).map((attr) => attr.name);
+      const triggers = [
+        "required",
+        ":required",
+        "pattern",
+        ":pattern",
+        ":disabled"
+      ];
+      const hasTrigger = attrs.some((attr) => triggers.includes(attr) || attr.includes("x-validate"));
+      if (field.matches("[type=hidden]") || !hasTrigger)
+        return;
+      addErrorMsg(field);
       const isClickField = includes([CHECKBOX, RADIO, "range"], field.type);
       const eventType = isClickField ? "click" : isHtmlElement(field, "select") ? "change" : "blur";
       addEvent(field, eventType, checkIfValid);
