@@ -254,7 +254,8 @@ var Plugin = function(Alpine) {
       };
     };
     function addEvents(field) {
-      addErrorMsg(field);
+      if (!field.matches("[type=hidden]"))
+        addErrorMsg(field);
       const isClickField = includes([CHECKBOX, RADIO, "range"], field.type);
       const eventType = isClickField ? "click" : isHtmlElement(field, "select") ? "change" : "blur";
       addEvent(field, eventType, checkIfValid);

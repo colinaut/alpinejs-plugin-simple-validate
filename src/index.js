@@ -419,7 +419,7 @@ const Plugin = function (Alpine) {
 			};
 
 			function addEvents(field) {
-				addErrorMsg(field);
+				if (!field.matches("[type=hidden]")) addErrorMsg(field);
 				const isClickField = includes(
 					[CHECKBOX, RADIO, "range"],
 					field.type
