@@ -75,7 +75,6 @@
     const formModifiers = new WeakMap();
     function updateFieldData(field, data, triggerErrorMsg) {
       var _a;
-      console.log("\u{1F680} ~ updateFieldData", field, data);
       const form = getForm(field);
       const name = getName(field);
       if (form && name) {

@@ -131,7 +131,7 @@ const Plugin = function (Alpine) {
 	/* -------------------------------------------------------------------------- */
 
 	function updateFieldData(field, data, triggerErrorMsg) {
-		console.log("🚀 ~ updateFieldData", field, data);
+		// console.log("🚀 ~ updateFieldData", field, data);
 		// data = {name: 'field id or name if no id', node: field, value:'field value', array:[optional used for groups], valid: true, required: false, disabled: false}
 		const form = getForm(field);
 		const name = getName(field);
