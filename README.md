@@ -142,7 +142,7 @@ These grant access to some of the backend functions — use at your own risk.
 More complicated examples in examples folder. run `npm run serve` to view.
 
 ```
-<form id="form" x-data x-validate @submit="$validate.submit">
+<form id="form" x-data x-validate.validate-on-submit action="/api/end-point" method="post">
         <p><em>* required</em></p>
         <div>
             <label for="name">Your Name *</label>
@@ -176,6 +176,13 @@ More complicated examples in examples folder. run `npm run serve` to view.
     }
 </style>
 
+```
+
+The above example will validate using x-validate prior to submitting. If you need to submit using javascript, then you can use alpine for this as such:
+
+```
+<form id="form" x-data x-validate.validate-on-submit 
+  @submit.prevent="if ($validate.isComplete('form')) yourPostFormFunctionHere($validate.value('form'))" >
 ```
 
 ### Example of more elaborate error message styling
